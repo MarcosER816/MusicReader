@@ -56,3 +56,26 @@ Audio route: not relevant (no audio yet)
 | 4 | Reorder sections by dragging the ≡ handle | Comfortable, the order is kept after reopening | OK |
 | 5 | Rename, duplicate and delete songs (and Undo); duplicate linked/independent, unlink and delete sections (and Undo) | Everything works; no crash | OK (updated without losing data; no crash; no changes wanted) |
 
+### Stage 2 — lyrics and syllables
+APK: `MusicReader-stage-02-lyrics-31.apk` or later (PR [#4](https://github.com/MarcosER816/MusicReader/pull/4), branch `stage-02-lyrics`)
+Date tested: 2026-11-13 (round 1, APK run 31)
+Audio route: not relevant (no audio yet)
+
+| # | Check | Expected | Result |
+|---|---|---|---|
+| 1 | Paste a Spanish song and an English song (song language set in Settings), open Syllables | Most words split correctly; send the wrong ones | Round 1: English wrong: y-ou, mak-ing, de-spite, y-ou'll, oth-er → fixed in round 2 (D-022) |
+| 2 | Split by tapping between letters and join by tapping a dot, with one hand | Easy to hit | Round 1: unclear what "splitting and merging" means → explained; hint text rewritten |
+| 3 | Second voice: write it while the main voice shows below | Works as meant (D-003) | Round 1: wanted per line, not per verse → changed in round 2 (D-022) |
+| 4 | Punctuation and capitals | Kept as typed — or say what you prefer | OK: keep as typed |
+| 5 | Update over Stage 1, force-stop, reopen: lyrics and manual splits still there | No data lost, no crash | OK: no data lost, no crash |
+
+Round 2 (2026-11-13, APK run 35):
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Spanish and English songs split | OK — everything split correctly |
+| 2 | Split / join by tap with one hand | OK |
+| 3 | Second voice per line | OK — works as meant |
+| 4 | Punctuation and capitals | OK — nothing else to change |
+| 5 | Update without losing data | OK |
+

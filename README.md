@@ -65,8 +65,11 @@ The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
 | `core/model` | Pure Kotlin data model and music logic |
 | `core/data` | Song files (JSON) and settings (DataStore) |
 | `core/dsp` | Pure Kotlin signal processing (pitch, onsets) |
+| `core/lyrics` | Pure Kotlin lyrics parsing and syllable splitting (Spanish rules, English Liang patterns) |
 | `audio` | C++17 audio core on Oboe, called from Kotlin through JNI |
 
 ## License
 
 MIT, see [LICENSE](LICENSE).
+
+The English hyphenation patterns (`core/lyrics/src/main/resources/hyphenation/hyph-en-us.*`) are Copyright (C) 1990, 2004, 2005 Gerard D.C. Kuiken, distributed under the permissive notice in `hyph-en-us.LICENSE.txt`.

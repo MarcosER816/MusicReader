@@ -8,8 +8,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.musicreader.app.ui.about.AboutScreen
 import com.musicreader.app.ui.library.LibraryScreen
+import com.musicreader.app.ui.song.LyricsScreen
 import com.musicreader.app.ui.song.SectionsScreen
 import com.musicreader.app.ui.song.SongSettingsScreen
 import com.musicreader.app.ui.song.SongViewModel
@@ -31,6 +33,9 @@ object SectionsRoute
 @Serializable
 object SongSettingsRoute
 
+@Serializable
+data class LyricsRoute(val sectionId: String)
+
 @Composable
 fun MusicReaderNavHost(navController: NavHostController = rememberNavController()) {
     NavHost(navController = navController, startDestination = LibraryRoute) {
@@ -51,12 +56,22 @@ fun MusicReaderNavHost(navController: NavHostController = rememberNavController(
                     viewModel = viewModel,
                     onBack = { navController.popBackStack(LibraryRoute, inclusive = false) },
                     onOpenSettings = { navController.navigate(SongSettingsRoute) },
+                    onOpenLyrics = { sectionId -> navController.navigate(LyricsRoute(sectionId)) },
                 )
             }
             composable<SongSettingsRoute> { entry ->
                 val songEntry = remember(entry) { navController.getBackStackEntry<SongRoute>() }
                 val viewModel: SongViewModel = viewModel(songEntry, factory = SongViewModel.Factory)
                 SongSettingsScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
+            }
+            composable<LyricsRoute> { entry ->
+                val songEntry = remember(entry) { navController.getBackStackEntry<SongRoute>() }
+                val viewModel: SongViewModel = viewModel(songEntry, factory = SongViewModel.Factory)
+                LyricsScreen(
+                    viewModel = viewModel,
+                    sectionId = entry.toRoute<LyricsRoute>().sectionId,
+                    onBack = { navController.popBackStack() },
+                )
             }
         }
     }

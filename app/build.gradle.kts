@@ -73,6 +73,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:data"))
     implementation(project(":core:dsp"))
+    implementation(project(":core:lyrics"))
     implementation(project(":audio"))
 
     implementation(libs.androidx.core.ktx)

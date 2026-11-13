@@ -53,8 +53,9 @@ Beats inside a section are relative to the section start.
 | voice | Int | 0 = main voice, 1 = second voice, sung **at the same time** as voice 0 (D-003) |
 | text | String | |
 | words | List&lt;Word&gt; | |
+| pairedLineId | String? | for a second-voice line (voice 1): the id of the main line it is sung with; null for main lines (D-022) |
 
-Each voice is captured in its own takes (one microphone cannot separate two people singing together). In the editor, while writing or editing voice 1, voice 0 is shown below it.
+Each main line has at most one second-voice line. Each voice is captured in its own takes (one microphone cannot separate two people singing together). In the editor, while writing a second-voice line, its main line is shown below it.
 
 ## Word
 

@@ -166,3 +166,60 @@ Checked again for Stage 0 against Google Maven, Maven Central, services.gradle.o
 - **Navigation:** navigation-compose 2.10.2 with type-safe routes. The Sections and Song settings screens share one ViewModel per song.
 - **Library versions added:** kotlinx-coroutines 1.11.0 (core and test), navigation-compose 2.10.2.
 - **Not built in this stage:** settings persistence with DataStore (the `AppSettings` class and its defaults exist; it is saved once the settings screens arrive in Stage 12). `Recording` exists as a class; where recordings are listed is decided in Stage 15.
+
+## D-020 — Syllable splitting (2026-11-13)
+
+- **Module:** new pure Kotlin module `core/lyrics` (syllabifiers and lyrics operations), next to `core/model`.
+- **Spanish:** rule-based splitter written for MusicReader (`SpanishSyllabifier`), no third-party code. It covers:
+  - the digraphs ch, ll, rr, qu, and gu before e/i;
+  - h treated as a consonant;
+  - y as a consonant before a vowel and as a vowel otherwise;
+  - strong vowels a e o and accented á é í ó ú, weak vowels i u ü;
+  - hiatus between two strong vowels or two identical weak ones; diphthongs and triphthongs;
+  - the inseparable consonant groups pl bl cl gl fl kl pr br tr dr cr gr fr kr;
+  - 3–4 consonants: the last two stay together when inseparable, otherwise only the last moves on.
+  
+  "tl" is split (at-lán-ti-co), and prefixes such as "sub-" follow the general rules ("su-bra-yar").
+- **English:** Liang's algorithm (as used by TeX), written for MusicReader (`EnglishHyphenator`), with the American English patterns `hyph-en-us`:
+  - **License:** Copyright (C) 1990, 2004, 2005 Gerard D.C. Kuiken. "Copying and distribution of this file, with or without modification, are permitted in any medium without royalty provided the copyright notice and this notice are preserved."
+  - This is an all-permissive notice, not literally one of Apache-2.0/MIT/BSD/zlib. **Mark accepted this exception on 2026-11-13.**
+  - The notice is kept in `core/lyrics/src/main/resources/hyphenation/hyph-en-us.LICENSE.txt`, which ships inside the app. The patterns come from the hyph-utf8 project (github.com/hyphenation/tex-hyphen), version 2005-05-30.
+- **English additions for singing** (first version; replaced by D-022):
+  - Minimum syllable length 1 letter at the start and 2 at the end (TeX uses 2 and 3).
+  - Every syllable must contain a vowel, so "s-tarlight" is refused.
+  - When the patterns give no usable break, a vowel-group fallback splits the word: "-ing" becomes its own syllable; one consonant between vowels moves to the next syllable; two are split unless they are th/sh/ch/ph/wh/gh; a silent final e does not count. This gives to-night, a-bout, sing-ing, a-lone, o-pen.
+- **Words as typed:** capitals, accents and punctuation stay exactly as typed. Punctuation is attached to the neighbouring syllable ("¿Dón-de", "siem-pre,"), and a hyphen inside a word always ends a syllable. Whether to keep punctuation in the stored words is a question for Mark at the end of Stage 2.
+
+## D-021 — Lyrics editing (2026-11-13)
+
+- **Stage numbers follow Mark's requests.** His Stage 1 covered the old stages 1–2 and his Stage 2 the old stage 3. PROGRESS.md was renumbered: audio core is now Stage 3, …, follow mode Stage 15.
+- **Where lyrics live:** lyrics belong to the section content, so linked sections share them (D-013).
+- **Two voices (D-003):** first built as one second-voice text per section; changed to one second-voice line per main line in D-022.
+- **Text to lines, words and syllables:** one line per row of text (blank rows are dropped); words are separated by whitespace; each word is split by the song's lyrics language.
+- **Editing keeps unchanged words:** a longest-common-subsequence match on word texts keeps every unchanged word, with its id, syllables, manual split and timing. Only new or changed words are split again. A word whose text changed in any way (including a capital or a comma) counts as new. Lines whose text did not change keep their id.
+- **Manual splits (`syllableOverride = true`):**
+  - In the syllable view, tap between two letters to split and tap a dot to join; long-press a word to reset it to the automatic split.
+  - The automatic splitter never touches overridden words, including when the lyrics language changes.
+  - Split syllables lose their timing. A join of two timed syllables keeps the first start and spans both durations, with the first's start pitch and the second's end pitch.
+- **Sections screen:** tapping a section card now opens its lyrics, and the card shows the first lyric line. "Edit section" (type, bars, name) moved to the ⋮ menu, next to "Lyrics".
+
+## D-022 — Stage 2 feedback from Mark (2026-11-13)
+
+- **Second voice per line, not per verse.**
+  - Each main lyric line can have one second-voice line, sung at the same time. `LyricLine.pairedLineId` names the main line (DATA_MODEL.md). This is a new optional field, so schemaVersion stays 1.
+  - On the Lyrics screen, the "Second voice" tab shows one field per main line, with that main line shown below the field while you write.
+  - Editing a main line in place keeps its id, so its second line stays attached. Deleting a main line deletes its second line.
+  - Second-voice lines saved by the first Stage 2 build (no `pairedLineId`) are attached in order to main lines that have none; any that are left over are dropped.
+- **English syllables are placed the way they are sung.** Mark's corrections: "you" not "y-ou", "ma-king", "des-pite", "o-ther".
+  - The hyph-en-us patterns now only decide which syllables a word has. The break inside the consonants between two vowel groups follows singing rules, like the Spanish ones:
+    - one consonant goes to the next syllable (ma-king);
+    - th sh ch ph wh ck and the blends pl bl cl gl fl pr br tr dr cr gr fr wr stay together and go on (o-ther);
+    - gh stays behind (laugh-ing);
+    - other pairs are split (des-pite);
+    - with three or more consonants, the last two go on when they stay together or are st/sp/sk/sc (un-der-stand), otherwise only the last one;
+    - before a final "-le", the consonant before the l goes on (lit-tle).
+  - y at the start of a word or before a vowel is a consonant (you, be-yond), except before a final silent e (good-bye).
+  - A final e is silent unless the patterns start a syllable right before it.
+  - When the patterns give no usable break, every vowel-group gap gets one (to-night, a-bout, sin-ging). Words the patterns do not split and whose final e looks silent stay whole (e.g. "maybe") and can be split by tap.
+- **Punctuation and capitals are kept as typed** (Mark: yes).
+
