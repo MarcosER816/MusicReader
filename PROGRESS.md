@@ -6,7 +6,7 @@ Status values: `not started` · `in progress` · `waiting for Mark` · `done`
 
 | # | Stage | Branch | Status | PR | Approved |
 |---|---|---|---|---|---|
-| 0 | Project skeleton: Gradle modules, versions, CI that builds and uploads the APK | stage-00-skeleton | not started | | |
+| 0 | Project skeleton: Gradle modules, versions, CI that builds and uploads the APK | stage-00-skeleton | waiting for Mark | [#1](https://github.com/MarcosER816/MusicReader/pull/1) | |
 | 1 | Core model: data classes, JSON serialization, atomic file storage, schema tests | stage-01-model | not started | | |
 | 2 | Song library and song settings: create/rename/delete, title, tempo, time signature, sections and section types with descriptions | stage-02-library | not started | | |
 | 3 | Lyrics entry: lyric lines, second line, Spanish/English syllable splitting, manual split | stage-03-lyrics | not started | | |
@@ -26,4 +26,11 @@ Status values: `not started` · `in progress` · `waiting for Mark` · `done`
 
 ## Log
 
-_No stages started yet._
+### Stage 0 — skeleton (2026-11-13)
+- Gradle 9.9.1 wrapper, version catalog, AGP 9.5.1 with built-in Kotlin, Kotlin 2.4.21, Compose BOM 2026.09.00 (D-016).
+- Modules: `app`, `core/model`, `core/data`, `core/dsp`, `audio` (C++17, CMake, Oboe 1.11.0 prefab, JNI).
+- Dark Material 3 app: Home (empty song list) and About (version, build, Oboe version read through JNI). English and Spanish strings.
+- CI `.github/workflows/android.yml`: lint, unit tests and debug APK on every push and PR; APK artifact `MusicReader-<branch>-<run>.apk`.
+- Committed debug keystore; versionCode = CI run number, versionName = `0.<stage>.<run>` (D-017).
+- README install guide; `Pitch` (MIDI ↔ Hz) in `core/model` with 5 unit tests.
+- Waiting for Mark's device test and "Stage 0 approved".
