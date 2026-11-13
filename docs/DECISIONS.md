@@ -142,6 +142,27 @@ Checked again for Stage 0 against Google Maven, Maven Central, services.gradle.o
 - **Versions:** `versionCode` = `GITHUB_RUN_NUMBER` (1 for local builds); `versionName` = `0.<stage>.<run>`, with the stage taken from `musicreader.stage` in `gradle.properties`. Bump that property at the start of each stage.
 - **ABIs:** `arm64-v8a` (the POCO F7 Ultra) and `x86_64` only. No 32-bit.
 - **Pure Kotlin modules** (`core/model`, `core/dsp`) use the Kotlin JVM plugin plus the standalone Android lint plugin. Each also registers a `testDebugUnitTest` task that runs its `test` task, so `./gradlew testDebugUnitTest` covers them.
-- **Theme:** dark by default (Material 3 dark color scheme), pending Mark's feedback at the end of Stage 0.
+- **Theme:** dark by default (Material 3 dark color scheme). Mark confirmed after Stage 0: dark theme only for now.
 - **UI language:** English and Spanish string resources from the start (D-006).
 - **CI artifact name:** `MusicReader-<branch>-<run>.apk`. Characters that are not allowed in artifact names (such as `/`) become `-`. GitHub always delivers the artifact as a zip that contains the APK.
+
+## D-018 — What a "beat" is (2026-11-13)
+
+- A beat is one note of the time signature's denominator, and `tempoBpm` counts those notes per minute. A 4/4 bar has 4 quarter-note beats, a 6/8 bar 6 eighth-note beats, a 12/8 bar 12.
+- seconds = beats × 60 / tempoBpm. Bar index = floor(beat / num), beat in bar = beat − bar × num (`BeatTime`).
+- Time signatures: numerator 1–32, denominator 1, 2, 4, 8, 16 or 32. The presets are 2/4, 3/4, 4/4, 6/8 and 12/8; anything else is "custom".
+- Changing the time signature keeps each section's number of bars and recomputes `lengthBeats` (4 bars of 4/4 = 16 beats become 4 bars of 3/4 = 12 beats). Events inside sections (chords, tab, syllables) keep their beat positions; how they move when bars change size is decided in Stages 6–10, where they are first edited.
+
+## D-019 — Stage 1 decisions (2026-11-13)
+
+- **Stage plan:** Mark's Stage 1 request includes the old Stage 2 (library, song settings and sections). Stage 2 in PROGRESS.md is marked "merged into Stage 1"; the other stage numbers are unchanged.
+- **Tempo:** 30–300 BPM, stored with one decimal. The slider and the −/+ buttons give whole BPM. Tap tempo averages the intervals of the last 8 taps; a pause longer than 2.5 s starts a new count, and the song tempo follows from the second tap.
+- **Saving:** every edit updates the screen at once and is written to disk 300 ms after the last change. Pending edits are written when the song screens close. Writes are atomic (D-002/DATA_MODEL storage); the repository keeps songs in memory, so the library always shows the latest data.
+- **Deleting a song** hides it and shows "Undo" for about 10 s. The file is deleted when the snackbar goes away. If the app is killed before that, the song is kept.
+- **Deleting a section** can also be undone from its snackbar.
+- **Sections:** "Duplicate (linked)" shares the content with the original (D-013). "Duplicate (independent)" and "Unlink" make a deep copy with new ids. Type and name belong to each timeline entry; length and music belong to the shared content. Section names are the type plus a number when the type appears more than once ("Verse 2"), unless the user gives a name. A section has 1–999 bars, 4 by default.
+- **Reorder:** drag the handle (≡) on the left of a section card. The list scrolls while dragging past its top or bottom edge. Drag-to-reorder is written in the app; no library is used.
+- **New song:** the lyrics language defaults to Spanish when the phone is in Spanish, otherwise English. After creation the song's settings open.
+- **Navigation:** navigation-compose 2.10.2 with type-safe routes. The Sections and Song settings screens share one ViewModel per song.
+- **Library versions added:** kotlinx-coroutines 1.11.0 (core and test), navigation-compose 2.10.2.
+- **Not built in this stage:** settings persistence with DataStore (the `AppSettings` class and its defaults exist; it is saved once the settings screens arrive in Stage 12). `Recording` exists as a class; where recordings are listed is decided in Stage 15.

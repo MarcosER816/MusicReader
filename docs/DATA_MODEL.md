@@ -14,8 +14,8 @@ Any change to this file must be agreed with Mark and recorded in [DECISIONS.md](
 | artist | String? | |
 | language | `es` \| `en` | used for syllable splitting |
 | instrument | Instrument | version 1: only `GUITAR_6_STANDARD`, tuning MIDI `[40,45,50,55,59,64]` (low E to high e), capo `0` (field kept for later, not editable in v1; D-005) |
-| tempoBpm | Double | |
-| timeSignature | `{ num: Int, den: Int }` | |
+| tempoBpm | Double | 30–300, one decimal |
+| timeSignature | `{ num: Int, den: Int }` | num 1–32, den 1/2/4/8/16/32. A beat is one `den` note and `tempoBpm` counts them (D-018) |
 | sections | List&lt;Section&gt; | the song timeline, in order |
 | sectionContents | List&lt;SectionContent&gt; | the musical content; linked sections share one (D-013) |
 | createdAt | Instant (epoch ms) | |

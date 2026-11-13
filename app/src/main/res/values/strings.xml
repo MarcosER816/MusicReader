@@ -1,11 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">MusicReader</string>
-    <string name="home_title">Songs</string>
-    <string name="home_empty">No songs yet.</string>
-    <string name="home_empty_hint">Song creation arrives in a later stage.</string>
-    <string name="about">About</string>
+
+    <!-- Common -->
     <string name="back">Back</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="create">Create</string>
+    <string name="undo">Undo</string>
+    <string name="more_options">More options</string>
+    <string name="untitled">Untitled</string>
+    <string name="song_not_found">This song no longer exists.</string>
+
+    <!-- Library -->
+    <string name="library_title">Songs</string>
+    <string name="library_empty">No songs yet.</string>
+    <string name="library_empty_hint">Tap “New song” to create one.</string>
+    <string name="new_song">New song</string>
+    <string name="song_title">Title</string>
+    <string name="rename">Rename</string>
+    <string name="rename_song">Rename song</string>
+    <string name="duplicate">Duplicate</string>
+    <string name="delete">Delete</string>
+    <string name="copy_title">%1$s (copy)</string>
+    <string name="song_deleted">“%1$s” deleted</string>
+    <plurals name="section_count">
+        <item quantity="one">%d section</item>
+        <item quantity="other">%d sections</item>
+    </plurals>
+
+    <!-- Song settings -->
+    <string name="settings">Settings</string>
+    <string name="song_settings">Song settings</string>
+    <string name="artist">Artist</string>
+    <string name="language">Lyrics language</string>
+    <string name="language_es">Español</string>
+    <string name="language_en">English</string>
+    <string name="tempo">Tempo</string>
+    <string name="tempo_value">%1$s BPM</string>
+    <string name="tempo_decrease">Slower</string>
+    <string name="tempo_increase">Faster</string>
+    <string name="tap_tempo">Tap tempo</string>
+    <string name="tap_tempo_hint">Tap at least twice in time with the song.</string>
+    <string name="tap_count">Taps: %1$d</string>
+    <string name="time_signature">Time signature</string>
+    <string name="time_signature_custom">Custom</string>
+    <string name="time_signature_custom_value">Custom %1$s</string>
+    <string name="custom_time_signature">Custom time signature</string>
+    <string name="beats_per_bar">Beats per bar</string>
+    <string name="beat_unit">Beat unit (note value)</string>
+    <string name="song_length">Song length: %1$s · %2$s</string>
+
+    <!-- Sections -->
+    <string name="sections_empty">No sections yet.</string>
+    <string name="sections_empty_hint">Tap “Add section” to build the structure of the song.</string>
+    <string name="add_section">Add section</string>
+    <string name="edit_section">Edit section</string>
+    <string name="section_type">Type</string>
+    <string name="section_label">Name (optional)</string>
+    <string name="section_label_hint">e.g. Final chorus</string>
+    <string name="length_bars">Length in bars</string>
+    <string name="fewer_bars">Fewer bars</string>
+    <string name="more_bars">More bars</string>
+    <string name="drag_to_reorder">Drag to reorder</string>
+    <string name="section_details">Bar %1$d · %2$s · %3$s</string>
+    <string name="duplicate_linked">Duplicate (linked)</string>
+    <string name="duplicate_independent">Duplicate (independent)</string>
+    <string name="unlink">Unlink</string>
+    <string name="linked_count">Linked ×%1$d</string>
+    <string name="section_deleted">Section “%1$s” deleted</string>
+    <string name="song_summary">%1$s · %2$s BPM · %3$s · %4$s</string>
+    <plurals name="linked_hint">
+        <item quantity="one">Linked to %d section: changes to the length and music apply to all of them. Use “Unlink” to make this one independent.</item>
+        <item quantity="other">Linked to %d sections: changes to the length and music apply to all of them. Use “Unlink” to make this one independent.</item>
+    </plurals>
+    <plurals name="bars">
+        <item quantity="one">%d bar</item>
+        <item quantity="other">%d bars</item>
+    </plurals>
+
+    <!-- Section types: names and descriptions (docs/SPEC.md) -->
+    <string name="section_intro">Intro</string>
+    <string name="section_verse">Verse</string>
+    <string name="section_pre_chorus">Pre-Chorus</string>
+    <string name="section_chorus">Chorus</string>
+    <string name="section_bridge">Bridge</string>
+    <string name="section_outro">Outro / Coda</string>
+    <string name="section_intro_description">The opening section that sets the key, tempo, mood and style.</string>
+    <string name="section_verse_description">The storytelling section. Same music each time, the lyrics change.</string>
+    <string name="section_pre_chorus_description">A short, optional section that builds tension before the chorus.</string>
+    <string name="section_chorus_description">The emotional, catchy peak. Repeats the same lyrics and main message.</string>
+    <string name="section_bridge_description">A contrasting section, often near the middle, with new chords or melody.</string>
+    <string name="section_outro_description">The concluding section that winds down or resolves the song.</string>
+
+    <!-- About -->
+    <string name="about">About</string>
     <string name="about_title">About MusicReader</string>
     <string name="about_description">A personal app for guitar players and singers: lyrics, chords, tabs and practice.</string>
     <string name="about_version">Version %1$s</string>

@@ -1,6 +1,7 @@
 // Pure Kotlin/JVM module: no Android dependencies.
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.android.lint)
 }
 
@@ -16,6 +17,7 @@ kotlin {
 }
 
 dependencies {
+    api(libs.kotlinx.serialization.json)
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test.junit)
 }
