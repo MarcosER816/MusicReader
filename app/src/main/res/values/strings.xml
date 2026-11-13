@@ -111,6 +111,24 @@
         <item quantity="other">Shared with all %d linked sections.</item>
     </plurals>
 
+    <!-- Viewer -->
+    <string name="view_song">View</string>
+    <string name="layer_lyrics">Lyrics</string>
+    <string name="layer_chords">Chords</string>
+    <string name="layer_tabs">Tabs</string>
+    <string name="autoscroll_play">Start scrolling</string>
+    <string name="autoscroll_pause">Pause scrolling</string>
+    <string name="autoscroll_speed">Scroll speed</string>
+    <string name="text_size">Text size</string>
+    <string name="text_size_short" translatable="false">Aa</string>
+    <string name="chord_label_description">Chord %1$s</string>
+    <string name="chord_root">Root: %1$s</string>
+    <string name="chord_bass">Bass: %1$s</string>
+    <string name="chord_type">Type: %1$s</string>
+    <string name="chord_type_major">major</string>
+    <string name="song_is_empty">This song has no sections yet.</string>
+    <string name="load_demo_song">Load demo song (debug)</string>
+
     <!-- About -->
     <string name="about">About</string>
     <string name="about_title">About MusicReader</string>
