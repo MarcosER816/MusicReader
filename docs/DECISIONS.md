@@ -110,3 +110,38 @@ The questions and Mark's answers, word for word, are below. D-003 to D-015 turn 
 10.-public, whatever you see more combinient
 11.-copies stay linked unless the user changes it
 12.-No
+
+## D-016 — Stage 0 toolchain, as built (2026-11-13)
+
+Checked again for Stage 0 against Google Maven, Maven Central, services.gradle.org, the Android SDK repository (`repository2-3.xml`) and the GitHub tags of each action. These are the exact versions in `gradle/libs.versions.toml` and `.github/workflows/android.yml`; D-001 is superseded where they differ.
+
+| Component | Version | Note |
+|---|---|---|
+| Gradle wrapper | 9.9.1 | with `distributionSha256Sum` |
+| Android Gradle Plugin | 9.5.1 | built-in Kotlin; no `kotlin-android` plugin applied in modules |
+| Kotlin Gradle plugin | 2.4.21 | AGP 9.5.1 bundles KGP 2.2.10; declaring `org.jetbrains.kotlin.android` 2.4.21 with `apply false` in the root build upgrades it (checked with `buildEnvironment`: `2.2.10 -> 2.4.21`) |
+| Compose compiler plugin | 2.4.21 | same as Kotlin |
+| Compose BOM | 2026.09.00 | latest stable BOM |
+| activity-compose | 1.13.0 | |
+| lifecycle (runtime-compose, viewmodel-compose) | 2.11.0 | |
+| core-ktx | 1.19.1 | |
+| kotlinx.serialization JSON | 1.13.0 | |
+| DataStore preferences | 1.3.0 | |
+| Oboe | 1.11.0 | prefab, `ANDROID_STL=c++_shared` |
+| JUnit | 4.13.2 | plus `kotlin-test-junit` |
+| NDK | 29.0.14206865 (r29) | latest r29 |
+| CMake | 4.1.2 | |
+| compileSdk / targetSdk / minSdk | 37 / 36 / 29 | lint's `OldTargetApi` warning is disabled because targetSdk 36 is the project rule |
+| JDK | 21 (Temurin in CI) | bytecode target Java 17 |
+| GitHub Actions | `actions/checkout@v7`, `actions/setup-java@v6`, `gradle/actions/setup-gradle@v6`, `actions/upload-artifact@v7` | |
+
+## D-017 — Stage 0 build and app decisions (2026-11-13)
+
+- **Application id** `com.musicreader.app`. Changing it later would install as a different app, so it stays.
+- **Signing:** `keystore/debug.keystore` is committed on purpose. It is not a secret: store and key password `android`, alias `androiddebugkey`, RSA 2048, valid 100 years. CN=MusicReader Debug. Certificate SHA-256 `43:04:47:9a:91:9e:61:4e:2f:d4:cb:7e:28:6f:60:3f:df:50:61:8a:b4:0b:45:e9:91:a0:58:91:f8:56:2a:94`. Every APK, from CI or a local build, has this signature, so each one installs as an update.
+- **Versions:** `versionCode` = `GITHUB_RUN_NUMBER` (1 for local builds); `versionName` = `0.<stage>.<run>`, with the stage taken from `musicreader.stage` in `gradle.properties`. Bump that property at the start of each stage.
+- **ABIs:** `arm64-v8a` (the POCO F7 Ultra) and `x86_64` only. No 32-bit.
+- **Pure Kotlin modules** (`core/model`, `core/dsp`) use the Kotlin JVM plugin plus the standalone Android lint plugin. Each also registers a `testDebugUnitTest` task that runs its `test` task, so `./gradlew testDebugUnitTest` covers them.
+- **Theme:** dark by default (Material 3 dark color scheme), pending Mark's feedback at the end of Stage 0.
+- **UI language:** English and Spanish string resources from the start (D-006).
+- **CI artifact name:** `MusicReader-<branch>-<run>.apk`. Characters that are not allowed in artifact names (such as `/`) become `-`. GitHub always delivers the artifact as a zip that contains the APK.

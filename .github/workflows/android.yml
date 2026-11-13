@@ -1,0 +1,58 @@
+name: Android CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Lint, unit tests and debug APK
+        # GITHUB_RUN_NUMBER becomes versionCode, and versionName = 0.<stage>.<run> (app/build.gradle.kts).
+        run: ./gradlew lint testDebugUnitTest assembleDebug --stacktrace
+
+      - name: Name the APK
+        id: apk
+        env:
+          # For pull requests use the source branch, for pushes the pushed branch.
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          safe_branch="$(echo "$BRANCH" | tr '/\\:*?"<>|' '---------')"
+          name="MusicReader-${safe_branch}-${GITHUB_RUN_NUMBER}.apk"
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/$name"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.apk.outputs.name }}
+          path: dist/${{ steps.apk.outputs.name }}
+          if-no-files-found: error
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports-${{ github.run_number }}
+          path: |
+            **/build/reports/
+            **/build/test-results/
+          if-no-files-found: ignore
