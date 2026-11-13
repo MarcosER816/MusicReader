@@ -1,6 +1,9 @@
 package com.musicreader.app.ui
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
 import com.musicreader.app.ui.song.SongUiState
 import com.musicreader.app.ui.song.SongViewModel
 import com.musicreader.core.model.IdGenerator
@@ -158,6 +161,31 @@ class SongViewModelTest {
         assertEquals(null, saved.artist)
         assertEquals(TimeSignature(7, 8), saved.timeSignature)
         assertEquals(28, saved.sectionContents.single().lengthBeats)
+    }
+
+    @Test
+    fun editsMadeJustBeforeClosingAreSaved() = runTest(dispatcher) {
+        val repo = repoWithSong()
+        val store = ViewModelStore()
+        val vm = ViewModelProvider(
+            store,
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T = viewModel(repo) as T
+            },
+        )[SongViewModel::class.java]
+        advanceUntilIdle()
+
+        vm.addSection(SectionType.INTRO, 2, null)
+        advanceTimeBy(SongViewModel.SAVE_DELAY_MS + 1) // the debounced save starts…
+        vm.addSection(SectionType.OUTRO, 2, null) // …and one more edit right before closing
+        store.clear() // the screen closes: viewModelScope is cancelled
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(SectionType.INTRO, SectionType.OUTRO),
+            repo.songs.getValue("song").sections.map { it.type },
+        )
     }
 
     @Test

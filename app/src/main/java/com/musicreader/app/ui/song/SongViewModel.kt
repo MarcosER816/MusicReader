@@ -25,6 +25,7 @@ import com.musicreader.core.model.occurrenceNumbers
 import com.musicreader.core.model.sectionStartBeats
 import com.musicreader.core.model.totalBars
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -123,7 +124,7 @@ class SongViewModel(
             load.value = if (loaded == null) Load.NOT_FOUND else Load.READY
         }
         viewModelScope.launch {
-            song.debounce(SAVE_DELAY_MS).filterNotNull().collect { saveIfChanged(it) }
+            song.debounce(SAVE_DELAY_MS).filterNotNull().collect { persist(it) }
         }
     }
 
@@ -211,18 +212,19 @@ class SongViewModel(
         song.update { current -> current?.let { change(it, clock()) } }
     }
 
-    private suspend fun saveIfChanged(current: Song) {
+    /**
+     * Writes [current] unless it was already written. The write runs in the app scope, so closing
+     * the screen never cancels it, and starts undispatched, so writes reach the repository's
+     * (first-in, first-out) lock in the order they were made.
+     */
+    private fun persist(current: Song) {
         if (current == lastSaved) return
         lastSaved = current
-        repository.save(current)
+        appScope.launch(start = CoroutineStart.UNDISPATCHED) { repository.save(current) }
     }
 
     override fun onCleared() {
-        val current = song.value
-        if (current != null && current != lastSaved) {
-            lastSaved = current
-            appScope.launch { repository.save(current) }
-        }
+        song.value?.let { persist(it) }
     }
 
     private fun editorState(s: Song, tap: TapTempo): SongEditorState {
