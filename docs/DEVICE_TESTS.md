@@ -45,14 +45,14 @@ Audio route: not relevant (no audio yet)
 
 ### Stage 1 — model, library, song settings, sections
 APK: `MusicReader-stage-01-model-24.apk` or later (PR [#3](https://github.com/MarcosER816/MusicReader/pull/3), branch `stage-01-model`)
-Date tested:
+Date tested: 2026-11-13
 Audio route: not relevant (no audio yet)
 
 | # | Check | Expected | Result |
 |---|---|---|---|
-| 1 | Install over the Stage 0 app; create two songs with several sections; force-stop (Settings → Apps → MusicReader → Force stop) and reopen | Both songs, their settings and sections are still there | |
-| 2 | Tap tempo on the song settings screen; change the time signature | A believable BPM after 3–4 taps; bars and section lengths follow the time signature | |
-| 3 | Add sections of all six types; read each description; change a section's type afterwards | Names and descriptions match the spec; the type can be changed | |
-| 4 | Reorder sections by dragging the ≡ handle | Comfortable, the order is kept after reopening | |
-| 5 | Rename, duplicate and delete songs (and Undo); duplicate linked/independent, unlink and delete sections (and Undo) | Everything works; no crash | |
+| 1 | Install over the Stage 0 app; create two songs with several sections; force-stop (Settings → Apps → MusicReader → Force stop) and reopen | Both songs, their settings and sections are still there | OK |
+| 2 | Tap tempo on the song settings screen; change the time signature | A believable BPM after 3–4 taps; bars and section lengths follow the time signature | OK |
+| 3 | Add sections of all six types; read each description; change a section's type afterwards | Names and descriptions match the spec; the type can be changed | OK (type can be changed) |
+| 4 | Reorder sections by dragging the ≡ handle | Comfortable, the order is kept after reopening | OK |
+| 5 | Rename, duplicate and delete songs (and Undo); duplicate linked/independent, unlink and delete sections (and Undo) | Everything works; no crash | OK (updated without losing data; no crash; no changes wanted) |
 
