@@ -80,7 +80,7 @@ Round 2 (2026-11-13, APK run 35):
 | 5 | Update without losing data | OK |
 
 ### Stage 3 — song viewer
-APK: `MusicReader-stage-03-viewer-<run>.apk` (branch `stage-03-viewer`)
+APK: `MusicReader-stage-03-viewer-46.apk` or later (PR [#5](https://github.com/MarcosER816/MusicReader/pull/5), branch `stage-03-viewer`)
 Date tested:
 Audio route: not relevant (no audio yet)
 
