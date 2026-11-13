@@ -5,7 +5,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -30,40 +30,47 @@ class AppFlowRobolectricTest {
     val rule = createAndroidComposeRule<MainActivity>()
 
     private fun waitForText(text: String) {
-        rule.waitUntil(5_000) { rule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+        rule.waitUntil(5_000) {
+            rule.onAllNodesWithText(text, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
     }
+
+    /** Button labels are merged into their button, so text is looked up in the unmerged tree. */
+    private fun text(text: String) = rule.onAllNodesWithText(text, useUnmergedTree = true).onFirst()
+
+    private fun click(label: String) = text(label).performClick()
 
     @Test
     fun createSongAddSectionsAndReopen() {
-        rule.onNodeWithText("No songs yet.").assertIsDisplayed()
-        rule.onNodeWithText("New song").performClick()
+        text("No songs yet.").assertIsDisplayed()
+        click("New song")
         rule.onNode(hasSetTextAction()).performTextInput("Prueba")
-        rule.onNodeWithText("Create").performClick()
+        click("Create")
 
         // A new song opens its settings.
         waitForText("Song settings")
-        rule.onNodeWithText("4/4").assertIsDisplayed()
-        rule.onNodeWithText("3/4").performClick()
-        rule.onNodeWithText("Tap tempo").performClick()
+        text("4/4").assertIsDisplayed()
+        click("3/4")
+        click("Tap tempo")
         rule.onNodeWithContentDescription("Back").performClick()
 
         // Sections screen: add a chorus and a verse.
         waitForText("Add section")
-        rule.onNodeWithText("No sections yet.").assertIsDisplayed()
-        rule.onNodeWithText("Add section").performClick()
-        rule.onNodeWithText("Chorus").performClick()
-        rule.onNodeWithText("The emotional, catchy peak. Repeats the same lyrics and main message.").assertIsDisplayed()
-        rule.onNodeWithText("Save").performClick()
-        rule.onNodeWithText("Add section").performClick()
-        rule.onNodeWithText("Save").performClick() // default type: Verse, 4 bars
+        text("No sections yet.").assertIsDisplayed()
+        click("Add section")
+        click("Chorus")
+        text("The emotional, catchy peak. Repeats the same lyrics and main message.").assertIsDisplayed()
+        click("Save")
+        click("Add section")
+        click("Save") // default type: Verse, 4 bars
         rule.waitForIdle()
-        rule.onNodeWithText("Chorus").assertIsDisplayed()
-        rule.onNodeWithText("Verse").assertIsDisplayed()
+        text("Chorus").assertIsDisplayed()
+        text("Verse").assertIsDisplayed()
 
         // Back to the library: the song is listed with its sections.
         rule.onNodeWithContentDescription("Back").performClick()
         waitForText("Prueba")
-        rule.onNodeWithText("2 sections").assertIsDisplayed()
+        text("2 sections").assertIsDisplayed()
 
         // What is stored on disk.
         val repo = (rule.activity.application as MusicReaderApplication).container.songRepository
@@ -78,8 +85,8 @@ class AppFlowRobolectricTest {
         // Recreate the activity (like coming back to the app): the song is still there.
         rule.activityRule.scenario.recreate()
         waitForText("Prueba")
-        rule.onNodeWithText("Prueba").performClick()
+        click("Prueba")
         waitForText("Chorus")
-        rule.onNodeWithText("Verse").assertIsDisplayed()
+        text("Verse").assertIsDisplayed()
     }
 }
