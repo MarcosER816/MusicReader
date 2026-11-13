@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Eighth note inside the 108dp adaptive-icon canvas (safe zone: central 66dp). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- note head: ellipse centred at (48,66), rx 9, ry 7 -->
+    <path
+        android:fillColor="#FFFDD835"
+        android:pathData="M39,66 A9,7 0 1,0 57,66 A9,7 0 1,0 39,66 Z" />
+    <!-- stem -->
+    <path
+        android:fillColor="#FFFDD835"
+        android:pathData="M53.5,34 L57,34 L57,66 L53.5,66 Z" />
+    <!-- flag -->
+    <path
+        android:fillColor="#FFFDD835"
+        android:pathData="M57,34 C63,38 70,41 69,52 C67,46 62,44 57,43 Z" />
+</vector>

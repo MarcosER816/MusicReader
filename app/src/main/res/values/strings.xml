@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">MusicReader</string>
+    <string name="home_title">Songs</string>
+    <string name="home_empty">No songs yet.</string>
+    <string name="home_empty_hint">Song creation arrives in a later stage.</string>
+    <string name="about">About</string>
+    <string name="back">Back</string>
+    <string name="about_title">About MusicReader</string>
+    <string name="about_description">A personal app for guitar players and singers: lyrics, chords, tabs and practice.</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_build">Build %1$d</string>
+    <string name="about_audio_core">Audio core: %1$s</string>
+</resources>
