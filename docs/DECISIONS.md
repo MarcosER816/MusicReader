@@ -223,3 +223,33 @@ Checked again for Stage 0 against Google Maven, Maven Central, services.gradle.o
   - When the patterns give no usable break, every vowel-group gap gets one (to-night, a-bout, sin-ging). Words the patterns do not split and whose final e looks silent stay whole (e.g. "maybe") and can be split by tap.
 - **Punctuation and capitals are kept as typed** (Mark: yes).
 
+## D-023 — Song viewer (2026-11-13)
+
+- **Stage order:** Mark's Stage 3 request is the viewer and says chords and tabs come in Stages 4–5. PROGRESS.md is now: 3 viewer, 4 chords, 5 tab editor, 6 audio core, 7 DSP, 8 lyric capture, 9 note editor, 10 user configuration, 11–12 practice, 13 recordings, 14 follow mode.
+- **Layout (`SheetLayoutBuilder`, pure and tested):**
+  - Sections are stacked with their type as a header. Each section is cut into rows.
+  - With lyrics, there is one row per main lyric line, and the lines share the section's beats equally (line i covers i·L/n to (i+1)·L/n). Without lyrics, rows are 2 bars long.
+  - Every chord, tab note and lyric has an x position = (beat − row start) / row length. In a row, chords are on top, tab in the middle and lyrics at the bottom, so items at the same beat line up. Bar lines are drawn through the row.
+- **Untimed lyrics** (before Stage 8 captures timing):
+  - Whole words are placed at their character position in the line, so the line spreads over its row.
+  - Timed syllables are placed at their start beat.
+  - When labels would overlap (large text), a label is pushed right just enough, and a row that overflows is shifted left.
+  - The second-voice line is drawn in italics under its main line.
+- **Chord labels:**
+  - Colored by root letter (D-011) with the user's chord colors (defaults in DATA_MODEL.md), and showing the full name.
+  - One `InfiniteTransition` makes a single phase (2.8 s cycle: the sweep crosses during the first half, then rests), shared by every label, so all glisten together.
+  - Each label draws a white gradient band over its own text (`BlendMode.SrcAtop` on an offscreen layer). The brush is built once per label size and only moved each frame: no allocation per frame, and the phase is read during drawing only (no recomposition).
+- **Tab lane:** six string lines, high e on top. Fret numbers are drawn in finger colors; open strings get a white outline circle. Technique marks: 5h, 7p, 3/, 3\\, 7b, 7br, 3~, <12>, [7], x.
+- **Autoscroll:**
+  - Speed is in dp per second, 2–150 on a logarithmic slider, 15 by default.
+  - Every frame scrolls by speed × time since the last frame (`withFrameNanos`), so the movement is smooth.
+  - Touching the song pauses it, and so does reaching the end.
+  - It is a reading aid, not musical timing; audio-clock timing starts with the audio stages.
+- **Layer checkboxes:** Lyrics, Chords, Tabs. The last checked one is disabled. Saved in settings.
+- **Text size:** "Aa" in the viewer's top bar opens a slider, 0.8–2.0 × normal. Saved in settings (`viewerFontScale`, new in DATA_MODEL.md).
+- **Settings storage:** `DataStoreSettingsRepository` keeps the whole `AppSettings` as one JSON value in a Preferences DataStore, so new fields get defaults and unknown ones are ignored. `autoscrollSpeed` now means dp per second (it was a tempo multiplier, never used).
+- **Long-press on a chord:** a bottom sheet with the chord name in its color, plus root, type and bass. The fretboard diagram is added to this sheet in Stage 4.
+- **Demo song:** debug builds only, in the library's ⋮ menu: "Load demo song (debug)". It has Intro, Verse, Chorus and Outro; lyrics in two voices; chords C, Em, F, G7, Cmaj7, D#, Bb9, Am, D/F#, D, E, A, Bm (every root letter); and tab notes with fingers 0–4 and several techniques.
+- **Opening the viewer:** the "View" button on a song's Sections screen.
+- **Screenshot tests:** Roborazzi 1.79.0. Three images of the demo song (all layers, lyrics + chords, tab only) at 411×891 dp, compared with the references in `app/src/test/screenshots` on every test run, with a 1 % pixel-difference tolerance. The references were recorded on CI (Linux) because Maven Central rate-limited the development machine. To update them: `./gradlew :app:testDebugUnitTest -Proborazzi.test.record=true`.
+
