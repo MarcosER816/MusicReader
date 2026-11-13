@@ -1,10 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="home_title">Canciones</string>
-    <string name="home_empty">Todavía no hay canciones.</string>
-    <string name="home_empty_hint">La creación de canciones llega en una etapa posterior.</string>
-    <string name="about">Acerca de</string>
+    <!-- Común -->
     <string name="back">Atrás</string>
+    <string name="cancel">Cancelar</string>
+    <string name="save">Guardar</string>
+    <string name="create">Crear</string>
+    <string name="undo">Deshacer</string>
+    <string name="more_options">Más opciones</string>
+    <string name="untitled">Sin título</string>
+    <string name="song_not_found">Esta canción ya no existe.</string>
+
+    <!-- Biblioteca -->
+    <string name="library_title">Canciones</string>
+    <string name="library_empty">Todavía no hay canciones.</string>
+    <string name="library_empty_hint">Toca “Nueva canción” para crear una.</string>
+    <string name="new_song">Nueva canción</string>
+    <string name="song_title">Título</string>
+    <string name="rename">Renombrar</string>
+    <string name="rename_song">Renombrar canción</string>
+    <string name="duplicate">Duplicar</string>
+    <string name="delete">Eliminar</string>
+    <string name="copy_title">%1$s (copia)</string>
+    <string name="song_deleted">“%1$s” eliminada</string>
+    <plurals name="section_count">
+        <item quantity="one">%d sección</item>
+        <item quantity="many">%d secciones</item>
+        <item quantity="other">%d secciones</item>
+    </plurals>
+
+    <!-- Ajustes de la canción -->
+    <string name="settings">Ajustes</string>
+    <string name="song_settings">Ajustes de la canción</string>
+    <string name="artist">Artista</string>
+    <string name="language">Idioma de la letra</string>
+    <string name="language_es">Español</string>
+    <string name="language_en">English</string>
+    <string name="tempo">Tempo</string>
+    <string name="tempo_value">%1$s BPM</string>
+    <string name="tempo_decrease">Más lento</string>
+    <string name="tempo_increase">Más rápido</string>
+    <string name="tap_tempo">Marcar tempo</string>
+    <string name="tap_tempo_hint">Toca al menos dos veces al ritmo de la canción.</string>
+    <string name="tap_count">Toques: %1$d</string>
+    <string name="time_signature">Compás</string>
+    <string name="time_signature_custom">Personalizado</string>
+    <string name="time_signature_custom_value">Personalizado %1$s</string>
+    <string name="custom_time_signature">Compás personalizado</string>
+    <string name="beats_per_bar">Tiempos por compás</string>
+    <string name="beat_unit">Unidad de tiempo (figura)</string>
+    <string name="song_length">Duración: %1$s · %2$s</string>
+
+    <!-- Secciones -->
+    <string name="sections">Secciones</string>
+    <string name="sections_empty">Todavía no hay secciones.</string>
+    <string name="sections_empty_hint">Toca “Añadir sección” para construir la estructura de la canción.</string>
+    <string name="add_section">Añadir sección</string>
+    <string name="edit_section">Editar sección</string>
+    <string name="section_type">Tipo</string>
+    <string name="section_label">Nombre (opcional)</string>
+    <string name="section_label_hint">p. ej. Estribillo final</string>
+    <string name="length_bars">Duración en compases</string>
+    <string name="fewer_bars">Menos compases</string>
+    <string name="more_bars">Más compases</string>
+    <string name="drag_to_reorder">Arrastra para reordenar</string>
+    <string name="section_details">Compás %1$d · %2$s · %3$s</string>
+    <string name="duplicate_linked">Duplicar (vinculada)</string>
+    <string name="duplicate_independent">Duplicar (independiente)</string>
+    <string name="unlink">Desvincular</string>
+    <string name="linked_count">Vinculada ×%1$d</string>
+    <string name="linked_hint">Vinculada con %1$d secciones: los cambios de duración y de música se aplican a todas. Usa “Desvincular” para que esta sea independiente.</string>
+    <string name="section_deleted">Sección “%1$s” eliminada</string>
+    <string name="song_summary">%1$s · %2$s BPM · %3$s · %4$s</string>
+    <plurals name="bars">
+        <item quantity="one">%d compás</item>
+        <item quantity="many">%d compases</item>
+        <item quantity="other">%d compases</item>
+    </plurals>
+
+    <!-- Tipos de sección -->
+    <string name="section_intro">Intro</string>
+    <string name="section_verse">Estrofa</string>
+    <string name="section_pre_chorus">Pre-estribillo</string>
+    <string name="section_chorus">Estribillo</string>
+    <string name="section_bridge">Puente</string>
+    <string name="section_outro">Outro / Coda</string>
+    <string name="section_intro_description">La sección de apertura que establece la tonalidad, el tempo, el ambiente y el estilo.</string>
+    <string name="section_verse_description">La sección que cuenta la historia. La misma música cada vez; la letra cambia.</string>
+    <string name="section_pre_chorus_description">Una sección corta y opcional que crea tensión antes del estribillo.</string>
+    <string name="section_chorus_description">El punto emocional y pegadizo. Repite la misma letra y el mensaje principal.</string>
+    <string name="section_bridge_description">Una sección de contraste, a menudo cerca del medio, con acordes o melodía nuevos.</string>
+    <string name="section_outro_description">La sección final que cierra o resuelve la canción.</string>
+
+    <!-- Acerca de -->
+    <string name="about">Acerca de</string>
     <string name="about_title">Acerca de MusicReader</string>
     <string name="about_description">Una app personal para guitarristas y cantantes: letras, acordes, tablaturas y práctica.</string>
     <string name="about_version">Versión %1$s</string>
