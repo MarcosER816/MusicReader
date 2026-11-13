@@ -69,6 +69,7 @@ fun SectionsScreen(
     viewModel: SongViewModel,
     onBack: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenLyrics: (sectionId: String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -138,6 +139,7 @@ fun SectionsScreen(
                 is SongUiState.Ready -> SectionList(
                     editor = s.editor,
                     onEdit = { sheetTarget = SheetTarget.Existing(it) },
+                    onOpenLyrics = onOpenLyrics,
                     onMove = viewModel::moveSection,
                     onDuplicate = viewModel::duplicateSection,
                     onUnlink = viewModel::unlinkSection,
@@ -183,6 +185,7 @@ fun SectionsScreen(
 private fun SectionList(
     editor: SongEditorState,
     onEdit: (String) -> Unit,
+    onOpenLyrics: (String) -> Unit,
     onMove: (String, String) -> Unit,
     onDuplicate: (String, Boolean) -> Unit,
     onUnlink: (String) -> Unit,
@@ -218,6 +221,7 @@ private fun SectionList(
                 row = row,
                 dragState = dragState,
                 onEdit = { onEdit(row.id) },
+                onOpenLyrics = { onOpenLyrics(row.id) },
                 onDuplicate = { linked -> onDuplicate(row.id, linked) },
                 onUnlink = { onUnlink(row.id) },
                 onDelete = { onDelete(row.id) },
@@ -249,13 +253,14 @@ private fun SectionCard(
     row: SectionRow,
     dragState: DragReorderState,
     onEdit: () -> Unit,
+    onOpenLyrics: () -> Unit,
     onDuplicate: (linked: Boolean) -> Unit,
     onUnlink: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var menuOpen by rememberSaveable { mutableStateOf(false) }
-    ElevatedCard(modifier.fillMaxWidth().clickable(onClick = onEdit)) {
+    ElevatedCard(modifier.fillMaxWidth().clickable(onClick = onOpenLyrics)) {
         Row(Modifier.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.dragHandle(dragState, row.id).padding(horizontal = 12.dp, vertical = 12.dp)) {
                 Icon(
@@ -280,6 +285,14 @@ private fun SectionCard(
                     ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    row.lyricsPreview ?: stringResource(R.string.tap_to_add_lyrics),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (row.lyricsPreview != null) MaterialTheme.colorScheme.onSurface
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
                 if (row.label != null) {
                     Text(
@@ -308,6 +321,14 @@ private fun SectionCard(
             Box {
                 IconButton(onClick = { menuOpen = true }) { AppIcon(AppIcons.More, stringResource(R.string.more_options)) }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.lyrics)) },
+                        onClick = { menuOpen = false; onOpenLyrics() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.edit_section)) },
+                        onClick = { menuOpen = false; onEdit() },
+                    )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.duplicate_linked)) },
                         onClick = { menuOpen = false; onDuplicate(true) },

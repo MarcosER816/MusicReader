@@ -94,6 +94,24 @@
     <string name="section_bridge_description">Una sección de contraste, a menudo cerca del medio, con acordes o melodía nuevos.</string>
     <string name="section_outro_description">La sección final que cierra o resuelve la canción.</string>
 
+    <!-- Letra -->
+    <string name="lyrics">Letra</string>
+    <string name="lyrics_of">Letra · %1$s</string>
+    <string name="main_voice">Voz principal</string>
+    <string name="second_voice">Segunda voz</string>
+    <string name="lyrics_text">Texto</string>
+    <string name="syllables">Sílabas</string>
+    <string name="lyrics_placeholder">Escribe o pega la letra, un verso por línea</string>
+    <string name="no_lyrics">Todavía no hay letra.</string>
+    <string name="tap_to_add_lyrics">Toca para añadir la letra</string>
+    <string name="syllables_hint">Toca entre dos letras para separar una sílaba y toca un punto para unir dos. Mantén pulsada una palabra para separarla de nuevo automáticamente. Las palabras que cambiaste a mano tienen un borde de color.</string>
+    <string name="join_syllables">Unir sílabas</string>
+    <plurals name="lyrics_linked_hint">
+        <item quantity="one">Compartida con %d sección vinculada.</item>
+        <item quantity="many">Compartida con las %d secciones vinculadas.</item>
+        <item quantity="other">Compartida con las %d secciones vinculadas.</item>
+    </plurals>
+
     <!-- Acerca de -->
     <string name="about">Acerca de</string>
     <string name="about_title">Acerca de MusicReader</string>

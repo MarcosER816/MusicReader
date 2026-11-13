@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModelStore
 import com.musicreader.app.ui.song.SongUiState
 import com.musicreader.app.ui.song.SongViewModel
 import com.musicreader.core.model.IdGenerator
-import com.musicreader.core.model.Language
 import com.musicreader.core.model.SectionType
 import com.musicreader.core.model.SongOps
 import com.musicreader.core.model.TimeSignature
@@ -25,7 +24,11 @@ import org.junit.After
 import org.junit.Before
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.flow.first
+import com.musicreader.app.ui.song.WordUi
+import com.musicreader.core.model.Language
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SongViewModelTest {
@@ -186,6 +189,77 @@ class SongViewModelTest {
             listOf(SectionType.INTRO, SectionType.OUTRO),
             repo.songs.getValue("song").sections.map { it.type },
         )
+    }
+
+    @Test
+    fun lyricsAreSplitEditedAndSaved() = runTest(dispatcher) {
+        val repo = repoWithSong() // Spanish song
+        val vm = viewModel(repo)
+        advanceUntilIdle()
+        vm.addSection(SectionType.CHORUS, 4, null)
+        advanceUntilIdle()
+        val section = ready(vm).sections.single().id
+
+        vm.setLyricsText(section, 0, "Canta conmigo\nahora")
+        vm.setLyricsText(section, 1, "eco")
+        advanceUntilIdle()
+        var lyrics = vm.lyricsState(section).first()!!
+        assertEquals(listOf(listOf("Can", "ta"), listOf("con", "mi", "go")), lyrics.mainVoice.lines[0].words.map { it.syllables })
+        assertEquals("eco", lyrics.secondVoice.text)
+        assertEquals("Canta conmigo", ready(vm).sections.single().lyricsPreview)
+
+        val canta = lyrics.mainVoice.lines[0].words[0]
+        vm.mergeSyllables(section, canta.id, 0)
+        val conmigo = lyrics.mainVoice.lines[0].words[1]
+        vm.splitSyllable(section, conmigo.id, 0, 2) // co-n-mi-go
+        advanceUntilIdle()
+        lyrics = vm.lyricsState(section).first()!!
+        assertEquals(WordUi(canta.id, listOf("Canta"), manual = true), lyrics.mainVoice.lines[0].words[0])
+        assertEquals(listOf("co", "n", "mi", "go"), lyrics.mainVoice.lines[0].words[1].syllables)
+
+        // Editing other words keeps the manual splits.
+        vm.setLyricsText(section, 0, "Canta conmigo\nahora mismo")
+        advanceUntilIdle()
+        lyrics = vm.lyricsState(section).first()!!
+        assertEquals(listOf("Canta"), lyrics.mainVoice.lines[0].words[0].syllables)
+        assertEquals(listOf("mis", "mo"), lyrics.mainVoice.lines[1].words[1].syllables)
+
+        // Reset brings back the automatic split.
+        vm.resetWord(section, canta.id)
+        advanceUntilIdle()
+        assertEquals(WordUi(canta.id, listOf("Can", "ta"), manual = false), vm.lyricsState(section).first()!!.mainVoice.lines[0].words[0])
+
+        val saved = repo.songs.getValue("song").sectionContents.single()
+        assertEquals(listOf("Canta conmigo", "ahora mismo", "eco"), saved.lyricLines.map { it.text })
+        assertTrue(saved.lyricLines[0].words[1].syllableOverride)
+    }
+
+    @Test
+    fun languageChangeResplitsOnlyAutomaticWords() = runTest(dispatcher) {
+        val repo = repoWithSong()
+        val vm = viewModel(repo)
+        advanceUntilIdle()
+        vm.addSection(SectionType.VERSE, 4, null)
+        advanceUntilIdle()
+        val section = ready(vm).sections.single().id
+        vm.setLyricsText(section, 0, "animal remember")
+        advanceUntilIdle()
+        val remember = vm.lyricsState(section).first()!!.mainVoice.lines[0].words[1]
+        assertEquals(listOf("re", "mem", "ber"), remember.syllables) // Spanish rules agree here
+        vm.mergeSyllables(section, remember.id, 1) // re-member, by hand
+        vm.setLanguage(Language.EN)
+        advanceUntilIdle()
+        val words = vm.lyricsState(section).first()!!.mainVoice.lines[0].words
+        assertEquals(listOf("an", "i", "mal"), words[0].syllables)
+        assertEquals(listOf("re", "member"), words[1].syllables)
+        assertEquals(Language.EN, repo.songs.getValue("song").language)
+    }
+
+    @Test
+    fun lyricsOfAMissingSectionAreNull() = runTest(dispatcher) {
+        val vm = viewModel(repoWithSong())
+        advanceUntilIdle()
+        assertNull(vm.lyricsState("nope").first())
     }
 
     @Test

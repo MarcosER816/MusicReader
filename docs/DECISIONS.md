@@ -166,3 +166,40 @@ Checked again for Stage 0 against Google Maven, Maven Central, services.gradle.o
 - **Navigation:** navigation-compose 2.10.2 with type-safe routes. The Sections and Song settings screens share one ViewModel per song.
 - **Library versions added:** kotlinx-coroutines 1.11.0 (core and test), navigation-compose 2.10.2.
 - **Not built in this stage:** settings persistence with DataStore (the `AppSettings` class and its defaults exist; it is saved once the settings screens arrive in Stage 12). `Recording` exists as a class; where recordings are listed is decided in Stage 15.
+
+## D-020 — Syllable splitting (2026-11-13)
+
+- **Module:** new pure Kotlin module `core/lyrics` (syllabifiers and lyrics operations), next to `core/model`.
+- **Spanish:** rule-based splitter written for MusicReader (`SpanishSyllabifier`), no third-party code. It covers:
+  - the digraphs ch, ll, rr, qu, and gu before e/i;
+  - h treated as a consonant;
+  - y as a consonant before a vowel and as a vowel otherwise;
+  - strong vowels a e o and accented á é í ó ú, weak vowels i u ü;
+  - hiatus between two strong vowels or two identical weak ones; diphthongs and triphthongs;
+  - the inseparable consonant groups pl bl cl gl fl kl pr br tr dr cr gr fr kr;
+  - 3–4 consonants: the last two stay together when inseparable, otherwise only the last moves on.
+  
+  "tl" is split (at-lán-ti-co), and prefixes such as "sub-" follow the general rules ("su-bra-yar").
+- **English:** Liang's algorithm (as used by TeX), written for MusicReader (`EnglishHyphenator`), with the American English patterns `hyph-en-us`:
+  - **License:** Copyright (C) 1990, 2004, 2005 Gerard D.C. Kuiken. "Copying and distribution of this file, with or without modification, are permitted in any medium without royalty provided the copyright notice and this notice are preserved."
+  - This is an all-permissive notice, not literally one of Apache-2.0/MIT/BSD/zlib. It is used because Mark asked for this file in the Stage 2 request; **Mark to confirm** the exception.
+  - The notice is kept in `core/lyrics/src/main/resources/hyphenation/hyph-en-us.LICENSE.txt`, which ships inside the app. The patterns come from the hyph-utf8 project (github.com/hyphenation/tex-hyphen), version 2005-05-30.
+- **English additions for singing:**
+  - Minimum syllable length 1 letter at the start and 2 at the end (TeX uses 2 and 3).
+  - Every syllable must contain a vowel, so "s-tarlight" is refused.
+  - When the patterns give no usable break, a vowel-group fallback splits the word: "-ing" becomes its own syllable; one consonant between vowels moves to the next syllable; two are split unless they are th/sh/ch/ph/wh/gh; a silent final e does not count. This gives to-night, a-bout, sing-ing, a-lone, o-pen.
+- **Words as typed:** capitals, accents and punctuation stay exactly as typed. Punctuation is attached to the neighbouring syllable ("¿Dón-de", "siem-pre,"), and a hyphen inside a word always ends a syllable. Whether to keep punctuation in the stored words is a question for Mark at the end of Stage 2.
+
+## D-021 — Lyrics editing (2026-11-13)
+
+- **Stage numbers follow Mark's requests.** His Stage 1 covered the old stages 1–2 and his Stage 2 the old stage 3. PROGRESS.md was renumbered: audio core is now Stage 3, …, follow mode Stage 15.
+- **Where lyrics live:** lyrics belong to the section content, so linked sections share them (D-013).
+- **Two voices (D-003):** the Lyrics screen has "Main voice" and "Second voice" (sung at the same time). While writing the second voice, the main voice is shown below the text field.
+- **Text to lines, words and syllables:** one line per row of text (blank rows are dropped); words are separated by whitespace; each word is split by the song's lyrics language.
+- **Editing keeps unchanged words:** a longest-common-subsequence match on word texts keeps every unchanged word, with its id, syllables, manual split and timing. Only new or changed words are split again. A word whose text changed in any way (including a capital or a comma) counts as new. Lines whose text did not change keep their id.
+- **Manual splits (`syllableOverride = true`):**
+  - In the syllable view, tap between two letters to split and tap a dot to join; long-press a word to reset it to the automatic split.
+  - The automatic splitter never touches overridden words, including when the lyrics language changes.
+  - Split syllables lose their timing. A join of two timed syllables keeps the first start and spans both durations, with the first's start pitch and the second's end pitch.
+- **Sections screen:** tapping a section card now opens its lyrics, and the card shows the first lyric line. "Edit section" (type, bars, name) moved to the ⋮ menu, next to "Lyrics".
+

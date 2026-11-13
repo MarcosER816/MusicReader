@@ -10,9 +10,13 @@ import androidx.navigation.toRoute
 import com.musicreader.app.navigation.SongRoute
 import com.musicreader.app.ui.common.appContainer
 import com.musicreader.core.data.SongRepository
+import com.musicreader.core.lyrics.LyricsOps
+import com.musicreader.core.lyrics.WordSyllabifier
 import com.musicreader.core.model.BeatTime
 import com.musicreader.core.model.IdGenerator
 import com.musicreader.core.model.Language
+import com.musicreader.core.model.LyricLine
+import com.musicreader.core.model.SectionContent
 import com.musicreader.core.model.SectionType
 import com.musicreader.core.model.Song
 import com.musicreader.core.model.SongOps
@@ -34,6 +38,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -56,6 +62,8 @@ data class SectionRow(
     val duration: String,
     /** How many sections share this content; 1 = not linked. */
     val linkedCount: Int,
+    /** First line of the main voice, or null when the section has no lyrics. */
+    val lyricsPreview: String?,
 )
 
 data class SongEditorState(
@@ -68,6 +76,26 @@ data class SongEditorState(
     /** True for 2/4, 3/4, 4/4, 6/8 and 12/8. */
     val isPresetTimeSignature: Boolean,
     val tapCount: Int,
+)
+
+/** One word in the syllable view: its syllables, and whether the user split it by hand. */
+data class WordUi(val id: String, val syllables: List<String>, val manual: Boolean)
+
+data class LyricLineUi(val id: String, val words: List<WordUi>)
+
+/** The lyrics of one voice, as text (for the editor) and as syllables (for the syllable view). */
+data class VoiceLyrics(val text: String, val lines: List<LyricLineUi>)
+
+data class LyricsUiState(
+    val sectionId: String,
+    val type: SectionType,
+    val label: String?,
+    val number: Int?,
+    val linkedCount: Int,
+    val language: Language,
+    val mainVoice: VoiceLyrics,
+    /** Sung at the same time as the main voice (D-003). */
+    val secondVoice: VoiceLyrics,
 )
 
 sealed interface SongUiState {
@@ -141,7 +169,11 @@ class SongViewModel(
 
     fun setArtist(artist: String) = edit { s, now -> SongOps.setArtist(s, artist, now) }
 
-    fun setLanguage(language: Language) = edit { s, now -> SongOps.setLanguage(s, language, now) }
+    /** Changes the lyrics language and splits again every word that was not split by hand. */
+    fun setLanguage(language: Language) = edit { s, now ->
+        if (s.language == language) s
+        else LyricsOps.resplitAutomatic(SongOps.setLanguage(s, language, now), WordSyllabifier.forLanguage(language), ids)
+    }
 
     fun setTempo(bpm: Double) = edit { s, now -> SongOps.setTempo(s, bpm, now) }
 
@@ -199,6 +231,65 @@ class SongViewModel(
         song.value = snapshot.copy(updatedAt = clock())
     }
 
+    // --- Lyrics -------------------------------------------------------------------------------
+
+    /** The lyrics editor state of one section; null when the section does not exist (any more). */
+    fun lyricsState(sectionId: String): Flow<LyricsUiState?> =
+        song.map { s -> s?.let { lyricsUiState(it, sectionId) } }.distinctUntilChanged()
+
+    /** Replaces the text of one voice; unchanged words keep their syllables and timing. */
+    fun setLyricsText(sectionId: String, voice: Int, text: String) = editContent(sectionId) { s, content ->
+        LyricsOps.setVoiceText(content, voice, text, WordSyllabifier.forLanguage(s.language), ids)
+    }
+
+    /** Splits a syllable before character [offset] (a tap between two letters). */
+    fun splitSyllable(sectionId: String, wordId: String, syllableIndex: Int, offset: Int) =
+        editContent(sectionId) { _, content ->
+            LyricsOps.updateWord(content, wordId) { LyricsOps.splitSyllable(it, syllableIndex, offset, ids) }
+        }
+
+    /** Joins syllable [leftIndex] with the next one (a tap on the separator between them). */
+    fun mergeSyllables(sectionId: String, wordId: String, leftIndex: Int) = editContent(sectionId) { _, content ->
+        LyricsOps.updateWord(content, wordId) { LyricsOps.mergeSyllables(it, leftIndex, ids) }
+    }
+
+    /** Throws away manual changes to a word and splits it automatically again. */
+    fun resetWord(sectionId: String, wordId: String) = editContent(sectionId) { s, content ->
+        LyricsOps.updateWord(content, wordId) { LyricsOps.resetWord(it, WordSyllabifier.forLanguage(s.language), ids) }
+    }
+
+    private fun editContent(sectionId: String, change: (Song, SectionContent) -> SectionContent) = edit { s, now ->
+        val section = s.sections.firstOrNull { it.id == sectionId } ?: return@edit s
+        val content = s.contentOf(section)
+        val changed = change(s, content)
+        if (changed == content) s
+        else s.copy(sectionContents = s.sectionContents.map { if (it.id == content.id) changed else it }, updatedAt = now)
+    }
+
+    private fun lyricsUiState(s: Song, sectionId: String): LyricsUiState? {
+        val section = s.sections.firstOrNull { it.id == sectionId } ?: return null
+        val content = s.contentOf(section)
+        fun voice(v: Int) = VoiceLyrics(
+            text = LyricsOps.voiceText(content, v),
+            lines = content.lyricLines.filter { it.voice == v }.map { line ->
+                LyricLineUi(
+                    id = line.id,
+                    words = line.words.map { w -> WordUi(w.id, w.syllables.map { it.text }, w.syllableOverride) },
+                )
+            },
+        )
+        return LyricsUiState(
+            sectionId = sectionId,
+            type = section.type,
+            label = section.label,
+            number = s.occurrenceNumbers()[sectionId],
+            linkedCount = s.linkedCount(section),
+            language = s.language,
+            mainVoice = voice(LyricLine.MAIN_VOICE),
+            secondVoice = voice(LyricLine.SECOND_VOICE),
+        )
+    }
+
     /** Moves a section while it is dragged over another one. */
     fun moveSection(fromId: String, toId: String) = edit { s, now ->
         val from = s.sections.indexOfFirst { it.id == fromId }
@@ -242,6 +333,7 @@ class SongViewModel(
                 startBar = starts[i] / beatsPerBar + 1,
                 duration = BeatTime.formatMinutesSeconds(BeatTime.beatsToSeconds(content.lengthBeats.toDouble(), s.tempoBpm)),
                 linkedCount = s.linkedCount(section),
+                lyricsPreview = content.lyricLines.firstOrNull { it.voice == LyricLine.MAIN_VOICE }?.text,
             )
         }
         return SongEditorState(

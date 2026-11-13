@@ -56,3 +56,16 @@ Audio route: not relevant (no audio yet)
 | 4 | Reorder sections by dragging the ≡ handle | Comfortable, the order is kept after reopening | OK |
 | 5 | Rename, duplicate and delete songs (and Undo); duplicate linked/independent, unlink and delete sections (and Undo) | Everything works; no crash | OK (updated without losing data; no crash; no changes wanted) |
 
+### Stage 2 — lyrics and syllables
+APK: `MusicReader-stage-02-lyrics-<run>.apk` (branch `stage-02-lyrics`)
+Date tested:
+Audio route: not relevant (no audio yet)
+
+| # | Check | Expected | Result |
+|---|---|---|---|
+| 1 | Paste a Spanish song and an English song (song language set in Settings), open Syllables | Most words split correctly; send the wrong ones | |
+| 2 | Split by tapping between letters and join by tapping a dot, with one hand | Easy to hit | |
+| 3 | Second voice: write it while the main voice shows below | Works as meant (D-003) | |
+| 4 | Punctuation and capitals | Kept as typed — or say what you prefer | |
+| 5 | Update over Stage 1, force-stop, reopen: lyrics and manual splits still there | No data lost, no crash | |
+

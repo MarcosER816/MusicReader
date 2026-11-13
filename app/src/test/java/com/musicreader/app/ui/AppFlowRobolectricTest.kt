@@ -3,6 +3,7 @@ package com.musicreader.app.ui
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onFirst
@@ -118,5 +119,36 @@ class AppFlowRobolectricTest {
         click("Prueba")
         waitForText("Chorus")
         text("Verse").assertIsDisplayed()
+
+        // Lyrics: tapping a section opens its lyrics; text is split into syllables.
+        click("Chorus")
+        waitForText("Lyrics · Chorus")
+        rule.onNode(hasSetTextAction()).performTextInput("Canta conmigo\nesta canción")
+        letAutoSaveRun()
+        click("Syllables")
+        waitForText("mi")
+        listOf("Can", "ta", "con", "mi", "go", "es", "can", "ción").forEach { text(it).assertIsDisplayed() }
+        // Tap the dot between "Can" and "ta": the word becomes "Canta", a manual split.
+        rule.onAllNodesWithContentDescription("Join syllables")[0].performClick()
+        waitForText("Canta")
+        letAutoSaveRun()
+        rule.onNodeWithContentDescription("Back").performClick()
+        waitForText("Canta conmigo") // the section card shows the first lyric line
+        letAutoSaveRun()
+
+        val stored = runBlocking { repo.load(song.id) }!!
+        val chorus = stored.sectionContents.first { c -> c.id == stored.sections[0].contentId }
+        assertEquals(listOf("Canta conmigo", "esta canción"), chorus.lyricLines.map { it.text })
+        assertEquals(listOf("Canta"), chorus.lyricLines[0].words[0].syllables.map { it.text })
+        assertEquals(true, chorus.lyricLines[0].words[0].syllableOverride)
+
+        // The manual split survives recreating the activity.
+        rule.activityRule.scenario.recreate()
+        waitForText("Canta conmigo")
+        click("Chorus")
+        waitForText("Lyrics · Chorus")
+        click("Syllables")
+        waitForText("Canta")
+        text("ción").assertIsDisplayed()
     }
 }
