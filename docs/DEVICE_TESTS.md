@@ -57,7 +57,7 @@ Audio route: not relevant (no audio yet)
 | 5 | Rename, duplicate and delete songs (and Undo); duplicate linked/independent, unlink and delete sections (and Undo) | Everything works; no crash | OK (updated without losing data; no crash; no changes wanted) |
 
 ### Stage 2 — lyrics and syllables
-APK: `MusicReader-stage-02-lyrics-<run>.apk` (branch `stage-02-lyrics`)
+APK: `MusicReader-stage-02-lyrics-31.apk` or later (PR [#4](https://github.com/MarcosER816/MusicReader/pull/4), branch `stage-02-lyrics`)
 Date tested:
 Audio route: not relevant (no audio yet)
 

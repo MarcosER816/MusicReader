@@ -10,7 +10,7 @@ Stage numbers follow Mark's stage requests (D-021): his Stage 1 covered the old 
 |---|---|---|---|---|---|
 | 0 | Project skeleton: Gradle modules, versions, CI that builds and uploads the APK | stage-00-skeleton | done | [#1](https://github.com/MarcosER816/MusicReader/pull/1) | 2026-11-13 (device checks passed; Mark moved on to Stage 1) |
 | 1 | Core model, JSON storage, beat/time helpers, song library, song settings (tempo, tap tempo, time signature), sections (types, descriptions, length, reorder, linked copies) | stage-01-model | done | [#2](https://github.com/MarcosER816/MusicReader/pull/2), [#3](https://github.com/MarcosER816/MusicReader/pull/3) | 2026-11-13 ("Stage 1 approved") |
-| 2 | Lyrics editor (per section, two voices), Spanish syllabifier (rules), English syllabifier (Liang + hyph-en-us), syllable view with tap split/merge, edits keep unchanged words | stage-02-lyrics | in progress | | |
+| 2 | Lyrics editor (per section, two voices), Spanish syllabifier (rules), English syllabifier (Liang + hyph-en-us), syllable view with tap split/merge, edits keep unchanged words | stage-02-lyrics | waiting for Mark | [#4](https://github.com/MarcosER816/MusicReader/pull/4) | |
 | 3 | Audio core: C++ Oboe engine, JNI, audio clock, metronome/count-in, latency calibration per route | stage-03-audio | not started | | |
 | 4 | DSP: pitch tracking and onset detection, tested on synthetic signals | stage-04-dsp | not started | | |
 | 5 | Lyric capture by singing: select word range, count-in, record take, align to syllables, last take wins | stage-05-capture | not started | | |
