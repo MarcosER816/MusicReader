@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.musicreader.app.MainActivity
@@ -24,7 +25,7 @@ import kotlin.test.assertEquals
  * come back, and check what was saved. Catches crashes in navigation, ViewModels and layouts.
  */
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [35])
+@Config(sdk = [35], qualifiers = "w411dp-h891dp-xxhdpi")
 class AppFlowRobolectricTest {
     @get:Rule
     val rule = createAndroidComposeRule<MainActivity>()
@@ -40,6 +41,9 @@ class AppFlowRobolectricTest {
 
     private fun click(label: String) = text(label).performClick()
 
+    /** For items inside a scrolling screen that may start below the fold. */
+    private fun scrollTo(label: String) = text(label).performScrollTo()
+
     @Test
     fun createSongAddSectionsAndReopen() {
         text("No songs yet.").assertIsDisplayed()
@@ -49,9 +53,9 @@ class AppFlowRobolectricTest {
 
         // A new song opens its settings.
         waitForText("Song settings")
-        text("4/4").assertIsDisplayed()
-        click("3/4")
-        click("Tap tempo")
+        scrollTo("4/4").assertIsDisplayed()
+        scrollTo("3/4").performClick()
+        scrollTo("Tap tempo").performClick()
         rule.onNodeWithContentDescription("Back").performClick()
 
         // Sections screen: add a chorus and a verse.
