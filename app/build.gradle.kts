@@ -55,6 +55,7 @@ android {
     testOptions {
         // Robolectric UI tests need the app's resources.
         unitTests.isIncludeAndroidResources = true
+        unitTests.all { it.maxHeapSize = "2g" }
     }
 
     lint {

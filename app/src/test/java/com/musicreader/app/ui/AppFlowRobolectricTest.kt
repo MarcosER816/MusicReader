@@ -25,7 +25,7 @@ import kotlin.test.assertEquals
  * come back, and check what was saved. Catches crashes in navigation, ViewModels and layouts.
  */
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [35], qualifiers = "w411dp-h891dp-xxhdpi")
+@Config(sdk = [35], qualifiers = "w411dp-h891dp")
 class AppFlowRobolectricTest {
     @get:Rule
     val rule = createAndroidComposeRule<MainActivity>()
