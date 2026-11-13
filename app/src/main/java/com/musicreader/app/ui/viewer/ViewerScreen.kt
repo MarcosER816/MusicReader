@@ -49,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -82,6 +83,7 @@ import com.musicreader.app.ui.common.sectionDisplayName
 import com.musicreader.core.model.AppSettings
 import com.musicreader.core.model.ChordSymbol
 import com.musicreader.core.model.Layer
+import com.musicreader.core.model.LayerVisibility
 import com.musicreader.core.model.PlacedChord
 import com.musicreader.core.model.PlacedTabNote
 import com.musicreader.core.model.PlacedText
@@ -234,6 +236,8 @@ fun ViewerContent(
                     )
                 }
                 section.rows.forEachIndexed { i, row ->
+                    // Rows with nothing in the visible layers are left out.
+                    if (!row.hasVisibleContent(state.layers)) return@forEachIndexed
                     item(key = "r-${section.sectionId}-$i") {
                         SheetRowView(
                             row = row,
@@ -447,10 +451,14 @@ private fun TabLane(notes: List<PlacedTabNote>, state: ViewerUiState, scale: Flo
             val pad = 2.dp.toPx()
             drawRect(background, Offset(x - pad, top), Size(layout.size.width + 2 * pad, layout.size.height.toFloat()))
             if (note.finger == 0) {
-                drawCircle(
+                // Open string: an outline around the label (a circle for "0", a pill for "<12>").
+                val h = layout.size.height.toFloat()
+                val w = maxOf(layout.size.width.toFloat(), h)
+                drawRoundRect(
                     color = color,
-                    radius = maxOf(layout.size.width, layout.size.height) / 2f + pad,
-                    center = Offset(x + layout.size.width / 2f, y(note.string)),
+                    topLeft = Offset(x + layout.size.width / 2f - w / 2f - pad, top),
+                    size = Size(w + 2 * pad, h),
+                    cornerRadius = CornerRadius(h / 2f),
                     style = Stroke(width = 1.dp.toPx()),
                 )
             }
@@ -475,3 +483,10 @@ private fun ChordSheet(chord: ChordSymbol, color: Color) {
         chord.bass?.let { Text(stringResource(R.string.chord_bass, it.toString()), style = MaterialTheme.typography.bodyLarge) }
     }
 }
+
+/** True when the row shows something with these layers. */
+internal fun SheetRow.hasVisibleContent(layers: LayerVisibility): Boolean =
+    (layers.chords && chords.isNotEmpty()) ||
+        (layers.tab && tab.isNotEmpty()) ||
+        (layers.lyrics && (lyrics.isNotEmpty() || secondLyrics.isNotEmpty()))
+

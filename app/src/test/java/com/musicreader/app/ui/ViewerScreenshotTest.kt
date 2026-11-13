@@ -51,8 +51,8 @@ class ViewerScreenshotTest {
     }
 
     private fun capture(name: String, layers: LayerVisibility) {
-        // A fixed glisten phase (mid-sweep) keeps the image stable.
-        val phase = mutableFloatStateOf(0.25f)
+        // A fixed glisten phase in the resting half of the cycle: stable image, true chord colors.
+        val phase = mutableFloatStateOf(0.75f)
         rule.setContent {
             MusicReaderTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
