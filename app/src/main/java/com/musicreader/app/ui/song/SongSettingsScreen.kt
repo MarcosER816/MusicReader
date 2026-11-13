@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
@@ -66,7 +65,7 @@ fun SongSettingsScreen(viewModel: SongViewModel, onBack: () -> Unit) {
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (val s = state) {
-                SongUiState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+                SongUiState.Loading -> Unit // loads take milliseconds; a spinner would only flash
                 SongUiState.NotFound -> Text(stringResource(R.string.song_not_found), Modifier.align(Alignment.Center))
                 is SongUiState.Ready -> SettingsForm(s.editor, viewModel)
             }

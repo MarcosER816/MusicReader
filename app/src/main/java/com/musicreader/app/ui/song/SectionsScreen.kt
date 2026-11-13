@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
@@ -131,7 +130,7 @@ fun SectionsScreen(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (val s = state) {
-                SongUiState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+                SongUiState.Loading -> Unit // loads take milliseconds; a spinner would only flash
                 SongUiState.NotFound -> Text(
                     stringResource(R.string.song_not_found),
                     Modifier.align(Alignment.Center).padding(24.dp),
