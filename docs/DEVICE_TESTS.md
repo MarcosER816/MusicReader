@@ -69,3 +69,13 @@ Audio route: not relevant (no audio yet)
 | 4 | Punctuation and capitals | Kept as typed — or say what you prefer | OK: keep as typed |
 | 5 | Update over Stage 1, force-stop, reopen: lyrics and manual splits still there | No data lost, no crash | OK: no data lost, no crash |
 
+Round 2 (2026-11-13, APK run 35):
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Spanish and English songs split | OK — everything split correctly |
+| 2 | Split / join by tap with one hand | OK |
+| 3 | Second voice per line | OK — works as meant |
+| 4 | Punctuation and capitals | OK — nothing else to change |
+| 5 | Update without losing data | OK |
+
