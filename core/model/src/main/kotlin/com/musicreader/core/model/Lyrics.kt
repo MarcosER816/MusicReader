@@ -2,13 +2,18 @@ package com.musicreader.core.model
 
 import kotlinx.serialization.Serializable
 
-/** A lyric line. Voice 0 is the main voice; voice 1 is a second voice sung at the same time (D-003). */
+/**
+ * A lyric line. Voice 0 is the main voice; voice 1 is a second voice sung at the same time
+ * (D-003). Each second-voice line belongs to one main line, named by [pairedLineId] (D-022).
+ */
 @Serializable
 data class LyricLine(
     val id: String,
     val voice: Int = MAIN_VOICE,
     val text: String,
     val words: List<Word> = emptyList(),
+    /** For a second-voice line: the id of the main line it is sung with. Null for main lines. */
+    val pairedLineId: String? = null,
 ) {
     companion object {
         const val MAIN_VOICE: Int = 0

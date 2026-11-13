@@ -50,4 +50,5 @@ Stage numbers follow Mark's stage requests (D-021): his Stage 1 covered the old 
 - Lyrics screen per section: main and second voice, text editor, syllable view (tap between letters to split, tap a dot to join, long-press to reset). Section cards show the first lyric line and open the lyrics.
 - Tests: 84 Spanish words, 69 English words, lyrics operations, ViewModel lyrics flow, Robolectric UI flow (type lyrics → syllables → join by tap → restart keeps it).
 - Decisions D-020 (syllable splitting, hyph-en-us license) and D-021 (lyrics editing, stage renumbering).
+- Round 2 after Mark's device test: English syllables placed as sung (ma-king, des-pite, o-ther, you), second voice per line (`LyricLine.pairedLineId`), clearer syllable hint; hyph-en-us license exception accepted (D-020, D-022).
 

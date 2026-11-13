@@ -98,12 +98,13 @@
     <string name="lyrics_of">Lyrics · %1$s</string>
     <string name="main_voice">Main voice</string>
     <string name="second_voice">Second voice</string>
-    <string name="lyrics_text">Text</string>
     <string name="syllables">Syllables</string>
     <string name="lyrics_placeholder">Type or paste the lyrics, one line per row</string>
     <string name="no_lyrics">No lyrics yet.</string>
     <string name="tap_to_add_lyrics">Tap to add lyrics</string>
-    <string name="syllables_hint">Tap between two letters to split a syllable, tap a dot to join two. Long-press a word to split it automatically again. Words you changed by hand have a colored border.</string>
+    <string name="syllables_hint">Each word is shown split into syllables, with a dot between them (can · ción). To fix a split: tap between two letters to cut a syllable there, or tap a dot to join the two syllables around it. Long-press a word to go back to the automatic split. Words you changed by hand get a colored border.</string>
+    <string name="second_voice_hint">Optional: a second voice sung at the same time as a line. Leave a field empty for no second voice.</string>
+    <string name="second_voice_line">Second voice, line %1$d</string>
     <string name="join_syllables">Join syllables</string>
     <plurals name="lyrics_linked_hint">
         <item quantity="one">Shared with %d linked section.</item>

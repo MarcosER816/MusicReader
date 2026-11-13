@@ -128,6 +128,13 @@ class AppFlowRobolectricTest {
         click("Syllables")
         waitForText("mi")
         listOf("Can", "ta", "con", "mi", "go", "es", "can", "ción").forEach { text(it).assertIsDisplayed() }
+        // A second voice for line 2, written while line 2 shows below the field.
+        click("Second voice")
+        waitForText("Second voice, line 2")
+        text("esta canción").assertIsDisplayed()
+        rule.onAllNodes(hasSetTextAction())[1].performTextInput("eco")
+        click("Syllables")
+        waitForText("co")
         // Tap the dot between "Can" and "ta": the word becomes "Canta", a manual split.
         rule.onAllNodesWithContentDescription("Join syllables")[0].performClick()
         waitForText("Canta")
@@ -138,7 +145,8 @@ class AppFlowRobolectricTest {
 
         val stored = runBlocking { repo.load(song.id) }!!
         val chorus = stored.sectionContents.first { c -> c.id == stored.sections[0].contentId }
-        assertEquals(listOf("Canta conmigo", "esta canción"), chorus.lyricLines.map { it.text })
+        assertEquals(listOf("Canta conmigo", "esta canción", "eco"), chorus.lyricLines.map { it.text })
+        assertEquals(chorus.lyricLines[1].id, chorus.lyricLines[2].pairedLineId)
         assertEquals(listOf("Canta"), chorus.lyricLines[0].words[0].syllables.map { it.text })
         assertEquals(true, chorus.lyricLines[0].words[0].syllableOverride)
 

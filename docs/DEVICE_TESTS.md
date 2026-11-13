@@ -58,14 +58,14 @@ Audio route: not relevant (no audio yet)
 
 ### Stage 2 — lyrics and syllables
 APK: `MusicReader-stage-02-lyrics-31.apk` or later (PR [#4](https://github.com/MarcosER816/MusicReader/pull/4), branch `stage-02-lyrics`)
-Date tested:
+Date tested: 2026-11-13 (round 1, APK run 31)
 Audio route: not relevant (no audio yet)
 
 | # | Check | Expected | Result |
 |---|---|---|---|
-| 1 | Paste a Spanish song and an English song (song language set in Settings), open Syllables | Most words split correctly; send the wrong ones | |
-| 2 | Split by tapping between letters and join by tapping a dot, with one hand | Easy to hit | |
-| 3 | Second voice: write it while the main voice shows below | Works as meant (D-003) | |
-| 4 | Punctuation and capitals | Kept as typed — or say what you prefer | |
-| 5 | Update over Stage 1, force-stop, reopen: lyrics and manual splits still there | No data lost, no crash | |
+| 1 | Paste a Spanish song and an English song (song language set in Settings), open Syllables | Most words split correctly; send the wrong ones | Round 1: English wrong: y-ou, mak-ing, de-spite, y-ou'll, oth-er → fixed in round 2 (D-022) |
+| 2 | Split by tapping between letters and join by tapping a dot, with one hand | Easy to hit | Round 1: unclear what "splitting and merging" means → explained; hint text rewritten |
+| 3 | Second voice: write it while the main voice shows below | Works as meant (D-003) | Round 1: wanted per line, not per verse → changed in round 2 (D-022) |
+| 4 | Punctuation and capitals | Kept as typed — or say what you prefer | OK: keep as typed |
+| 5 | Update over Stage 1, force-stop, reopen: lyrics and manual splits still there | No data lost, no crash | OK: no data lost, no crash |
 

@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -51,17 +52,15 @@ import com.musicreader.app.R
 import com.musicreader.app.ui.common.AppIcon
 import com.musicreader.app.ui.common.AppIcons
 import com.musicreader.app.ui.common.sectionDisplayName
-import com.musicreader.core.model.LyricLine
 
-private enum class LyricsMode { TEXT, SYLLABLES }
+private enum class LyricsMode { MAIN_TEXT, SECOND_VOICE, SYLLABLES }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun LyricsScreen(viewModel: SongViewModel, sectionId: String, onBack: () -> Unit) {
     val flow = remember(viewModel, sectionId) { viewModel.lyricsState(sectionId) }
     val state by flow.collectAsStateWithLifecycle(initialValue = null)
-    var voice by rememberSaveable { mutableStateOf(LyricLine.MAIN_VOICE) }
-    var mode by rememberSaveable { mutableStateOf(LyricsMode.TEXT) }
+    var mode by rememberSaveable { mutableStateOf(LyricsMode.MAIN_TEXT) }
 
     Scaffold(
         topBar = {
@@ -90,20 +89,14 @@ fun LyricsScreen(viewModel: SongViewModel, sectionId: String, onBack: () -> Unit
         ) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(
-                    selected = voice == LyricLine.MAIN_VOICE,
-                    onClick = { voice = LyricLine.MAIN_VOICE },
-                    label = { Text(stringResource(R.string.main_voice)) },
+                    selected = mode == LyricsMode.MAIN_TEXT,
+                    onClick = { mode = LyricsMode.MAIN_TEXT },
+                    label = { Text(stringResource(R.string.lyrics)) },
                 )
                 FilterChip(
-                    selected = voice == LyricLine.SECOND_VOICE,
-                    onClick = { voice = LyricLine.SECOND_VOICE },
+                    selected = mode == LyricsMode.SECOND_VOICE,
+                    onClick = { mode = LyricsMode.SECOND_VOICE },
                     label = { Text(stringResource(R.string.second_voice)) },
-                )
-                Box(Modifier.widthIn(min = 8.dp))
-                FilterChip(
-                    selected = mode == LyricsMode.TEXT,
-                    onClick = { mode = LyricsMode.TEXT },
-                    label = { Text(stringResource(R.string.lyrics_text)) },
                 )
                 FilterChip(
                     selected = mode == LyricsMode.SYLLABLES,
@@ -118,17 +111,18 @@ fun LyricsScreen(viewModel: SongViewModel, sectionId: String, onBack: () -> Unit
                     color = MaterialTheme.colorScheme.secondary,
                 )
             }
-            val lyrics = if (voice == LyricLine.MAIN_VOICE) s.mainVoice else s.secondVoice
             when (mode) {
-                LyricsMode.TEXT -> TextEditor(
-                    key = "${s.sectionId}/$voice",
-                    text = lyrics.text,
-                    isSecondVoice = voice == LyricLine.SECOND_VOICE,
-                    mainVoiceText = s.mainVoice.text,
-                    onTextChange = { viewModel.setLyricsText(s.sectionId, voice, it) },
+                LyricsMode.MAIN_TEXT -> MainTextEditor(
+                    key = s.sectionId,
+                    text = s.mainText,
+                    onTextChange = { viewModel.setMainLyrics(s.sectionId, it) },
+                )
+                LyricsMode.SECOND_VOICE -> SecondVoiceEditor(
+                    lines = s.lines,
+                    onLineChange = { mainLineId, text -> viewModel.setSecondLine(s.sectionId, mainLineId, text) },
                 )
                 LyricsMode.SYLLABLES -> SyllableView(
-                    lines = lyrics.lines,
+                    lines = s.lines,
                     onSplit = { wordId, syllable, offset -> viewModel.splitSyllable(s.sectionId, wordId, syllable, offset) },
                     onMerge = { wordId, left -> viewModel.mergeSyllables(s.sectionId, wordId, left) },
                     onReset = { wordId -> viewModel.resetWord(s.sectionId, wordId) },
@@ -139,76 +133,106 @@ fun LyricsScreen(viewModel: SongViewModel, sectionId: String, onBack: () -> Unit
 }
 
 /**
- * Plain text editor for one voice. The field keeps its own text so typing is never disturbed;
- * every change is sent to the ViewModel, which keeps the syllables of unchanged words.
+ * Plain text editor for the main voice. The field keeps its own text so typing is never
+ * disturbed; every change is sent to the ViewModel, which keeps the syllables of unchanged words.
  */
 @Composable
-private fun TextEditor(
-    key: String,
-    text: String,
-    isSecondVoice: Boolean,
-    mainVoiceText: String,
-    onTextChange: (String) -> Unit,
-) {
+private fun MainTextEditor(key: String, text: String, onTextChange: (String) -> Unit) {
     var draft by rememberSaveable(key) { mutableStateOf(text) }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         OutlinedTextField(
             value = draft,
             onValueChange = {
                 draft = it
                 onTextChange(it)
             },
-            label = { Text(stringResource(if (isSecondVoice) R.string.second_voice else R.string.main_voice)) },
+            label = { Text(stringResource(R.string.main_voice)) },
             placeholder = { Text(stringResource(R.string.lyrics_placeholder)) },
             minLines = 6,
             modifier = Modifier.fillMaxWidth(),
         )
-        if (isSecondVoice) {
-            // While writing the second voice, the main voice is shown below it (D-003).
-            Text(
-                stringResource(R.string.main_voice),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                mainVoiceText.ifEmpty { stringResource(R.string.no_lyrics) },
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+    }
+}
+
+/**
+ * One field per main line for its second voice (D-022). While writing the second line, its
+ * main line is shown below it.
+ */
+@Composable
+private fun SecondVoiceEditor(lines: List<LyricPairUi>, onLineChange: (mainLineId: String, text: String) -> Unit) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            stringResource(R.string.second_voice_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (lines.isEmpty()) Text(stringResource(R.string.no_lyrics), style = MaterialTheme.typography.bodyLarge)
+        lines.forEachIndexed { index, line ->
+            key(line.mainLineId) { SecondVoiceField(index, line, onLineChange) }
         }
+    }
+}
+
+@Composable
+private fun SecondVoiceField(index: Int, line: LyricPairUi, onLineChange: (mainLineId: String, text: String) -> Unit) {
+    var draft by rememberSaveable(line.mainLineId) { mutableStateOf(line.secondText) }
+    Column {
+        OutlinedTextField(
+            value = draft,
+            onValueChange = {
+                draft = it.replace('\n', ' ')
+                onLineChange(line.mainLineId, draft)
+            },
+            label = { Text(stringResource(R.string.second_voice_line, index + 1)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Text(
+            line.mainText,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 16.dp, top = 4.dp),
+        )
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SyllableView(
-    lines: List<LyricLineUi>,
+    lines: List<LyricPairUi>,
     onSplit: (wordId: String, syllableIndex: Int, offset: Int) -> Unit,
     onMerge: (wordId: String, leftIndex: Int) -> Unit,
     onReset: (wordId: String) -> Unit,
 ) {
+    @Composable
+    fun WordsRow(words: List<WordUi>) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            words.forEach { word ->
+                WordChip(
+                    word = word,
+                    onSplit = { syllable, offset -> onSplit(word.id, syllable, offset) },
+                    onMerge = { left -> onMerge(word.id, left) },
+                    onReset = { onReset(word.id) },
+                )
+            }
+        }
+    }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             stringResource(R.string.syllables_hint),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        if (lines.isEmpty()) {
-            Text(stringResource(R.string.no_lyrics), style = MaterialTheme.typography.bodyLarge)
-        }
+        if (lines.isEmpty()) Text(stringResource(R.string.no_lyrics), style = MaterialTheme.typography.bodyLarge)
         lines.forEach { line ->
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                line.words.forEach { word ->
-                    WordChip(
-                        word = word,
-                        onSplit = { syllable, offset -> onSplit(word.id, syllable, offset) },
-                        onMerge = { left -> onMerge(word.id, left) },
-                        onReset = { onReset(word.id) },
-                    )
-                }
+            WordsRow(line.mainWords)
+            if (line.secondWords.isNotEmpty()) {
+                Text(
+                    stringResource(R.string.second_voice),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+                WordsRow(line.secondWords)
             }
             HorizontalDivider()
         }

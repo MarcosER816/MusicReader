@@ -81,10 +81,17 @@ data class SongEditorState(
 /** One word in the syllable view: its syllables, and whether the user split it by hand. */
 data class WordUi(val id: String, val syllables: List<String>, val manual: Boolean)
 
-data class LyricLineUi(val id: String, val words: List<WordUi>)
-
-/** The lyrics of one voice, as text (for the editor) and as syllables (for the syllable view). */
-data class VoiceLyrics(val text: String, val lines: List<LyricLineUi>)
+/**
+ * One main lyric line with its second-voice line (D-022). [secondText] is empty and
+ * [secondWords] is empty when the line has no second voice.
+ */
+data class LyricPairUi(
+    val mainLineId: String,
+    val mainText: String,
+    val mainWords: List<WordUi>,
+    val secondText: String,
+    val secondWords: List<WordUi>,
+)
 
 data class LyricsUiState(
     val sectionId: String,
@@ -93,9 +100,9 @@ data class LyricsUiState(
     val number: Int?,
     val linkedCount: Int,
     val language: Language,
-    val mainVoice: VoiceLyrics,
-    /** Sung at the same time as the main voice (D-003). */
-    val secondVoice: VoiceLyrics,
+    /** The main voice as editable text. */
+    val mainText: String,
+    val lines: List<LyricPairUi>,
 )
 
 sealed interface SongUiState {
@@ -237,9 +244,14 @@ class SongViewModel(
     fun lyricsState(sectionId: String): Flow<LyricsUiState?> =
         song.map { s -> s?.let { lyricsUiState(it, sectionId) } }.distinctUntilChanged()
 
-    /** Replaces the text of one voice; unchanged words keep their syllables and timing. */
-    fun setLyricsText(sectionId: String, voice: Int, text: String) = editContent(sectionId) { s, content ->
-        LyricsOps.setVoiceText(content, voice, text, WordSyllabifier.forLanguage(s.language), ids)
+    /** Replaces the main voice; unchanged words keep their syllables and timing. */
+    fun setMainLyrics(sectionId: String, text: String) = editContent(sectionId) { s, content ->
+        LyricsOps.setMainText(content, text, WordSyllabifier.forLanguage(s.language), ids)
+    }
+
+    /** Sets the second-voice line sung with one main line; blank text removes it (D-022). */
+    fun setSecondLine(sectionId: String, mainLineId: String, text: String) = editContent(sectionId) { s, content ->
+        LyricsOps.setSecondLine(content, mainLineId, text, WordSyllabifier.forLanguage(s.language), ids)
     }
 
     /** Splits a syllable before character [offset] (a tap between two letters). */
@@ -268,16 +280,18 @@ class SongViewModel(
 
     private fun lyricsUiState(s: Song, sectionId: String): LyricsUiState? {
         val section = s.sections.firstOrNull { it.id == sectionId } ?: return null
-        val content = s.contentOf(section)
-        fun voice(v: Int) = VoiceLyrics(
-            text = LyricsOps.voiceText(content, v),
-            lines = content.lyricLines.filter { it.voice == v }.map { line ->
-                LyricLineUi(
-                    id = line.id,
-                    words = line.words.map { w -> WordUi(w.id, w.syllables.map { it.text }, w.syllableOverride) },
-                )
-            },
-        )
+        val content = LyricsOps.normalized(s.contentOf(section))
+        fun words(line: LyricLine?) = line?.words.orEmpty().map { w -> WordUi(w.id, w.syllables.map { it.text }, w.syllableOverride) }
+        val lines = content.lyricLines.filter { it.voice == LyricLine.MAIN_VOICE }.map { main ->
+            val second = LyricsOps.secondLineOf(content, main.id)
+            LyricPairUi(
+                mainLineId = main.id,
+                mainText = main.text,
+                mainWords = words(main),
+                secondText = second?.text.orEmpty(),
+                secondWords = words(second),
+            )
+        }
         return LyricsUiState(
             sectionId = sectionId,
             type = section.type,
@@ -285,8 +299,8 @@ class SongViewModel(
             number = s.occurrenceNumbers()[sectionId],
             linkedCount = s.linkedCount(section),
             language = s.language,
-            mainVoice = voice(LyricLine.MAIN_VOICE),
-            secondVoice = voice(LyricLine.SECOND_VOICE),
+            mainText = LyricsOps.mainText(content),
+            lines = lines,
         )
     }
 

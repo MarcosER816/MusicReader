@@ -16,9 +16,9 @@ import com.musicreader.core.model.Word
  */
 object LyricsOps {
 
-    /** The lyrics of [voice] as editable text: one line per lyric line, words separated by spaces. */
-    fun voiceText(content: SectionContent, voice: Int): String =
-        content.lyricLines.filter { it.voice == voice }.joinToString("\n") { it.text }
+    /** The main voice as editable text: one line per lyric line, words separated by spaces. */
+    fun mainText(content: SectionContent): String =
+        normalized(content).lyricLines.filter { it.voice == LyricLine.MAIN_VOICE }.joinToString("\n") { it.text }
 
     /** Splits text into non-blank lines of words (any whitespace separates words). */
     fun tokenize(text: String): List<List<String>> =
@@ -35,38 +35,99 @@ object LyricsOps {
     )
 
     /**
-     * Replaces the lyrics of [voice] with [text]. Words that are still there (same text, same
-     * order; found with a longest-common-subsequence match) keep their id, syllables, manual
-     * splits and timing. Only new or changed words are split by [splitter]. Lines whose text did
-     * not change keep their id. Lines of the other voice are untouched.
+     * Replaces the main voice with [text].
+     *
+     * - Words that are still there (same text, same order; longest-common-subsequence match)
+     *   keep their id, syllables, manual splits and timing. Only new or changed words are split.
+     * - Lines keep their id when their text is unchanged, and also when they were edited in
+     *   place (matched by position between unchanged lines), so their second-voice line stays
+     *   attached. Second-voice lines of removed main lines are removed.
      */
-    fun setVoiceText(
+    fun setMainText(content: SectionContent, text: String, splitter: WordSyllabifier, ids: IdGenerator): SectionContent {
+        val current = normalized(content)
+        val oldLines = current.lyricLines.filter { it.voice == LyricLine.MAIN_VOICE }
+        val newTokens = tokenize(text)
+        val newTexts = newTokens.map { it.joinToString(" ") }
+
+        val oldWords = oldLines.flatMap { it.words }
+        val reusedWords = matchByLcs(oldWords.map { it.text }, newTokens.flatten())
+        val reusedLines = matchLines(oldLines.map { it.text }, newTexts)
+
+        var flatIndex = 0
+        val mainLines = newTokens.mapIndexed { i, tokens ->
+            val words = tokens.map { token ->
+                val oldIndex = reusedWords[flatIndex++]
+                if (oldIndex != null) oldWords[oldIndex] else newWord(token, splitter, ids)
+            }
+            val id = reusedLines[i]?.let { oldLines[it].id } ?: ids.newId()
+            LyricLine(id = id, voice = LyricLine.MAIN_VOICE, text = newTexts[i], words = words)
+        }
+        val mainIds = mainLines.mapTo(HashSet()) { it.id }
+        val second = current.lyricLines.filter { it.voice == LyricLine.SECOND_VOICE && it.pairedLineId in mainIds }
+        return ordered(current.copy(lyricLines = mainLines + second))
+    }
+
+    /**
+     * Sets the second-voice line sung with main line [mainLineId] (D-022). Blank text removes it.
+     * Unchanged words keep their syllables and timing.
+     */
+    fun setSecondLine(
         content: SectionContent,
-        voice: Int,
+        mainLineId: String,
         text: String,
         splitter: WordSyllabifier,
         ids: IdGenerator,
     ): SectionContent {
-        val oldLines = content.lyricLines.filter { it.voice == voice }
-        val newTokens = tokenize(text)
+        val current = normalized(content)
+        if (current.lyricLines.none { it.voice == LyricLine.MAIN_VOICE && it.id == mainLineId }) return content
+        val existing = secondLineOf(current, mainLineId)
+        val others = current.lyricLines.filter { it !== existing }
+        val tokens = tokenize(text).flatten()
+        if (tokens.isEmpty()) return ordered(current.copy(lyricLines = others))
+        val oldWords = existing?.words.orEmpty()
+        val reused = matchByLcs(oldWords.map { it.text }, tokens)
+        val words = tokens.mapIndexed { i, token -> reused[i]?.let { oldWords[it] } ?: newWord(token, splitter, ids) }
+        val line = LyricLine(
+            id = existing?.id ?: ids.newId(),
+            voice = LyricLine.SECOND_VOICE,
+            text = tokens.joinToString(" "),
+            words = words,
+            pairedLineId = mainLineId,
+        )
+        return ordered(current.copy(lyricLines = others + line))
+    }
 
-        val oldWords = oldLines.flatMap { it.words }
-        val newWords = newTokens.flatten()
-        val reused = matchByLcs(oldWords.map { it.text }, newWords)
+    /** The second-voice line of main line [mainLineId], if any. */
+    fun secondLineOf(content: SectionContent, mainLineId: String): LyricLine? =
+        content.lyricLines.firstOrNull { it.voice == LyricLine.SECOND_VOICE && it.pairedLineId == mainLineId }
 
-        val oldLineIdsByText = oldLines.groupBy({ it.text }, { it.id }).mapValues { it.value.toMutableList() }
-        var flatIndex = 0
-        val lines = newTokens.map { tokens ->
-            val words = tokens.map { token ->
-                val oldIndex = reused[flatIndex++]
-                if (oldIndex != null) oldWords[oldIndex] else newWord(token, splitter, ids)
-            }
-            val lineText = tokens.joinToString(" ")
-            val id = oldLineIdsByText[lineText]?.removeFirstOrNull() ?: ids.newId()
-            LyricLine(id = id, voice = voice, text = lineText, words = words)
+    /**
+     * Brings older or inconsistent data in line with D-022: a second-voice line without a main
+     * line gets the next main line that has none (in order), and second-voice lines that still
+     * have no main line (more second lines than main lines, or their main line is gone) are
+     * dropped. Lines are ordered main voice first, each second line after the main lines.
+     */
+    fun normalized(content: SectionContent): SectionContent {
+        val main = content.lyricLines.filter { it.voice == LyricLine.MAIN_VOICE }
+        val mainIds = main.map { it.id }.toSet()
+        val second = content.lyricLines.filter { it.voice == LyricLine.SECOND_VOICE }
+        val paired = second.filter { it.pairedLineId in mainIds }.distinctBy { it.pairedLineId }
+        val taken = paired.mapTo(HashSet()) { it.pairedLineId }
+        val free = main.map { it.id }.filter { it !in taken }.iterator()
+        val adopted = second.filter { it.pairedLineId == null }.mapNotNull { line ->
+            if (free.hasNext()) line.copy(pairedLineId = free.next()) else null
         }
-        // Lines are stored main voice first; the sort is stable, so each voice keeps its order.
-        return content.copy(lyricLines = (content.lyricLines.filter { it.voice != voice } + lines).sortedBy { it.voice })
+        val result = ordered(content.copy(lyricLines = main + paired + adopted))
+        return if (result == content) content else result
+    }
+
+    /** Main lines in their order, then the second-voice lines in the order of their main lines. */
+    private fun ordered(content: SectionContent): SectionContent {
+        val main = content.lyricLines.filter { it.voice == LyricLine.MAIN_VOICE }
+        val position = main.withIndex().associate { (i, line) -> line.id to i }
+        val second = content.lyricLines.filter { it.voice == LyricLine.SECOND_VOICE }
+            .sortedBy { position[it.pairedLineId] ?: Int.MAX_VALUE }
+        return content.copy(lyricLines = main + second)
     }
 
     /**
@@ -176,6 +237,30 @@ object LyricsOps {
             }
         }
         return result.toList()
+    }
+
+    /**
+     * For each new line, the old line whose id it keeps: equal texts first (longest common
+     * subsequence), then, between two equal lines, the remaining old and new lines in order
+     * (a line edited in place keeps its id).
+     */
+    internal fun matchLines(old: List<String>, new: List<String>): List<Int?> {
+        val result = matchByLcs(old, new).toMutableList()
+        var lastOld = -1
+        var j = 0
+        while (j <= new.size) {
+            // Find the next matched new line (or the end) and the old index it matched.
+            var k = j
+            while (k < new.size && result[k] == null) k++
+            val nextOld = if (k < new.size) result[k]!! else old.size
+            var o = lastOld + 1
+            for (n in j until k) {
+                if (o < nextOld) result[n] = o++
+            }
+            if (k < new.size) lastOld = result[k]!!
+            j = k + 1
+        }
+        return result
     }
 
     private val WHITESPACE = Regex("\\s+")
