@@ -43,7 +43,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -73,7 +73,7 @@ fun SectionsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
     val scope = rememberCoroutineScope()
     var sheetTarget by remember { mutableStateOf<SheetTarget?>(null) }
 
@@ -86,10 +86,10 @@ fun SectionsScreen(
                 is SongEvent.SectionDeleted -> scope.launch {
                     snackbarHostState.currentSnackbarData?.dismiss()
                     val name = event.label
-                        ?: (context.getString(event.type.nameRes()) + (event.number?.let { " $it" } ?: ""))
+                        ?: (resources.getString(event.type.nameRes()) + (event.number?.let { " $it" } ?: ""))
                     val result = snackbarHostState.showSnackbar(
-                        message = context.getString(R.string.section_deleted, name),
-                        actionLabel = context.getString(R.string.undo),
+                        message = resources.getString(R.string.section_deleted, name),
+                        actionLabel = resources.getString(R.string.undo),
                         withDismissAction = true,
                         duration = SnackbarDuration.Long,
                     )
@@ -217,7 +217,7 @@ private fun SectionList(
             val isDragging = dragState.draggingKey == row.id
             SectionCard(
                 row = row,
-                dragHandle = Modifier.dragHandle(dragState, row.id),
+                dragState = dragState,
                 onEdit = { onEdit(row.id) },
                 onDuplicate = { linked -> onDuplicate(row.id, linked) },
                 onUnlink = { onUnlink(row.id) },
@@ -248,7 +248,7 @@ private fun EmptySections() {
 @Composable
 private fun SectionCard(
     row: SectionRow,
-    dragHandle: Modifier,
+    dragState: DragReorderState,
     onEdit: () -> Unit,
     onDuplicate: (linked: Boolean) -> Unit,
     onUnlink: () -> Unit,
@@ -258,7 +258,7 @@ private fun SectionCard(
     var menuOpen by rememberSaveable { mutableStateOf(false) }
     ElevatedCard(modifier.fillMaxWidth().clickable(onClick = onEdit)) {
         Row(Modifier.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(dragHandle.padding(horizontal = 12.dp, vertical = 12.dp)) {
+            Box(Modifier.dragHandle(dragState, row.id).padding(horizontal = 12.dp, vertical = 12.dp)) {
                 Icon(
                     painterResource(AppIcons.DragHandle),
                     contentDescription = stringResource(R.string.drag_to_reorder),

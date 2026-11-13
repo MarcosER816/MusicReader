@@ -41,7 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -64,7 +64,7 @@ fun LibraryScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
     val scope = rememberCoroutineScope()
     var showCreate by rememberSaveable { mutableStateOf(false) }
     var renaming by rememberSaveable { mutableStateOf<String?>(null) }
@@ -75,10 +75,10 @@ fun LibraryScreen(
                 is LibraryEvent.OpenSong -> onOpenSong(event.songId, event.openSettings)
                 is LibraryEvent.SongDeleted -> scope.launch {
                     snackbarHostState.currentSnackbarData?.dismiss()
-                    val title = event.song.title.ifBlank { context.getString(R.string.untitled) }
+                    val title = event.song.title.ifBlank { resources.getString(R.string.untitled) }
                     val result = snackbarHostState.showSnackbar(
-                        message = context.getString(R.string.song_deleted, title),
-                        actionLabel = context.getString(R.string.undo),
+                        message = resources.getString(R.string.song_deleted, title),
+                        actionLabel = resources.getString(R.string.undo),
                         withDismissAction = true,
                         duration = SnackbarDuration.Long,
                     )

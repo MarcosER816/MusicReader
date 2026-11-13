@@ -25,11 +25,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -61,7 +63,7 @@ fun SectionEditorSheet(
     onDismiss: () -> Unit,
 ) {
     var type by rememberSaveable { mutableStateOf(initial.type) }
-    var bars by rememberSaveable { mutableStateOf(initial.bars) }
+    var bars by rememberSaveable { mutableIntStateOf(initial.bars) }
     var label by rememberSaveable { mutableStateOf(initial.label) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -112,7 +114,7 @@ fun SectionEditorSheet(
             }
             if (linkedCount > 1) {
                 Text(
-                    stringResource(R.string.linked_hint, linkedCount),
+                    pluralStringResource(R.plurals.linked_hint, linkedCount, linkedCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.secondary,
                 )

@@ -52,7 +52,6 @@
     <string name="song_length">Song length: %1$s · %2$s</string>
 
     <!-- Sections -->
-    <string name="sections">Sections</string>
     <string name="sections_empty">No sections yet.</string>
     <string name="sections_empty_hint">Tap “Add section” to build the structure of the song.</string>
     <string name="add_section">Add section</string>
@@ -69,9 +68,12 @@
     <string name="duplicate_independent">Duplicate (independent)</string>
     <string name="unlink">Unlink</string>
     <string name="linked_count">Linked ×%1$d</string>
-    <string name="linked_hint">Linked to %1$d sections: changes to the length and music apply to all of them. Use “Unlink” to make this one independent.</string>
     <string name="section_deleted">Section “%1$s” deleted</string>
     <string name="song_summary">%1$s · %2$s BPM · %3$s · %4$s</string>
+    <plurals name="linked_hint">
+        <item quantity="one">Linked to %d section: changes to the length and music apply to all of them. Use “Unlink” to make this one independent.</item>
+        <item quantity="other">Linked to %d sections: changes to the length and music apply to all of them. Use “Unlink” to make this one independent.</item>
+    </plurals>
     <plurals name="bars">
         <item quantity="one">%d bar</item>
         <item quantity="other">%d bars</item>

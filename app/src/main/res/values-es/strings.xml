@@ -51,7 +51,6 @@
     <string name="song_length">Duración: %1$s · %2$s</string>
 
     <!-- Secciones -->
-    <string name="sections">Secciones</string>
     <string name="sections_empty">Todavía no hay secciones.</string>
     <string name="sections_empty_hint">Toca “Añadir sección” para construir la estructura de la canción.</string>
     <string name="add_section">Añadir sección</string>
@@ -68,9 +67,13 @@
     <string name="duplicate_independent">Duplicar (independiente)</string>
     <string name="unlink">Desvincular</string>
     <string name="linked_count">Vinculada ×%1$d</string>
-    <string name="linked_hint">Vinculada con %1$d secciones: los cambios de duración y de música se aplican a todas. Usa “Desvincular” para que esta sea independiente.</string>
     <string name="section_deleted">Sección “%1$s” eliminada</string>
     <string name="song_summary">%1$s · %2$s BPM · %3$s · %4$s</string>
+    <plurals name="linked_hint">
+        <item quantity="one">Vinculada con %d sección: los cambios de duración y de música se aplican a todas. Usa “Desvincular” para que esta sea independiente.</item>
+        <item quantity="many">Vinculada con %d secciones: los cambios de duración y de música se aplican a todas. Usa “Desvincular” para que esta sea independiente.</item>
+        <item quantity="other">Vinculada con %d secciones: los cambios de duración y de música se aplican a todas. Usa “Desvincular” para que esta sea independiente.</item>
+    </plurals>
     <plurals name="bars">
         <item quantity="one">%d compás</item>
         <item quantity="many">%d compases</item>
