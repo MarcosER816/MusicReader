@@ -15,7 +15,7 @@ Status values: `not started` · `in progress` · `waiting for Mark` · `done`
 | 6 | Lyric capture by singing: select word range, count-in, record take, align to syllables, last take wins | stage-06-capture | not started | | |
 | 7 | Note editor: per-syllable pitch and duration, free drag with no snapping | stage-07-note-editor | not started | | |
 | 8 | Chord dictionary: chord symbols, all voicings, finger numbers, fretboard diagram | stage-08-chord-dictionary | not started | | |
-| 9 | Chord editor: place chords on the beat grid above the lyrics, choose voicing, strumming | stage-09-chord-editor | not started | | |
+| 9 | Chord editor: place chords on the beat grid above the lyrics, choose voicing, one strumming pattern per section, half-beat grid | stage-09-chord-editor | not started | | |
 | 10 | Tab editor: tab events between chords and lyrics, techniques (bend, hammer-on, pull-off, slide, vibrato, harmonics, mute) | stage-10-tab-editor | not started | | |
 | 11 | Song viewer: layer checkboxes, chord colors, synchronized glisten, long-press diagram, tab finger colors, slow autoscroll | stage-11-viewer | not started | | |
 | 12 | User configuration: chord colors, finger colors, practice lower layers, judge windows | stage-12-settings | not started | | |

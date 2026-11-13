@@ -44,11 +44,17 @@ Section type descriptions to show in the app:
 
 ## Part 2 — Working interpretation
 
-Status: **pending confirmation** (open questions in DECISIONS.md).
+Status: **confirmed by Mark on 2026-11-13**, with the answers in DECISIONS.md D-003 to D-015.
 
-- Lyric capture: select a word range, count-in, sing. The app records pitch and onsets and gives each syllable a start beat, a duration in beats (decimal) and a continuous pitch. Singing a range again overwrites only that range (last take wins). The note editor drags pitch and duration freely with NO snapping.
-- Chords snap to the beat grid and sit above the lyrics. Tabs sit between chords and lyrics.
-- Chord color goes by root letter; the full name is shown (D#, Bb9, Cmaj7). All chord labels share one synchronized glisten animation. Long-press shows the fretboard diagram with finger colors equal to the tab finger colors.
+- Lyric capture: select a word range, count-in, sing. The app records pitch and onsets and gives each syllable a start beat, a duration in beats (decimal), an initial note, a final note and the sung pitch curve. Singing a range again overwrites only that range (last take wins). The note editor drags the initial note, the final note and the duration freely with NO snapping; the curve follows the edits. (D-010)
+- Two lyric lines means two voices sung at the same time. Each voice is captured in its own takes. While writing the second voice, the first shows below it. (D-003)
+- Chords snap to a half-beat grid and sit above the lyrics. Tabs sit between chords and lyrics. (D-009)
+- Strumming: one pattern per section, repeating every bar. (D-008)
+- Chord color goes by root letter only (Bb uses B's color, D# uses D's); the full name is shown (D#, Bb9, Cmaj7). All chord labels share one synchronized glisten animation. Long-press shows the fretboard diagram with finger colors equal to the tab finger colors. Diagrams can be shown left-handed. (D-005, D-011)
+- Fingers: open and 1–4; no thumb. (D-012)
+- Version 1 uses standard tuning only, without a capo setting. (D-005)
+- App UI in English and Spanish; syllable splitting for Spanish and English only. (D-006, D-007)
+- Repeated sections: a copy stays linked to its original (edit one, all change) until the user unlinks it. (D-013)
 - Practice lanes scroll right to left at the tempo. Gold = perfect plus gold particles, green = slightly off, red = far off.
-- One official recording per practice type per song. Play mixes them in sync; the mix can be exported to Downloads.
+- One official recording per practice type per song. Play mixes them in sync; the mix is exported to Downloads as M4A without the metronome. (D-014)
 - Follow mode advances lyrics + chords by listening to the chords I play.

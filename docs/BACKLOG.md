@@ -6,7 +6,8 @@ Format: `- [date] idea — who suggested it — notes`
 
 ## Open
 
-_Empty._
+- [2026-11-13] Capo setting (model field `Instrument.capo` already exists, fixed at 0) — Claude — not requested for v1 (D-005)
+- [2026-11-13] Alternate tunings (drop D, half step down, …) — Claude — v1 is standard tuning only (D-005)
 
 ## Moved into the spec or a stage
 
