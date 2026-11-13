@@ -44,7 +44,7 @@ Audio route: not relevant (no audio yet)
 | 5 | Use the app a little (back button, rotate, switch apps) | No crash | OK |
 
 ### Stage 1 — model, library, song settings, sections
-APK: from PR [#2](https://github.com/MarcosER816/MusicReader/pull/2), branch `stage-01-model`
+APK: `MusicReader-stage-01-model-24.apk` or later (PR [#3](https://github.com/MarcosER816/MusicReader/pull/3), branch `stage-01-model`)
 Date tested:
 Audio route: not relevant (no audio yet)
 

@@ -7,7 +7,7 @@ Status values: `not started` · `in progress` · `waiting for Mark` · `done`
 | # | Stage | Branch | Status | PR | Approved |
 |---|---|---|---|---|---|
 | 0 | Project skeleton: Gradle modules, versions, CI that builds and uploads the APK | stage-00-skeleton | done | [#1](https://github.com/MarcosER816/MusicReader/pull/1) | 2026-11-13 (device checks passed; Mark moved on to Stage 1) |
-| 1 | Core model, JSON storage, beat/time helpers, song library, song settings (tempo, tap tempo, time signature), sections (types, descriptions, length, reorder, linked copies) | stage-01-model | waiting for Mark | [#2](https://github.com/MarcosER816/MusicReader/pull/2) | |
+| 1 | Core model, JSON storage, beat/time helpers, song library, song settings (tempo, tap tempo, time signature), sections (types, descriptions, length, reorder, linked copies) | stage-01-model | waiting for Mark | [#2](https://github.com/MarcosER816/MusicReader/pull/2), [#3](https://github.com/MarcosER816/MusicReader/pull/3) | |
 | 2 | Merged into Stage 1 by Mark's Stage 1 request (D-019) | — | merged into 1 | | |
 | 3 | Lyrics entry: lyric lines, second line, Spanish/English syllable splitting, manual split | stage-03-lyrics | not started | | |
 | 4 | Audio core: C++ Oboe engine, JNI, audio clock, metronome/count-in, latency calibration per route | stage-04-audio | not started | | |
@@ -41,3 +41,4 @@ Status values: `not started` · `in progress` · `waiting for Mark` · `done`
 - App: navigation-compose; Library (create, rename, duplicate, delete with Undo); Song settings (title, artist, language, tempo slider/−/+/tap tempo, time signature presets and custom); Sections (add with type chips and descriptions, length in bars, drag to reorder, duplicate linked/independent, unlink, delete with Undo, edit type/length/name).
 - Tests: model (round trip of a full song, migrations, beat/time, tap tempo, section operations), repository (save/load across instances, atomicity, delete), ViewModels (auto-save, reorder, undo, linked copies, settings).
 - Decisions D-018 (beat definition) and D-019.
+- Follow-up PR #3: fixed a data-loss bug (the last edits could be lost when leaving a song while its save was in flight); no loading spinner; Robolectric UI flow test (create song → settings → sections → library → stored song → recreate).
