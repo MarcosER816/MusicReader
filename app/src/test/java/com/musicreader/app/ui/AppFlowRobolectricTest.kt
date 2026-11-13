@@ -14,25 +14,39 @@ import com.musicreader.app.MainActivity
 import com.musicreader.app.MusicReaderApplication
 import com.musicreader.core.model.SectionType
 import kotlinx.coroutines.runBlocking
+import android.os.Looper
+import com.musicreader.app.ui.song.SongViewModel
 import org.junit.Rule
+import org.robolectric.Shadows.shadowOf
+import java.time.Duration
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
 
 /**
+ * Runs on Robolectric's default screen (320×470 dp), scrolling to items below the fold.
+ *
  * Drives the real screens on Robolectric (no device): create a song, add sections, leave and
  * come back, and check what was saved. Catches crashes in navigation, ViewModels and layouts.
  */
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [35], qualifiers = "w411dp-h891dp")
+@Config(sdk = [35])
 class AppFlowRobolectricTest {
     @get:Rule
     val rule = createAndroidComposeRule<MainActivity>()
 
     private fun waitForText(text: String) {
         rule.waitUntil(5_000) {
+            shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(20))
             rule.onAllNodesWithText(text, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    private fun waitForTextGone(text: String) {
+        rule.waitUntil(5_000) {
+            shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(20))
+            rule.onAllNodesWithText(text, useUnmergedTree = true).fetchSemanticsNodes().isEmpty()
         }
     }
 
@@ -40,6 +54,15 @@ class AppFlowRobolectricTest {
     private fun text(text: String) = rule.onAllNodesWithText(text, useUnmergedTree = true).onFirst()
 
     private fun click(label: String) = text(label).performClick()
+
+    /**
+     * Lets the song screen's debounced auto-save run: Robolectric's main-thread clock only moves
+     * when the test moves it.
+     */
+    private fun letAutoSaveRun() {
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(SongViewModel.SAVE_DELAY_MS * 2))
+        rule.waitForIdle()
+    }
 
     /** For items inside a scrolling screen that may start below the fold. */
     private fun scrollTo(label: String) = text(label).performScrollTo()
@@ -64,23 +87,26 @@ class AppFlowRobolectricTest {
         click("Add section")
         click("Chorus")
         text("The emotional, catchy peak. Repeats the same lyrics and main message.").assertIsDisplayed()
-        click("Save")
+        scrollTo("Save").performClick()
+        waitForTextGone("Save")
         click("Add section")
-        click("Save") // default type: Verse, 4 bars
-        rule.waitForIdle()
-        text("Chorus").assertIsDisplayed()
+        scrollTo("Save").performClick() // default type: Verse, 4 bars
+        waitForTextGone("Save")
+        text("Chorus").assertIsDisplayed() // section cards, not sheet chips: the sheet is closed
         text("Verse").assertIsDisplayed()
+        text("Bar 5 · 4 bars · 0:06").assertIsDisplayed() // Verse after 4 bars of Chorus, 3/4 at 120 BPM
+
+        letAutoSaveRun()
 
         // Back to the library: the song is listed with its sections.
         rule.onNodeWithContentDescription("Back").performClick()
+        letAutoSaveRun()
         waitForText("Prueba")
+        waitForText("2 sections")
         text("2 sections").assertIsDisplayed()
 
         // What is stored on disk.
         val repo = (rule.activity.application as MusicReaderApplication).container.songRepository
-        rule.waitUntil(5_000) {
-            runBlocking { repo.summaries.value.singleOrNull()?.sectionCount == 2 }
-        }
         val song = runBlocking { repo.load(repo.summaries.value.single().id) }!!
         assertEquals("Prueba", song.title)
         assertEquals(listOf(SectionType.CHORUS, SectionType.VERSE), song.sections.map { it.type })

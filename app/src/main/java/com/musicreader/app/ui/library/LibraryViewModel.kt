@@ -85,7 +85,7 @@ class LibraryViewModel(
     fun renameSong(songId: String, title: String) {
         val clean = title.trim()
         if (clean.isEmpty()) return
-        viewModelScope.launch {
+        appScope.launch {
             val song = repository.load(songId) ?: return@launch
             repository.save(SongOps.setTitle(song, clean, clock()))
         }
@@ -93,7 +93,7 @@ class LibraryViewModel(
 
     /** Saves a copy titled [copyTitle] (the screen passes the localized "Title (copy)"). */
     fun duplicateSong(songId: String, copyTitle: String) {
-        viewModelScope.launch {
+        appScope.launch {
             val song = repository.load(songId) ?: return@launch
             repository.save(SongOps.duplicateSong(song, ids.newId(), copyTitle, clock()))
         }
