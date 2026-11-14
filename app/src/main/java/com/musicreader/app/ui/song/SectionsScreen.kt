@@ -32,6 +32,9 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import com.musicreader.app.ui.audio.MetronomeButton
+import com.musicreader.app.ui.audio.MetronomeStrip
+import com.musicreader.app.ui.audio.MetronomeViewModel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -67,6 +70,7 @@ private sealed interface SheetTarget {
 @Composable
 fun SectionsScreen(
     viewModel: SongViewModel,
+    metronome: MetronomeViewModel,
     onBack: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenLyrics: (sectionId: String) -> Unit,
@@ -75,6 +79,7 @@ fun SectionsScreen(
     onOpenTab: (sectionId: String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val metronomeState by metronome.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val scope = rememberCoroutineScope()
@@ -106,6 +111,7 @@ fun SectionsScreen(
     val editor = (state as? SongUiState.Ready)?.editor
     Scaffold(
         topBar = {
+          Column {
             TopAppBar(
                 title = {
                     Text(
@@ -119,11 +125,14 @@ fun SectionsScreen(
                 },
                 actions = {
                     if (editor != null) {
+                        MetronomeButton(metronomeState, metronome::toggle)
                         TextButton(onClick = onOpenViewer) { Text(stringResource(R.string.view_song)) }
                         TextButton(onClick = onOpenSettings) { Text(stringResource(R.string.settings)) }
                     }
                 },
             )
+            if (metronomeState.running) MetronomeStrip(metronomeState, metronome::beatNow)
+          }
         },
         floatingActionButton = {
             if (editor != null) {

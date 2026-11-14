@@ -162,3 +162,23 @@ How: Library ⋮ → "Settings".
 | 3 | Force-stop and reopen; then "Reset to default" and "Reset all" | Colors kept after restart; resets restore the defaults | OK |
 | 4 | Switch the language to Español and back | Every screen in the chosen language | OK |
 | 5 | Update over Stage 5 | No data lost, no crash | OK — no data lost, no crash, no change wanted |
+
+### Stage 7 — audio core
+APK: `MusicReader-stage-07-audio-<run>.apk` or later (PR [#9](https://github.com/MarcosER816/MusicReader/pull/9), branch `stage-07-audio`)
+Date tested:
+Audio route: speaker and wired headphones
+
+How:
+- Metronome: open a song → metronome icon in the top bar (set tempo and time signature in the song's Settings).
+- Calibration: Library ⋮ → Settings → Audio → Latency calibration.
+- Diagnostics: Library ⋮ → Settings → Audio → Audio diagnostics.
+- Reference: Google's OboeTester app (Play Store or GitHub releases) → "Round Trip Latency".
+
+| # | Check | Expected | Result |
+|---|---|---|---|
+| 1 | OboeTester round-trip latency on the speaker and on wired headphones | Two numbers in ms | |
+| 2 | MusicReader automatic calibration on the same routes | Within about 5 ms of OboeTester; confidence high | |
+| 3 | Metronome for two minutes at 60 BPM and at 180 BPM | Steady, accent on beat 1, the light matches the sound | |
+| 4 | Diagnostics after five minutes of metronome | Underrun count (ideally 0) | |
+| 5 | Plug and unplug headphones while the metronome runs | Keeps playing on the new route; route updates in Diagnostics | |
+| 6 | Update over Stage 6 | No data lost, no crash | |

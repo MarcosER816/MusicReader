@@ -35,7 +35,10 @@ class SongJsonTest {
 
         val settings = AppSettings(
             leftHanded = true,
-            latencyProfiles = mapOf(AudioRoute.WIRED to 21.0, AudioRoute.BLUETOOTH to 180.0),
+            latencyProfiles = mapOf(
+                AudioRoute.WIRED to LatencyProfile(21.0, LatencyMethod.AUTOMATIC, 0.95, 1_700_000_000_000),
+                AudioRoute.BLUETOOTH to LatencyProfile(180.0, LatencyMethod.MANUAL, 0.6, 1_700_000_000_000),
+            ),
             uiLanguage = UiLanguage.ES,
         )
         assertEquals(settings, json.decodeFromString(AppSettings.serializer(), json.encodeToString(AppSettings.serializer(), settings)))

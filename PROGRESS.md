@@ -87,3 +87,18 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 
 ### Stage 7 — audio core (2026-11-14)
 - Stage 6 approved by Mark (device test all OK).
+- C++ engine on Oboe 1.11.0 (`audio/src/main/cpp/engine`):
+  - low-latency exclusive 48 kHz float output as the master, with the microphone read in the same callback only for calibration;
+  - lock-free command queue and input ring buffer, nothing allocated, locked or logged in callbacks;
+  - `LatencyTuner`; streams reopened after a disconnect or a device change.
+- Audio clock from the output timestamps (seqlock, monotonic interpolation), exposed to Kotlin.
+- Sample-exact metronome with an accent on beat 1. It follows the song's tempo and time signature, with a button and a beat light on the Sections screen.
+- Lifecycle:
+  - the microphone is asked for only when calibrating, with a screen explaining a refusal;
+  - the screen stays on while audio runs;
+  - everything stops in the background.
+- Latency calibration: automatic (5 chirps, cross-correlation, confidence) and manual (16 clicks, median offset). One profile per route is saved in settings, with a Bluetooth warning.
+- Audio diagnostics screen.
+- Host-buildable DSP (`audio/src/main/cpp/dsp`) with 27 GoogleTest tests run in CI (`cmake` + `ctest`): a delayed chirp is found within 1 ms, and clicks land on the exact sample.
+- Kotlin tests: controller (fake engine), route mapping, latency profiles, metronome/calibration/diagnostics ViewModels. Decision D-029.
+- Fixed a flaky Stage 6 DataStore test (it now waits for the old store to close).

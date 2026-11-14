@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
@@ -31,8 +32,14 @@ class DataStoreSettingsRepositoryTest {
             val store = PreferenceDataStoreFactory.create(scope = scope) { file }
             return runBlocking { block(DataStoreSettingsRepository(store)) }
         } finally {
-            scope.cancel()
+            closeStore(scope)
         }
+    }
+
+    /** Cancels a DataStore's scope and waits until it is gone, so the file can be opened again. */
+    private fun closeStore(scope: CoroutineScope) {
+        scope.cancel()
+        runBlocking { scope.coroutineContext.job.join() }
     }
 
     @Test
@@ -101,7 +108,7 @@ class DataStoreSettingsRepositoryTest {
                 assertEquals(AppSettings(), DataStoreSettingsRepository(store).settings.first())
             }
         } finally {
-            scope.cancel()
+            closeStore(scope)
         }
     }
 }
