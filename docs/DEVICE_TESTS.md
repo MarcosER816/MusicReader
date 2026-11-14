@@ -81,17 +81,17 @@ Round 2 (2026-11-13, APK run 35):
 
 ### Stage 3 — song viewer
 APK: `MusicReader-stage-03-viewer-46.apk` or later (PR [#5](https://github.com/MarcosER816/MusicReader/pull/5), branch `stage-03-viewer`)
-Date tested:
+Date tested: 2026-11-14
 Audio route: not relevant (no audio yet)
 
 How: Library ⋮ → "Load demo song (debug)" → "View".
 
 | # | Check | Expected | Result |
 |---|---|---|---|
-| 1 | Autoscroll at the slowest speed | Slow enough and smooth | |
-| 2 | Chord colors on the dark background | C red, D orange, E yellow, F lime, G sky blue, A magenta, B lavender; readable | |
-| 3 | Glisten | All chords shine together; smooth at 120 Hz | |
-| 4 | Try to uncheck all three checkboxes | The last one cannot be unchecked | |
-| 5 | Text sizes ("Aa") at arm's length | Comfortable | |
-| 6 | Update over Stage 2, reopen songs | No data lost, no crash | |
+| 1 | Autoscroll at the slowest speed | Slow enough and smooth | OK |
+| 2 | Chord colors on the dark background | C red, D orange, E yellow, F lime, G sky blue, A magenta, B lavender; readable | OK |
+| 3 | Glisten | All chords shine together; smooth at 120 Hz | OK |
+| 4 | Try to uncheck all three checkboxes | The last one cannot be unchecked | OK — the last one turns gray |
+| 5 | Text sizes ("Aa") at arm's length | Comfortable | OK |
+| 6 | Update over Stage 2, reopen songs | No data lost, no crash | OK — no crash |
 
