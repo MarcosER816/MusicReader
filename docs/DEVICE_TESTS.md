@@ -96,7 +96,7 @@ How: Library ⋮ → "Load demo song (debug)" → "View".
 | 6 | Update over Stage 2, reopen songs | No data lost, no crash | OK — no crash |
 
 ### Stage 4 — chords
-APK: `MusicReader-stage-04-chords-<run>.apk` (branch `stage-04-chords`)
+APK: `MusicReader-stage-04-chords-55.apk` or later (PR [#6](https://github.com/MarcosER816/MusicReader/pull/6), branch `stage-04-chords`)
 Date tested:
 Audio route: not relevant (no audio yet)
 
