@@ -122,3 +122,14 @@ Round 2 (2026-11-14, APK run 59):
 | 5 | Viewer long-press shows the chosen shape | OK |
 | 6 | Update without losing data | OK |
 
+Round 3 (2026-11-14, APK run 61):
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Chords you use, with your shapes | OK |
+| 2 | Finger numbers and colors (Gm7 and others) | OK |
+| 3 | Chord lands on the tapped syllable | OK |
+| 4 | Clear which syllable is under each chord | OK |
+| 5 | Viewer long-press shows the chosen shape | OK |
+| 6 | Update without losing data; crash or change | OK — no crash, no change |
+
