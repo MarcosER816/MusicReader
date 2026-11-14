@@ -351,6 +351,7 @@ private fun SyllableChordRow(
     val chordsById = state.chords.associateBy { it.id }
     val chordOnSyllable = row.chords.associateBy { it.syllableId }
     val firstBar = (row.startBeat / state.beatsPerBar).toInt() + 1
+    val underline = MaterialTheme.colorScheme.outline
     Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Text(
             stringResource(R.string.bar_number, firstBar),
@@ -384,7 +385,7 @@ private fun SyllableChordRow(
                             // A dotted underline marks every syllable as a place for a chord.
                             val y = size.height - 1.dp.toPx()
                             drawLine(
-                                Color.Gray,
+                                underline,
                                 Offset(0f, y),
                                 Offset(size.width, y),
                                 strokeWidth = 1.dp.toPx(),

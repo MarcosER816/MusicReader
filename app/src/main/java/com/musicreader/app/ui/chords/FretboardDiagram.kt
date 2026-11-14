@@ -11,7 +11,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.luminance
+import com.musicreader.app.ui.common.numberColorOn
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextMeasurer
@@ -107,7 +107,7 @@ private fun DrawScope.drawDiagram(
     }
 
     fun drawNumber(finger: Int, center: Offset, fill: Color) {
-        val textColor = if (fill.luminance() > 0.45f) Color.Black else Color.White
+        val textColor = numberColorOn(fill)
         val layout = measurer.measure("$finger", labelStyle.copy(color = textColor, fontWeight = FontWeight.Bold))
         drawText(layout, topLeft = Offset(center.x - layout.size.width / 2f, center.y - layout.size.height / 2f))
     }

@@ -330,3 +330,30 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
   - alphaTex: `fret.string.duration`, chords of notes in parentheses, `r` rests, `|` bars; effects `{h}`, `{sl}` (or `{sou}`/`{sod}`), `{b (0 n)}`, `{b (0 n 0)}`, `{v}`, `{nh}`, `{ah}`, `x`.
   - ASCII: a chord line, six lines high e to low E, one column per quarter beat, `|` bars; bends written as the fret they reach (8b10).
 
+
+## D-028 — User settings screen (Stage 6, 2026-11-14)
+- **Where:** Library ⋮ → "Settings". Every setting is one `AppSettings` value in DataStore (D-023). Each change is saved at once. Every screen collects the same settings flow, so a change shows everywhere immediately and survives a restart.
+- **Chord colors:** one row per root letter C D E F G A B. Each row has a swatch, a preview (`C  Cm7  C7` in the color) and the hex value. Tapping a row opens the color picker, which has:
+  - hue, saturation and brightness sliders;
+  - a palette;
+  - a `#RRGGBB` field;
+  - a live preview;
+  - "Reset to default".
+
+  "Reset all" restores all seven colors. Sharps and flats take the color of their letter (D-011).
+- **Finger colors:** open string and fingers 1–4, with the same picker and resets. **No thumb** (D-012, Mark's answer to Q7). The Stage 6 task listed a thumb, so this is asked again at the end of the stage.
+  - Two finger colors are "nearly the same" when their CIE76 ΔE (Lab, D65) is below 20 (`ColorMath.similarFingerPairs`). The screen then shows a red warning naming both fingers.
+  - The warning does not block saving.
+- **Default viewer layers:** checkboxes for lyrics, chords and tabs. The last checked one is disabled, as in the viewer (D-023). These are the same `viewerLayers` the viewer's own checkboxes change.
+- **Also here:** sharps/flats for chord names (the same setting as the chord picker's ♯/♭) and left-handed diagrams.
+- **App language:** System, English or Español, for every string in the app (all in `values/` and `values-es/`). Format names and symbols (alphaTex, ASCII, ♯, ♭, digits) are not translated.
+  - Android 13+ uses the per-app language (`LocaleManager`, `locales_config.xml`), so it also shows in Android's app settings.
+  - Android 10–12 keeps a copy of the choice in SharedPreferences. `MainActivity.attachBaseContext` applies it, and the activity is recreated.
+  - The song language (syllable splitting) is separate and stays per song.
+- **No fixed colors:** chord and finger colors come from the settings, everything else from the theme. A unit test scans the app's sources for `Color(0x…)` and named colors. Three exceptions are allowed:
+  - the theme;
+  - black or white for the number inside a finger dot, chosen for contrast with the user's color;
+  - the viewer's white glisten.
+
+  The chord editor's dotted underline now uses the theme's outline color.
+- **Robust reading:** if the stored settings miss a letter or finger (e.g. written by an older version), the default fills in. Unknown fingers are dropped, and unreadable settings fall back to the defaults.

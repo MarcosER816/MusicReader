@@ -40,7 +40,13 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
     }
 
     private fun decode(text: String?): AppSettings =
-        text?.let { runCatching { json.decodeFromString(AppSettings.serializer(), it) }.getOrNull() } ?: AppSettings()
+        text?.let { runCatching { json.decodeFromString(AppSettings.serializer(), it) }.getOrNull() }?.withAllColors() ?: AppSettings()
+
+    /** Every root letter and finger 0–4 has a color, even if the stored map lost one. */
+    private fun AppSettings.withAllColors(): AppSettings = copy(
+        chordColors = AppSettings.DEFAULT_CHORD_COLORS + chordColors,
+        fingerColors = AppSettings.DEFAULT_FINGER_COLORS + fingerColors.filterKeys { it in AppSettings.DEFAULT_FINGER_COLORS },
+    )
 
     companion object {
         private val KEY = stringPreferencesKey("app_settings_json")

@@ -13,6 +13,10 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
+import com.musicreader.core.model.AppSettings
+import com.musicreader.core.model.NoteLetter
+import kotlinx.coroutines.flow.first
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.musicreader.app.MainActivity
 import com.musicreader.app.MusicReaderApplication
@@ -206,5 +210,43 @@ class AppFlowRobolectricTest {
         click("Syllables")
         waitForText("Canta")
         text("ción").assertIsDisplayed()
+    }
+
+    @Test
+    fun changeChordAndFingerColorsInSettings() {
+        rule.onNodeWithContentDescription("More options").performClick()
+        click("Settings")
+        waitForText("Chord colors")
+
+        // C: type a hex color and save.
+        click("C")
+        waitForText("Color of C chords")
+        rule.onNode(hasSetTextAction()).performTextReplacement("#00C853")
+        click("Save")
+        waitForTextGone("Color of C chords")
+
+        val settings = (rule.activity.application as MusicReaderApplication).container.settingsRepository
+        rule.waitUntil(5_000) { runBlocking { settings.settings.first().chordColors[NoteLetter.C] == 0xFF00C853 } }
+        text("#00C853").assertIsDisplayed()
+
+        // Finger 3 gets the color of finger 1: a warning shows; reset clears it.
+        scrollTo("Finger 3").performClick()
+        waitForText("Color of Finger 3")
+        val finger1 = AppSettings.DEFAULT_FINGER_COLORS.getValue(1)
+        rule.onNode(hasSetTextAction()).performTextReplacement(com.musicreader.core.model.ColorMath.toHex(finger1))
+        click("Save")
+        waitForText("Finger 1 and Finger 3 look almost the same. Pick a different color for one of them.")
+        scrollTo("Finger 3").performClick()
+        waitForText("Color of Finger 3")
+        scrollTo("Reset to default").performClick()
+        click("Save")
+        waitForTextGone("Finger 1 and Finger 3 look almost the same. Pick a different color for one of them.")
+        assertEquals(AppSettings.DEFAULT_FINGER_COLORS, runBlocking { settings.settings.first().fingerColors })
+
+        // Reset all chord colors.
+        scrollTo("Reset all").performClick()
+        rule.waitUntil(5_000) { runBlocking { settings.settings.first().chordColors == AppSettings.DEFAULT_CHORD_COLORS } }
+        rule.onNodeWithContentDescription("Back").performClick()
+        waitForText("No songs yet.")
     }
 }
