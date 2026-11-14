@@ -72,6 +72,7 @@ fun SectionsScreen(
     onOpenLyrics: (sectionId: String) -> Unit,
     onOpenViewer: () -> Unit,
     onOpenChords: (sectionId: String) -> Unit,
+    onOpenTab: (sectionId: String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -147,6 +148,7 @@ fun SectionsScreen(
                     onEdit = { sheetTarget = SheetTarget.Existing(it) },
                     onOpenLyrics = onOpenLyrics,
                     onOpenChords = onOpenChords,
+                    onOpenTab = onOpenTab,
                     onMove = viewModel::moveSection,
                     onDuplicate = viewModel::duplicateSection,
                     onUnlink = viewModel::unlinkSection,
@@ -194,6 +196,7 @@ private fun SectionList(
     onEdit: (String) -> Unit,
     onOpenLyrics: (String) -> Unit,
     onOpenChords: (String) -> Unit,
+    onOpenTab: (String) -> Unit,
     onMove: (String, String) -> Unit,
     onDuplicate: (String, Boolean) -> Unit,
     onUnlink: (String) -> Unit,
@@ -231,6 +234,7 @@ private fun SectionList(
                 onEdit = { onEdit(row.id) },
                 onOpenLyrics = { onOpenLyrics(row.id) },
                 onOpenChords = { onOpenChords(row.id) },
+                onOpenTab = { onOpenTab(row.id) },
                 onDuplicate = { linked -> onDuplicate(row.id, linked) },
                 onUnlink = { onUnlink(row.id) },
                 onDelete = { onDelete(row.id) },
@@ -264,6 +268,7 @@ private fun SectionCard(
     onEdit: () -> Unit,
     onOpenLyrics: () -> Unit,
     onOpenChords: () -> Unit,
+    onOpenTab: () -> Unit,
     onDuplicate: (linked: Boolean) -> Unit,
     onUnlink: () -> Unit,
     onDelete: () -> Unit,
@@ -347,6 +352,10 @@ private fun SectionCard(
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.chords)) },
                         onClick = { menuOpen = false; onOpenChords() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.tab_title)) },
+                        onClick = { menuOpen = false; onOpenTab() },
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.edit_section)) },

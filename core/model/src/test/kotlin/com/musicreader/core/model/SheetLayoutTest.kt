@@ -33,7 +33,7 @@ class SheetLayoutTest {
         assertEquals(listOf(0.0, 0.5), rows[0].barLines)
         // The chord at the very end of the section belongs to the last row.
         assertEquals(listOf(0.0, 1.0), rows[1].chords.map { it.x })
-        assertEquals(PlacedTabNote("t", 0.25, 2, 3, 2, Technique.BEND), rows[1].tab.single())
+        assertEquals(PlacedTabNote("t", 0.25, 2, 3, 2, Technique.BEND, beat = 10.0, durationBeats = 1.0), rows[1].tab.single())
         // Untimed words spread by character position: "ab cd" → ab at 0, cd at 3/5.
         assertEquals(listOf(PlacedText("w1", 0.0, "ab"), PlacedText("w2", 0.6, "cd")), rows[0].lyrics)
         assertEquals(listOf(PlacedText("w3", 0.0, "efgh")), rows[1].lyrics)

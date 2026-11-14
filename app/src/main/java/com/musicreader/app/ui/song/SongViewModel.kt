@@ -20,6 +20,10 @@ import com.musicreader.core.model.BeatTime
 import com.musicreader.core.model.ChordEvent
 import com.musicreader.core.model.ChordOps
 import com.musicreader.core.model.ChordSymbol
+import com.musicreader.core.model.EditHistory
+import com.musicreader.core.model.TabEvent
+import com.musicreader.core.model.TabExport
+import com.musicreader.core.model.TabOps
 import com.musicreader.core.model.SheetLayoutBuilder
 import com.musicreader.core.model.SheetRow
 import com.musicreader.core.model.IdGenerator
@@ -121,6 +125,21 @@ sealed interface SongUiState {
     data object NotFound : SongUiState
     data class Ready(val editor: SongEditorState) : SongUiState
 }
+
+/** The tab editor of one section: rows like the viewer, the notes, and undo/redo availability. */
+data class TabEditorUiState(
+    val sectionId: String,
+    val type: SectionType,
+    val label: String?,
+    val number: Int?,
+    val linkedCount: Int,
+    val lengthBeats: Int,
+    val beatsPerBar: Int,
+    val rows: List<SheetRow>,
+    val notes: List<TabEvent>,
+    val canUndo: Boolean,
+    val canRedo: Boolean,
+)
 
 /** The chord editor of one section: rows like the viewer, with every chord of the section. */
 data class ChordEditorUiState(
@@ -400,6 +419,88 @@ class SongViewModel(
             beatsPerBar = s.timeSignature.beatsPerBar,
             rows = SheetLayoutBuilder.rows(content, s.timeSignature),
             chords = content.chords,
+        )
+    }
+
+    // --- Tab ------------------------------------------------------------------------------------
+
+    private val tabHistory = EditHistory<Song>()
+    private val tabHistoryState = MutableStateFlow(false to false)
+
+    /** The tab editor state of one section; null when the section does not exist (any more). */
+    fun tabEditorState(sectionId: String): Flow<TabEditorUiState?> =
+        combine(song, tabHistoryState) { s, (canUndo, canRedo) ->
+            s?.let { tabEditorUiState(it, sectionId, canUndo, canRedo) }
+        }.distinctUntilChanged()
+
+    /** Adds a note (snapped to the quarter-beat grid); a note on the same beat and string is replaced. */
+    fun addTabNote(sectionId: String, note: TabEvent) =
+        tabEdit(sectionId) { content -> TabOps.add(content, note.copy(id = ids.newId())) }
+
+    fun updateTabNote(sectionId: String, note: TabEvent) = tabEdit(sectionId) { content -> TabOps.update(content, note) }
+
+    fun moveTabNote(sectionId: String, noteId: String, beat: Double, string: Int) =
+        tabEdit(sectionId) { content -> TabOps.move(content, noteId, beat, string) }
+
+    fun deleteTabNote(sectionId: String, noteId: String) = tabEdit(sectionId) { content -> TabOps.delete(content, noteId) }
+
+    fun undoTab() {
+        val current = song.value ?: return
+        val previous = tabHistory.undo(current) ?: return
+        song.value = previous.copy(updatedAt = clock())
+        publishTabHistory()
+    }
+
+    fun redoTab() {
+        val current = song.value ?: return
+        val next = tabHistory.redo(current) ?: return
+        song.value = next.copy(updatedAt = clock())
+        publishTabHistory()
+    }
+
+    /** Called when the tab editor closes: its undo history ends with it. */
+    fun clearTabHistory() {
+        tabHistory.clear()
+        publishTabHistory()
+    }
+
+    /** The section's tab as alphaTex and as ASCII tab (Stage 5 export). */
+    fun tabExport(sectionId: String): Pair<String, String>? {
+        val s = song.value ?: return null
+        val section = s.sections.firstOrNull { it.id == sectionId } ?: return null
+        val content = s.contentOf(section)
+        val title = listOfNotNull(s.title.ifBlank { null }, section.label ?: section.type.name).joinToString(" – ")
+        return TabExport.alphaTex(title, content, s.timeSignature, s.tempoBpm) to TabExport.ascii(content, s.timeSignature)
+    }
+
+    private fun tabEdit(sectionId: String, change: (SectionContent) -> SectionContent) {
+        val before = song.value ?: return
+        editContent(sectionId) { _, content -> change(content) }
+        if (song.value !== before) {
+            tabHistory.record(before)
+            publishTabHistory()
+        }
+    }
+
+    private fun publishTabHistory() {
+        tabHistoryState.value = tabHistory.canUndo to tabHistory.canRedo
+    }
+
+    private fun tabEditorUiState(s: Song, sectionId: String, canUndo: Boolean, canRedo: Boolean): TabEditorUiState? {
+        val section = s.sections.firstOrNull { it.id == sectionId } ?: return null
+        val content = s.contentOf(section)
+        return TabEditorUiState(
+            sectionId = sectionId,
+            type = section.type,
+            label = section.label,
+            number = s.occurrenceNumbers()[sectionId],
+            linkedCount = s.linkedCount(section),
+            lengthBeats = content.lengthBeats,
+            beatsPerBar = s.timeSignature.beatsPerBar,
+            rows = SheetLayoutBuilder.rows(content, s.timeSignature),
+            notes = content.tab,
+            canUndo = canUndo,
+            canRedo = canRedo,
         )
     }
 

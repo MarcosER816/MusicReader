@@ -13,7 +13,7 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–3 are as M
 | 2 | Lyrics editor (per section, two voices), Spanish syllabifier (rules), English syllabifier (Liang + hyph-en-us), syllable view with tap split/merge, edits keep unchanged words | stage-02-lyrics | done | [#4](https://github.com/MarcosER816/MusicReader/pull/4) | 2026-11-13 ("Stage 2 approved") |
 | 3 | Song viewer: sections with chords/tab/lyrics on shared beat positions, layer checkboxes, chord colors, synchronized glisten, slow autoscroll, long-press chord sheet, font size, demo song, screenshot tests | stage-03-viewer | done | [#5](https://github.com/MarcosER816/MusicReader/pull/5) | 2026-11-14 ("Stage 3 approved") |
 | 4 | Chords: chord dictionary (all voicings, finger numbers, fretboard diagram), chord editor (chords on syllables, half-beat grid without lyrics), long-press diagram in the viewer | stage-04-chords | done | [#6](https://github.com/MarcosER816/MusicReader/pull/6) | 2026-11-14 ("Stage 4 approved") |
-| 5 | Tab editor: tab events between chords and lyrics, techniques (bend, hammer-on, pull-off, slide, vibrato, harmonics, mute) | stage-05-tab-editor | not started | | |
+| 5 | Tab editor: tab events between chords and lyrics, techniques (bend, hammer-on, pull-off, slide, vibrato, harmonics, mute) | stage-05-tabs | waiting for Mark | [#7](https://github.com/MarcosER816/MusicReader/pull/7) | |
 | 6 | Audio core: C++ Oboe engine, JNI, audio clock, metronome/count-in, latency calibration per route | stage-06-audio | not started | | |
 | 7 | DSP: pitch tracking and onset detection, tested on synthetic signals | stage-07-dsp | not started | | |
 | 8 | Lyric capture by singing: select word range, count-in, record take, align to syllables, last take wins | stage-08-capture | not started | | |
@@ -69,3 +69,10 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–3 are as M
 - Round 3: barres the dictionary does not list are inferred (Gm7 showed finger 3 three times), Gm7 screenshot (D-026).
 
 - Stage 4 approved by Mark on 2026-11-14 after three device-test rounds.
+
+### Stage 5 — tabs (2026-11-14)
+- `TabOps` (quarter-beat grid, add/update/move/delete, legato targets, number-pad typing), `BeatAxis` and `LineAxes` (one beat grid for chords, tab and lyrics), `EditHistory` (undo/redo), `TabExport` (alphaTex and ASCII).
+- `SheetRowLayout` (chords, tab staff and lyrics per visual line) used by the viewer and both editors; `TabStaff` draws every technique in finger colors.
+- Tab editor per section (tap/drag/long-press, note sheet with number pad, finger, length, technique, "Save + next", undo/redo, export with Copy/Share).
+- Tests: tab ops, beat axes, history, export, ViewModel, UI flow types a hammer-on, screenshots (every technique, viewer). Decision D-027.
+

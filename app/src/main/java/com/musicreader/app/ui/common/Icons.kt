@@ -21,4 +21,7 @@ object AppIcons {
     val Remove = R.drawable.ic_remove
     val Play = R.drawable.ic_play
     val Pause = R.drawable.ic_pause
+    val Undo = R.drawable.ic_undo
+    val Redo = R.drawable.ic_redo
+    val Backspace = R.drawable.ic_backspace
 }

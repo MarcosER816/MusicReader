@@ -136,6 +136,19 @@ class AppFlowRobolectricTest {
         waitForText("C") // the card shows the section's chords
         letAutoSaveRun()
 
+        // Tab: open the Chorus tab editor, tap the staff, type 7 with a hammer-on.
+        rule.onAllNodesWithContentDescription("More options")[0].performClick()
+        click("Tab")
+        waitForText("Tab · Chorus")
+        rule.onAllNodesWithContentDescription("Tab staff, line 1")[0].performTouchInput { click(Offset(4f, centerY)) }
+        waitForText("Save + next")
+        click("7")
+        scrollTo("h hammer-on").performClick()
+        scrollTo("Save").performClick()
+        waitForTextGone("Save + next")
+        rule.onNodeWithContentDescription("Back").performClick()
+        letAutoSaveRun()
+
         // Lyrics: tapping a section opens its lyrics; text is split into syllables.
         click("Chorus")
         waitForText("Lyrics · Chorus")
@@ -162,6 +175,7 @@ class AppFlowRobolectricTest {
         val stored = runBlocking { repo.load(song.id) }!!
         val chorus = stored.sectionContents.first { c -> c.id == stored.sections[0].contentId }
         assertEquals(listOf(0.0 to "C|major|0"), chorus.chords.map { it.beat to it.voicingId })
+        assertEquals(listOf(Triple(0.0, 7, com.musicreader.core.model.Technique.HAMMER_ON)), chorus.tab.map { Triple(it.beat, it.fret, it.technique) })
         assertEquals(listOf("Canta conmigo", "esta canción", "eco"), chorus.lyricLines.map { it.text })
         assertEquals(chorus.lyricLines[1].id, chorus.lyricLines[2].pairedLineId)
         assertEquals(listOf("Canta"), chorus.lyricLines[0].words[0].syllables.map { it.text })

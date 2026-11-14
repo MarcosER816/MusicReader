@@ -145,6 +145,37 @@
     <string name="use_this_shape">Usar esta posición</string>
     <string name="about_credits">Posiciones de acordes: chords-db de David Rubert (licencia MIT). Patrones de silabeo en inglés: hyph-en-us de Gerard D.C. Kuiken.</string>
 
+    <!-- Tablatura -->
+    <string name="tab_title">Tablatura</string>
+    <string name="tab_of">Tablatura · %1$s</string>
+    <string name="tab_editor_hint">Toca una cuerda del pentagrama para añadir una nota ahí (se ajusta al cuarto de tiempo más cercano). Toca una nota para editarla, arrástrala para moverla y mantenla pulsada para borrarla. «Guardar + siguiente» guarda y abre la nota siguiente en la misma cuerda.</string>
+    <string name="tab_staff_description">Tablatura, línea %1$d</string>
+    <string name="redo">Rehacer</string>
+    <string name="export">Exportar</string>
+    <string name="export_tab">Exportar tablatura</string>
+    <string name="share">Compartir</string>
+    <string name="copy">Copiar</string>
+    <string name="close">Cerrar</string>
+    <string name="note_position">Cuerda %1$d · compás %2$d, tiempo %3$s</string>
+    <string name="fret">Traste</string>
+    <string name="delete_digit">Borrar cifra</string>
+    <string name="finger">Dedo</string>
+    <string name="finger_open">al aire</string>
+    <string name="note_length">Duración (tiempos)</string>
+    <string name="technique">Técnica</string>
+    <string name="save_and_next">Guardar + siguiente</string>
+    <string name="technique_none">Ninguna</string>
+    <string name="technique_hammer_on">h ligado ascendente</string>
+    <string name="technique_pull_off">p ligado descendente</string>
+    <string name="technique_slide_up">/ deslizar arriba</string>
+    <string name="technique_slide_down">\\ deslizar abajo</string>
+    <string name="technique_bend">bend %1$s</string>
+    <string name="technique_bend_release">bend %1$s + soltar</string>
+    <string name="technique_vibrato">~ vibrato</string>
+    <string name="technique_natural_harmonic">&lt;12&gt; armónico</string>
+    <string name="technique_artificial_harmonic">[12] armónico artificial</string>
+    <string name="technique_mute">x apagada</string>
+
     <!-- Acerca de -->
     <string name="about">Acerca de</string>
     <string name="about_title">Acerca de MusicReader</string>

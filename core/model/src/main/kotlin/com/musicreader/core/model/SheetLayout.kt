@@ -58,6 +58,11 @@ data class PlacedTabNote(
     val fret: Int,
     val finger: Int,
     val technique: Technique,
+    /** Beat relative to the section start. */
+    val beat: Double = 0.0,
+    val durationBeats: Double = 0.0,
+    val bendQuarterTones: Int? = null,
+    val harmonicFret: Int? = null,
 )
 
 data class PlacedText(val id: String, val x: Double, val text: String)
@@ -125,7 +130,12 @@ object SheetLayoutBuilder {
                     PlacedChord(c.id, cx, c.symbol, c.voicingId, shown)
                 }.sortedBy { it.x },
                 tab = content.tab.filter { inRow(it.beat) }.sortedBy { it.beat }
-                    .map { PlacedTabNote(it.id, x(it.beat), it.string, it.fret, it.finger, it.technique) },
+                    .map {
+                        PlacedTabNote(
+                            it.id, x(it.beat), it.string, it.fret, it.finger, it.technique,
+                            it.beat, it.durationBeats, it.bendQuarterTones, it.harmonicFret,
+                        )
+                    },
                 lyrics = line?.let { placeLine(it, ::x) }.orEmpty(),
                 secondLyrics = second?.let { placeLine(it, ::x) }.orEmpty(),
                 syllables = syllables,

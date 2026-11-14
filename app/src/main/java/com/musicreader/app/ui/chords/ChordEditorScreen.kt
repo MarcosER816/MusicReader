@@ -2,7 +2,7 @@ package com.musicreader.app.ui.chords
 
 import androidx.compose.foundation.Canvas
 import com.musicreader.app.ui.common.SyllableBox
-import com.musicreader.app.ui.common.ChordLyricsLayout
+import com.musicreader.app.ui.common.SheetRowLayout
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.layout.positionInParent
@@ -357,11 +357,12 @@ private fun SyllableChordRow(
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        ChordLyricsLayout(
-            syllables = row.syllables,
-            chords = row.chords,
+        SheetRowLayout(
+            row = row,
             showChords = true,
+            showTab = false,
             showLyrics = true,
+            staff = {},
             wordGap = 10.dp,
             lineGap = 10.dp,
             onSyllableBoxes = { holder.boxes = it },
@@ -394,7 +395,7 @@ private fun SyllableChordRow(
                 )
             },
             chordContent = { placed ->
-                val chord = chordsById[placed.id] ?: return@ChordLyricsLayout
+                val chord = chordsById[placed.id] ?: return@SheetRowLayout
                 SyllableChordLabel(
                     chord = chord,
                     color = Color(settings.chordColor(chord.symbol).toInt()),

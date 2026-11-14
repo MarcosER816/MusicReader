@@ -31,6 +31,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import com.musicreader.core.model.Accidental
 import com.musicreader.core.model.ChordSymbol
 import com.musicreader.core.model.NoteLetter
+import com.musicreader.core.model.TabEvent
+import com.musicreader.core.model.Technique
 import com.musicreader.app.ui.song.WordUi
 import com.musicreader.core.model.Language
 
@@ -341,6 +343,57 @@ class SongViewModelTest {
         vm.moveChordToSyllable(section, chord.id, mi.id)
         advanceUntilIdle()
         assertEquals(mi.id, repo.songs.getValue("song").sectionContents.single().chords.single().syllableId)
+    }
+
+    @Test
+    fun tabNotesWithUndoRedoAndExport() = runTest(dispatcher) {
+        val repo = repoWithSong()
+        val vm = viewModel(repo)
+        advanceUntilIdle()
+        vm.addSection(SectionType.VERSE, 1, null) // 4 beats
+        advanceUntilIdle()
+        val section = ready(vm).sections.single().id
+        fun note(beat: Double, string: Int, fret: Int, technique: Technique = Technique.NONE) =
+            TabEvent("new", beat, 0.5, string, fret, 1, technique)
+
+        vm.addTabNote(section, note(0.1, 3, 5, Technique.HAMMER_ON))
+        vm.addTabNote(section, note(0.5, 3, 7))
+        advanceUntilIdle()
+        var editor = vm.tabEditorState(section).first()!!
+        assertEquals(listOf(0.0 to 5, 0.5 to 7), editor.notes.map { it.beat to it.fret })
+        assertEquals(true, editor.canUndo)
+        assertEquals(false, editor.canRedo)
+        val ids = editor.notes.map { it.id }.toSet()
+        assertEquals(2, ids.size) // each note gets its own id
+
+        val first = editor.notes[0]
+        vm.updateTabNote(section, first.copy(fret = 6, technique = Technique.BEND, bendQuarterTones = 2))
+        vm.moveTabNote(section, editor.notes[1].id, 2.2, 2)
+        advanceUntilIdle()
+        editor = vm.tabEditorState(section).first()!!
+        assertEquals(listOf(Triple(0.0, 3, 6), Triple(2.25, 2, 7)), editor.notes.map { Triple(it.beat, it.string, it.fret) })
+
+        vm.deleteTabNote(section, first.id)
+        advanceUntilIdle()
+        assertEquals(1, vm.tabEditorState(section).first()!!.notes.size)
+        vm.undoTab() // delete
+        vm.undoTab() // move
+        advanceUntilIdle()
+        editor = vm.tabEditorState(section).first()!!
+        assertEquals(listOf(0.0 to 3, 0.5 to 3), editor.notes.map { it.beat to it.string })
+        assertEquals(true, editor.canRedo)
+        vm.redoTab()
+        advanceUntilIdle()
+        assertEquals(2.25, vm.tabEditorState(section).first()!!.notes[1].beat)
+        assertEquals(listOf(6, 7), repo.songs.getValue("song").sectionContents.single().tab.map { it.fret })
+
+        val (tex, ascii) = vm.tabExport(section)!!
+        assertTrue("6.3{b (0 2)}" in tex, tex)
+        assertTrue(ascii.lines().any { it.startsWith("B|") && "7" in it }, ascii)
+
+        vm.clearTabHistory()
+        advanceUntilIdle()
+        assertEquals(false to false, vm.tabEditorState(section).first()!!.let { it.canUndo to it.canRedo })
     }
 
     @Test

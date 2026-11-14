@@ -304,3 +304,29 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
 - **Not inferred:** when a string in between is at a lower fret or muted, a bar there would be wrong, so the separate dots stay. Example: C6/9 x32233, finger 3 on A and B with D and G at fret 2.
 - **Tests:** Gm7 and C6/9, plus a screenshot of Gm7.
 
+## D-027 — Tabs (2026-11-14)
+
+- **One beat grid in rows with lyrics:** lyrics are laid out as text (D-025). Each visual line gets a piecewise-linear beat→x axis (`LineAxes`, `BeatAxis`, pure and tested) through every syllable at its beat (sung, or estimated from its place in the line), reaching the right edge at the line's end beat. Tab notes, grid chords and bar lines are placed on that axis, so a note at a syllable's beat sits under that syllable.
+  - Each visual line is drawn as chords, then a six-line tab staff, then lyrics.
+  - Rows without lyrics are one line with a linear axis.
+  - In the viewer, the staff appears only on lines with notes when Tabs is checked; in the tab editor every line has a staff.
+- **Grid:** tab notes snap to quarter beats (16th notes in 4/4). Lengths offered: ¼, ½, 1, 2, 4 beats. Frets 0–24. Fingers 0 (open) … 4 (no thumb, D-012). A note on the same beat and string is replaced.
+- **Techniques:** hammer-on h, pull-off p, slide up /, slide down \, bend ¼ / ½ / full, bend + release (same amounts), vibrato ~, natural harmonic <12>, artificial harmonic [12], muted x.
+  - Hammer-ons, pull-offs and slides lead to the next note on the same string, if it starts within one beat after the note ends.
+  - Bend amounts are stored in `bendQuarterTones` (1, 2, 4); harmonics store `harmonicFret` (= the fret).
+- **Drawing:**
+  - fret numbers in the finger's color, open strings with an outline;
+  - an arc with h/p to the target note, or a short arc when there is none;
+  - a diagonal line for slides, rising or falling;
+  - a curved arrow with the amount above for bends, a dashed arrow back down for a release;
+  - a wavy line over the note's length for vibrato;
+  - brackets for harmonics, x for muted notes.
+- **Editor:** "Tab" in a section's ⋮ menu.
+  - Tap a string on the staff to add a note; the sheet has a fret number pad, finger, length and technique. Typing 1 then 2 gives 12; 2 then 5 gives 5, because 25 is above 24.
+  - "Save + next" saves and opens the next note on the same string, right after this one.
+  - Tap a note to edit it, drag it to move it (beat and string), long-press it to delete it.
+  - Undo and redo cover tab edits while the editor is open.
+- **Export:** the editor's "Export" shows the section's tab with Copy and Share.
+  - alphaTex: `fret.string.duration`, chords of notes in parentheses, `r` rests, `|` bars; effects `{h}`, `{sl}` (or `{sou}`/`{sod}`), `{b (0 n)}`, `{b (0 n 0)}`, `{v}`, `{nh}`, `{ah}`, `x`.
+  - ASCII: a chord line, six lines high e to low E, one column per quarter beat, `|` bars; bends written as the fret they reach (8b10).
+
