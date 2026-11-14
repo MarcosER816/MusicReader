@@ -94,9 +94,10 @@ The curve is stored at most one point per 10 ms of the take. Because `t` is rela
 | Field | Type | Notes |
 |---|---|---|
 | id | String | |
-| beat | Double | snapped to a half-beat grid (multiples of 0.5) (D-009) |
+| beat | Double | snapped to a half-beat grid (multiples of 0.5) (D-009); for a chord on a syllable, that syllable's (estimated) start beat (D-025) |
 | symbol | `{ root: A..G, accidental: NONE \| SHARP \| FLAT, suffix: String, bass: Note? }` | e.g. Bb9 = root B, FLAT, "9"; color comes from the root letter only (D-011) |
 | voicingId | String | chosen shape in the chord dictionary: `key\|suffix\|index`, e.g. `Eb\|9\|0` (D-024) |
+| syllableId | String? | the main-voice syllable the chord is placed on (D-025); null for a chord on the beat grid |
 
 ## StrumPattern (one per SectionContent, D-008)
 

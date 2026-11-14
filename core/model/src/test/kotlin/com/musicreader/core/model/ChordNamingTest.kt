@@ -82,3 +82,95 @@ class ChordNamingTest {
         assertEquals(content, ChordOps.move(content, "missing", 1.0))
     }
 }
+
+class ChordOnSyllableTest {
+    private fun syl(id: String, text: String) = Syllable(id, text)
+
+    // 8 beats, two lines of 4 beats: "can-ta con" / "mi-go".
+    private val content = SectionContent(
+        id = "s",
+        lengthBeats = 8,
+        lyricLines = listOf(
+            LyricLine(
+                "l1",
+                text = "canta con",
+                words = listOf(
+                    Word("w1", "canta", listOf(syl("can", "can"), syl("ta", "ta"))),
+                    Word("w2", "con", listOf(syl("con", "con"))),
+                ),
+            ),
+            LyricLine("l2", text = "migo", words = listOf(Word("w3", "migo", listOf(syl("mi", "mi"), syl("go", "go"))))),
+        ),
+    )
+    private val ts = TimeSignature.FOUR_FOUR
+    private val c = ChordSymbol(NoteLetter.C)
+    private val g = ChordSymbol(NoteLetter.G)
+
+    @Test
+    fun syllableBeatIsEstimatedFromTheLineUntilSung() {
+        // Line 1 covers beats 0–4; "canta con" has 9 characters: ta at 3/9, con at 6/9.
+        assertEquals(0.0, ChordOps.syllableBeat(content, ts, "can"))
+        assertEquals(1.5, ChordOps.syllableBeat(content, ts, "ta")) // 4 × 3/9 = 1.33 → 1.5
+        assertEquals(2.5, ChordOps.syllableBeat(content, ts, "con")) // 4 × 6/9 = 2.67 → 2.5
+        assertEquals(4.0, ChordOps.syllableBeat(content, ts, "mi"))
+        assertNull(ChordOps.syllableBeat(content, ts, "nope"))
+        // Once sung, the syllable's own start beat counts.
+        val sung = content.copy(
+            lyricLines = content.lyricLines.map { l ->
+                l.copy(words = l.words.map { w -> w.copy(syllables = w.syllables.mapIndexed { i, s -> s.copy(startBeat = 0.5 + i, durationBeats = 1.0) }) })
+            },
+        )
+        assertEquals(0.5, ChordOps.syllableBeat(sung, ts, "can"))
+    }
+
+    @Test
+    fun chordsOnSyllablesAreDrawnAboveThemInTheirRow() {
+        var x = ChordOps.addOnSyllable(content, ts, "ta", c, "C|major|0", "c1")
+        x = ChordOps.addOnSyllable(x, ts, "go", g, "G|major|0", "g1")
+        assertEquals(listOf("ta" to 1.5, "go" to 6.0), x.chords.map { it.syllableId to it.beat })
+        val rows = SheetLayoutBuilder.rows(x, ts)
+        assertEquals(listOf("ta"), rows[0].chords.map { it.syllableId })
+        assertEquals(3.0 / 9, rows[0].chords.single().x, 1e-9)
+        assertEquals(listOf("go"), rows[1].chords.map { it.syllableId })
+        assertEquals(listOf("can", "ta", "con"), rows[0].syllables.map { it.id })
+        assertEquals(listOf(true, false, true), rows[0].syllables.map { it.startsWord })
+        // A second chord on the same syllable replaces the first.
+        x = ChordOps.addOnSyllable(x, ts, "ta", g, "G|major|1", "g2")
+        assertEquals(listOf("g2", "g1"), x.chords.map { it.id })
+    }
+
+    @Test
+    fun gridChordsInLyricRowsAreShownOverTheNearestSyllable() {
+        val x = ChordOps.add(content, 2.5, c, "C|major|0", "c")
+        val row = SheetLayoutBuilder.rows(x, ts)[0]
+        assertEquals("con", row.chords.single().syllableId)
+        assertNull(x.chords.single().syllableId)
+    }
+
+    @Test
+    fun moveToAnotherSyllableAndBackToTheGrid() {
+        var x = ChordOps.addOnSyllable(content, ts, "can", c, "C|major|0", "c")
+        x = ChordOps.addOnSyllable(x, ts, "mi", g, "G|major|0", "g")
+        x = ChordOps.moveToSyllable(x, ts, "c", "mi") // onto G's syllable: replaces it
+        assertEquals(listOf("c" to "mi"), x.chords.map { it.id to it.syllableId })
+        assertEquals(4.0, x.chords.single().beat)
+        x = ChordOps.move(x, "c", 7.2) // dragged on the grid: no longer on a syllable
+        assertEquals(listOf(7.0 to null), x.chords.map { it.beat to it.syllableId })
+    }
+
+    @Test
+    fun realignFollowsLyricChanges() {
+        var x = ChordOps.addOnSyllable(content, ts, "con", c, "C|major|0", "c")
+        x = ChordOps.addOnSyllable(x, ts, "go", g, "G|major|0", "g")
+        // The first line loses "canta": "con" moves to the line start; "go" is deleted.
+        val edited = x.copy(
+            lyricLines = listOf(
+                x.lyricLines[0].copy(text = "con", words = listOf(x.lyricLines[0].words[1])),
+                x.lyricLines[1].copy(text = "mi", words = listOf(Word("w3", "mi", listOf(syl("mi", "mi"))))),
+            ),
+        )
+        val realigned = ChordOps.realign(edited, ts)
+        assertEquals(listOf(Triple("c", 0.0, "con"), Triple("g", 6.0, null)), realigned.chords.map { Triple(it.id, it.beat, it.syllableId) })
+        assertEquals(realigned, ChordOps.realign(realigned, ts))
+    }
+}

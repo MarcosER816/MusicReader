@@ -1,6 +1,15 @@
 package com.musicreader.app.ui.chords
 
 import androidx.compose.foundation.Canvas
+import com.musicreader.app.ui.common.SyllableBox
+import com.musicreader.app.ui.common.ChordLyricsLayout
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -68,6 +77,7 @@ import kotlin.math.roundToInt
 /** What the chord picker is open for. */
 private sealed interface PickerTarget {
     data class New(val beat: Double) : PickerTarget
+    data class NewOnSyllable(val syllableId: String) : PickerTarget
     data class Existing(val chord: ChordEvent) : PickerTarget
 }
 
@@ -149,6 +159,8 @@ fun ChordEditorScreen(viewModel: SongViewModel, sectionId: String, onBack: () ->
                     state = s,
                     settings = settings,
                     onTapBeat = { beat -> picker = PickerTarget.New(ChordOps.snap(beat, s.lengthBeats)) },
+                    onTapSyllable = { syllableId -> picker = PickerTarget.NewOnSyllable(syllableId) },
+                    onMoveChordToSyllable = { chord, syllableId -> viewModel.moveChordToSyllable(s.sectionId, chord.id, syllableId) },
                     onTapChord = { picker = PickerTarget.Existing(it) },
                     onDeleteChord = { viewModel.deleteChord(s.sectionId, it.id) },
                     onMoveChord = { chord, beat -> viewModel.moveChord(s.sectionId, chord.id, beat) },
@@ -172,6 +184,7 @@ fun ChordEditorScreen(viewModel: SongViewModel, sectionId: String, onBack: () ->
                 picker = null
                 when (target) {
                     is PickerTarget.New -> viewModel.addChord(sectionId2, target.beat, symbol, voicingId)
+                    is PickerTarget.NewOnSyllable -> viewModel.addChordOnSyllable(sectionId2, target.syllableId, symbol, voicingId)
                     is PickerTarget.Existing -> viewModel.changeChord(sectionId2, target.chord.id, symbol, voicingId)
                 }
             },
@@ -189,10 +202,16 @@ private fun ChordRow(
     state: ChordEditorUiState,
     settings: AppSettings,
     onTapBeat: (Double) -> Unit,
+    onTapSyllable: (String) -> Unit,
     onTapChord: (ChordEvent) -> Unit,
     onDeleteChord: (ChordEvent) -> Unit,
     onMoveChord: (ChordEvent, Double) -> Unit,
+    onMoveChordToSyllable: (ChordEvent, String) -> Unit,
 ) {
+    if (row.syllables.isNotEmpty()) {
+        SyllableChordRow(row, state, settings, onTapSyllable, onTapChord, onDeleteChord, onMoveChordToSyllable)
+        return
+    }
     val end = row.startBeat + row.lengthBeats
     val last = rowIndex == rowCount - 1
     val chords = state.chords.filter { it.beat >= row.startBeat && (it.beat < end || (last && it.beat <= end)) }
@@ -304,6 +323,144 @@ private fun DraggableChord(
             fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+        )
+    }
+}
+
+/** Where the syllables of a row were laid out; read when a dragged chord is dropped. */
+private class BoxHolder {
+    var boxes: List<SyllableBox> = emptyList()
+}
+
+/**
+ * A row with lyrics (D-025): the line as text with each chord right above its syllable.
+ * Tap a syllable to put a chord on it (or change the chord above it), drag a chord onto another
+ * syllable to move it, tap it to change it, long-press it to delete it.
+ */
+@Composable
+private fun SyllableChordRow(
+    row: SheetRow,
+    state: ChordEditorUiState,
+    settings: AppSettings,
+    onTapSyllable: (String) -> Unit,
+    onTapChord: (ChordEvent) -> Unit,
+    onDeleteChord: (ChordEvent) -> Unit,
+    onMoveChordToSyllable: (ChordEvent, String) -> Unit,
+) {
+    val holder = remember { BoxHolder() }
+    val chordsById = state.chords.associateBy { it.id }
+    val chordOnSyllable = row.chords.associateBy { it.syllableId }
+    val firstBar = (row.startBeat / state.beatsPerBar).toInt() + 1
+    Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+        Text(
+            stringResource(R.string.bar_number, firstBar),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ChordLyricsLayout(
+            syllables = row.syllables,
+            chords = row.chords,
+            showChords = true,
+            showLyrics = true,
+            wordGap = 10.dp,
+            lineGap = 10.dp,
+            onSyllableBoxes = { holder.boxes = it },
+            syllableContent = { syllable ->
+                val existing = chordOnSyllable[syllable.id]?.let { chordsById[it.id] }
+                val description = stringResource(R.string.syllable_description, syllable.text)
+                Text(
+                    syllable.text,
+                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 19.sp),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .semantics { contentDescription = description }
+                        .pointerInput(syllable.id, existing) {
+                            detectTapGestures {
+                                if (existing != null) onTapChord(existing) else onTapSyllable(syllable.id)
+                            }
+                        }
+                        .drawBehind {
+                            // A dotted underline marks every syllable as a place for a chord.
+                            val y = size.height - 1.dp.toPx()
+                            drawLine(
+                                Color.Gray,
+                                Offset(0f, y),
+                                Offset(size.width, y),
+                                strokeWidth = 1.dp.toPx(),
+                                pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 4f)),
+                            )
+                        }
+                        .padding(bottom = 3.dp),
+                )
+            },
+            chordContent = { placed ->
+                val chord = chordsById[placed.id] ?: return@ChordLyricsLayout
+                SyllableChordLabel(
+                    chord = chord,
+                    color = Color(settings.chordColor(chord.symbol).toInt()),
+                    onTap = { onTapChord(chord) },
+                    onLongPress = { onDeleteChord(chord) },
+                    onDrop = { x, y ->
+                        val target = holder.boxes.minByOrNull { b ->
+                            val cx = (b.left + b.right) / 2f
+                            val cy = (b.top + b.bottom) / 2f
+                            kotlin.math.abs(cx - x) + 2 * kotlin.math.abs(cy - y)
+                        }
+                        if (target != null) onMoveChordToSyllable(chord, target.syllableId)
+                    },
+                )
+            },
+        )
+    }
+}
+
+/** A chord over a syllable: tap to change, long-press to delete, drag to another syllable. */
+@Composable
+private fun SyllableChordLabel(
+    chord: ChordEvent,
+    color: Color,
+    onTap: () -> Unit,
+    onLongPress: () -> Unit,
+    onDrop: (x: Float, y: Float) -> Unit,
+) {
+    var offset by remember(chord.id, chord.syllableId) { mutableStateOf(Offset.Zero) }
+    var placed by remember { mutableStateOf(Offset.Zero) }
+    var labelSize by remember { mutableStateOf(IntSize.Zero) }
+    val tap by rememberUpdatedState(onTap)
+    val longPress by rememberUpdatedState(onLongPress)
+    val drop by rememberUpdatedState(onDrop)
+    val description = stringResource(R.string.chord_label_description, chord.symbol.toString())
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier
+            .onPlaced { placed = it.positionInParent() }
+            .onSizeChanged { labelSize = it }
+            .offset { IntOffset(offset.x.roundToInt(), offset.y.roundToInt()) }
+            .zIndex(if (offset != Offset.Zero) 1f else 0f)
+            .semantics { contentDescription = description }
+            .pointerInput(chord.id) { detectTapGestures(onTap = { tap() }, onLongPress = { longPress() }) }
+            .pointerInput(chord.id, chord.syllableId) {
+                detectDragGestures(
+                    onDragEnd = {
+                        // Drop point: the label's left edge, just below it (where its syllable is).
+                        drop(placed.x + offset.x + 4f, placed.y + offset.y + labelSize.height * 1.5f)
+                        offset = Offset.Zero
+                    },
+                    onDragCancel = { offset = Offset.Zero },
+                    onDrag = { change, amount ->
+                        change.consume()
+                        offset += amount
+                    },
+                )
+            },
+    ) {
+        Text(
+            chord.symbol.toString(),
+            color = color,
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
         )
     }
 }

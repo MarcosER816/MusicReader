@@ -135,20 +135,20 @@ object ChordOps {
         return snapped.coerceIn(0.0, maxOf(0.0, last)) + 0.0
     }
 
-    /** Adds a chord at [beat] (snapped); a chord already on that beat is replaced. */
+    /** Adds a grid chord at [beat] (snapped); a grid chord already on that beat is replaced. */
     fun add(content: SectionContent, beat: Double, symbol: ChordSymbol, voicingId: String, id: String): SectionContent {
         val at = snap(beat, content.lengthBeats)
-        val others = content.chords.filter { it.beat != at }
+        val others = content.chords.filter { it.beat != at || it.syllableId != null }
         return content.copy(chords = (others + ChordEvent(id, at, symbol, voicingId)).sortedBy { it.beat })
     }
 
-    /** Moves a chord to [beat] (snapped), replacing a chord already there. */
+    /** Moves a chord to grid beat [beat] (snapped), replacing a grid chord already there. */
     fun move(content: SectionContent, chordId: String, beat: Double): SectionContent {
         val chord = content.chords.firstOrNull { it.id == chordId } ?: return content
         val at = snap(beat, content.lengthBeats)
-        if (at == chord.beat) return content
-        val others = content.chords.filter { it.id != chordId && it.beat != at }
-        return content.copy(chords = (others + chord.copy(beat = at)).sortedBy { it.beat })
+        if (at == chord.beat && chord.syllableId == null) return content
+        val others = content.chords.filter { it.id != chordId && (it.beat != at || it.syllableId != null) }
+        return content.copy(chords = (others + chord.copy(beat = at, syllableId = null)).sortedBy { it.beat })
     }
 
     /** Changes the chord name and shape, keeping its beat. */
@@ -157,4 +157,56 @@ object ChordOps {
 
     fun delete(content: SectionContent, chordId: String): SectionContent =
         content.copy(chords = content.chords.filterNot { it.id == chordId })
+
+    /**
+     * The beat of a main-voice syllable: its start beat when sung, otherwise estimated from its
+     * place in the line (the line's share of the section, D-023), snapped to the grid. Null when
+     * the syllable is not in the section.
+     */
+    fun syllableBeat(content: SectionContent, timeSignature: TimeSignature, syllableId: String): Double? {
+        val rows = SheetLayoutBuilder.rows(content, timeSignature)
+        for (row in rows) {
+            val syllable = row.syllables.firstOrNull { it.id == syllableId } ?: continue
+            return snap(row.startBeat + syllable.x * row.lengthBeats, content.lengthBeats)
+        }
+        return null
+    }
+
+    /** Places a chord on a syllable (D-025); a chord already on that syllable is replaced. */
+    fun addOnSyllable(
+        content: SectionContent,
+        timeSignature: TimeSignature,
+        syllableId: String,
+        symbol: ChordSymbol,
+        voicingId: String,
+        id: String,
+    ): SectionContent {
+        val beat = syllableBeat(content, timeSignature, syllableId) ?: return content
+        val others = content.chords.filter { it.syllableId != syllableId }
+        val chord = ChordEvent(id, beat, symbol, voicingId, syllableId)
+        return content.copy(chords = (others + chord).sortedBy { it.beat })
+    }
+
+    /** Moves a chord onto another syllable, replacing a chord already there. */
+    fun moveToSyllable(content: SectionContent, timeSignature: TimeSignature, chordId: String, syllableId: String): SectionContent {
+        val chord = content.chords.firstOrNull { it.id == chordId } ?: return content
+        if (chord.syllableId == syllableId) return content
+        val beat = syllableBeat(content, timeSignature, syllableId) ?: return content
+        val others = content.chords.filter { it.id != chordId && it.syllableId != syllableId }
+        return content.copy(chords = (others + chord.copy(beat = beat, syllableId = syllableId)).sortedBy { it.beat })
+    }
+
+    /**
+     * Brings the beats of chords on syllables up to date (after lyrics changed or were sung).
+     * A chord whose syllable no longer exists keeps its beat and becomes a grid chord.
+     */
+    fun realign(content: SectionContent, timeSignature: TimeSignature): SectionContent {
+        if (content.chords.none { it.syllableId != null }) return content
+        val chords = content.chords.map { c ->
+            val id = c.syllableId ?: return@map c
+            val beat = syllableBeat(content, timeSignature, id)
+            if (beat == null) c.copy(syllableId = null) else c.copy(beat = beat)
+        }.sortedBy { it.beat }
+        return if (chords == content.chords) content else content.copy(chords = chords)
+    }
 }

@@ -79,6 +79,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.musicreader.app.R
 import com.musicreader.app.ui.common.AppIcon
 import com.musicreader.app.ui.common.AppIcons
+import com.musicreader.app.ui.common.ChordLyricsLayout
 import com.musicreader.app.ui.common.LyricLane
 import com.musicreader.app.ui.common.PlacedLane
 import com.musicreader.app.ui.common.sectionDisplayName
@@ -321,39 +322,54 @@ private fun SheetRowView(
 ) {
     val barColor = MaterialTheme.colorScheme.outlineVariant
     val scale = state.fontScale
+    val lyricStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp * scale)
+    val lyricColor = MaterialTheme.colorScheme.onSurface
+    val textLayout = row.syllables.isNotEmpty()
     Column(
         Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp)
             .drawBehind {
-                // Bar lines across the whole row.
-                row.barLines.forEach { x ->
-                    val px = (x * size.width).toFloat()
-                    drawLine(barColor, Offset(px, 0f), Offset(px, size.height), strokeWidth = 1.dp.toPx())
+                // Bar lines only where items are placed by beat (rows without lyrics).
+                if (!textLayout) {
+                    row.barLines.forEach { x ->
+                        val px = (x * size.width).toFloat()
+                        drawLine(barColor, Offset(px, 0f), Offset(px, size.height), strokeWidth = 1.dp.toPx())
+                    }
                 }
             },
     ) {
-        if (state.layers.chords && row.chords.isNotEmpty()) {
-            PlacedLane(row.chords.map { it.x }) {
-                row.chords.forEach { chord ->
+        val showTab = state.layers.tab && row.tab.isNotEmpty()
+        if (textLayout && (state.layers.chords || state.layers.lyrics)) {
+            // Lyrics as text with every chord right above its syllable (D-025); the tab lane in between.
+            ChordLyricsLayout(
+                syllables = row.syllables,
+                chords = row.chords,
+                showChords = state.layers.chords,
+                showLyrics = state.layers.lyrics,
+                syllableContent = { Text(it.text, style = lyricStyle, color = lyricColor, maxLines = 1) },
+                chordContent = { chord ->
                     ChordLabel(chord, Color(state.chordColor(chord.symbol).toInt()), scale, glistenPhase, onChordLongPress)
+                },
+                middle = if (showTab) ({ TabLane(row.tab, state, scale) }) else null,
+            )
+        } else {
+            if (state.layers.chords && row.chords.isNotEmpty()) {
+                PlacedLane(row.chords.map { it.x }) {
+                    row.chords.forEach { chord ->
+                        ChordLabel(chord, Color(state.chordColor(chord.symbol).toInt()), scale, glistenPhase, onChordLongPress)
+                    }
                 }
             }
+            if (showTab) TabLane(row.tab, state, scale)
+            if (state.layers.lyrics && row.lyrics.isNotEmpty()) LyricLane(row.lyrics, lyricStyle, lyricColor)
         }
-        if (state.layers.tab && row.tab.isNotEmpty()) {
-            TabLane(row.tab, state, scale)
-        }
-        if (state.layers.lyrics) {
-            if (row.lyrics.isNotEmpty()) {
-                LyricLane(row.lyrics, MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp * scale), MaterialTheme.colorScheme.onSurface)
-            }
-            if (row.secondLyrics.isNotEmpty()) {
-                LyricLane(
-                    row.secondLyrics,
-                    MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp * scale, fontStyle = FontStyle.Italic),
-                    MaterialTheme.colorScheme.secondary,
-                )
-            }
+        if (state.layers.lyrics && row.secondLyrics.isNotEmpty()) {
+            Text(
+                row.secondLyrics.joinToString(" ") { it.text },
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp * scale, fontStyle = FontStyle.Italic),
+                color = MaterialTheme.colorScheme.secondary,
+            )
         }
     }
 }

@@ -312,6 +312,38 @@ class SongViewModelTest {
     }
 
     @Test
+    fun chordsOnSyllablesFollowLyricEdits() = runTest(dispatcher) {
+        val repo = repoWithSong() // Spanish
+        val vm = viewModel(repo)
+        advanceUntilIdle()
+        vm.addSection(SectionType.CHORUS, 2, null) // 8 beats
+        advanceUntilIdle()
+        val section = ready(vm).sections.single().id
+        vm.setMainLyrics(section, "canta conmigo")
+        advanceUntilIdle()
+        val ta = vm.chordEditorState(section).first()!!.rows.single().syllables[1]
+        assertEquals("ta", ta.text)
+        vm.addChordOnSyllable(section, ta.id, ChordSymbol(NoteLetter.A, suffix = "m"), "A|minor|0")
+        advanceUntilIdle()
+        var chord = vm.chordEditorState(section).first()!!.chords.single()
+        assertEquals(ta.id, chord.syllableId)
+        // "canta conmigo" is 13 characters over 8 beats; "ta" starts at character 3 → 1.85 → 2.0.
+        assertEquals(2.0, chord.beat)
+
+        // Words are added before "canta": the chord stays on "ta" and its beat moves.
+        vm.setMainLyrics(section, "oh oh canta conmigo")
+        advanceUntilIdle()
+        chord = vm.chordEditorState(section).first()!!.chords.single()
+        assertEquals(ta.id, chord.syllableId)
+        assertEquals(4.0, chord.beat) // character 9 of 19 → 3.79 → 4.0
+
+        val mi = vm.chordEditorState(section).first()!!.rows.single().syllables.first { it.text == "mi" }
+        vm.moveChordToSyllable(section, chord.id, mi.id)
+        advanceUntilIdle()
+        assertEquals(mi.id, repo.songs.getValue("song").sectionContents.single().chords.single().syllableId)
+    }
+
+    @Test
     fun newSongOpensSettingsOnlyOnce() = runTest(dispatcher) {
         val vm = viewModel(repoWithSong(), openSettings = true)
         assertEquals(true, vm.consumeOpenSettingsRequest())

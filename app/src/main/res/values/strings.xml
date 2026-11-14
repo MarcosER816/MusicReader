@@ -132,9 +132,10 @@
     <!-- Chords -->
     <string name="chords">Chords</string>
     <string name="chords_of">Chords · %1$s</string>
-    <string name="chord_editor_hint">Tap the grid to add a chord: it snaps to the nearest half beat. Drag a chord to move it, tap it to change it, long-press it to delete it. The lyrics below show which word each chord falls on.</string>
+    <string name="chord_editor_hint">Tap a syllable to put a chord on it; the chord stays right above that syllable. Drag a chord onto another syllable to move it, tap it to change it, long-press it to delete it. Rows without lyrics have a half-beat grid: tap the grid to add a chord there.</string>
     <string name="chord_deleted">Chord %1$s deleted</string>
     <string name="chord_grid_description">Chord grid from bar %1$d</string>
+    <string name="syllable_description">Syllable %1$s</string>
     <string name="bar_number">Bar %1$d</string>
     <string name="chord_root_label">Root</string>
     <string name="chord_type_label">Type</string>

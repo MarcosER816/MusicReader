@@ -281,3 +281,19 @@ Checked again for Stage 0 against Google Maven, Maven Central, services.gradle.o
   - Section cards list their chords.
 - **Viewer:** a long-press on a chord shows the chosen shape's diagram above root, type and bass.
 
+## D-025 — Chords on syllables (2026-11-14, Mark's Stage 4 test)
+
+Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllable sits under a chord was "not totally" clear.
+
+- **In rows with lyrics, a chord is placed on a syllable.** `ChordEvent.syllableId` names the main-voice syllable. It is a new optional field, so schemaVersion stays 1.
+- **Drawn above its syllable:** the chord is always drawn right above its syllable, in the chord editor and in the viewer.
+- **Lyrics as text:** in rows with lyrics, the line is laid out as normal text (syllables of a word together, a gap between words, wrapping at word boundaries), with each chord above its syllable. A chord that would overlap the previous one moves right just enough. The tab lane stays between chords and lyrics; bar lines are only drawn in rows without lyrics.
+- **Beat of a chord on a syllable:** the syllable's start beat once sung (Stage 8). Until then it is estimated from the syllable's character position in its line (the line's share of the section, D-023), snapped to the half-beat grid.
+  - The beat is updated after every edit, so chords follow their syllables when lyrics, section lengths or the time signature change.
+  - If the syllable is deleted, the chord keeps its beat and becomes a grid chord.
+- **Rows without lyrics** (intros, solos) keep the half-beat grid (D-009). A grid chord in a row with lyrics is shown above the syllable nearest to its beat; dragging it onto a syllable places it there.
+- **Chord editor:**
+  - Tap a syllable (each has a dotted underline) to put a chord on it, or to change the chord above it.
+  - Drag a chord onto another syllable to move it; tap a chord to change it; long-press to delete (Undo).
+- **Demo song:** its chords in Verse and Chorus sit on syllables.
+

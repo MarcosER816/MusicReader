@@ -167,6 +167,23 @@ class AppFlowRobolectricTest {
         assertEquals(listOf("Canta"), chorus.lyricLines[0].words[0].syllables.map { it.text })
         assertEquals(true, chorus.lyricLines[0].words[0].syllableOverride)
 
+        // A chord on a syllable: in the chord editor, tap "ta" and pick a chord.
+        rule.onAllNodesWithContentDescription("More options")[0].performClick()
+        click("Chords")
+        waitForText("Chords · Chorus")
+        rule.onAllNodesWithContentDescription("Syllable ta")[0].performClick()
+        waitForText("Use this shape")
+        click("A") // root A, major
+        scrollTo("Use this shape").performClick()
+        waitForTextGone("Use this shape")
+        rule.onAllNodesWithContentDescription("Chord A")[0].assertIsDisplayed()
+        rule.onNodeWithContentDescription("Back").performClick()
+        letAutoSaveRun()
+        val withChord = runBlocking { repo.load(song.id) }!!
+        val chorusChords = withChord.sectionContents.first { c -> c.id == withChord.sections[0].contentId }.chords
+        val taId = chorus.lyricLines[0].words[0].syllables[0].id // "Canta" was merged by hand above
+        kotlin.test.assertTrue(chorusChords.any { it.symbol.toString() == "A" && it.syllableId != null }, "$chorusChords $taId")
+
         // The manual split survives recreating the activity.
         rule.activityRule.scenario.recreate()
         waitForText("Canta conmigo")

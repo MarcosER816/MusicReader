@@ -65,4 +65,4 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–3 are as M
 - Enharmonics and dictionary names (`ChordNaming`), sharps/flats setting, chord placement on the half-beat grid (`ChordOps`).
 - Fretboard diagram (Canvas), chord picker (root → type → every shape), chord editor per section (tap/drag/tap/long-press), diagram in the viewer's long-press sheet.
 - Tests: dictionary (all shapes, midi = tuning + fret, enharmonics, voicing ids), naming and placement, ViewModel chord edits, demo chords resolve to their shapes, UI flow places a chord, screenshots of open C, barre F, Bb9, Cmaj7, D#. Decision D-024.
-
+- Round 2 after Mark's device test: chords on syllables (`ChordEvent.syllableId`), lyrics laid out as text with each chord right above its syllable, tap a syllable to add, drag onto another syllable to move, chords follow lyric edits (D-025).

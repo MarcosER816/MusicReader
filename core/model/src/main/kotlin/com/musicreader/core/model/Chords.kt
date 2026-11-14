@@ -31,15 +31,23 @@ data class ChordSymbol(
         root.name + accidental.symbol + suffix + (bass?.let { "/$it" } ?: "")
 }
 
-/** A chord placed in a section, on a half-beat grid (D-009). */
+/**
+ * A chord placed in a section. In rows with lyrics it is placed on a syllable ([syllableId],
+ * D-025) and drawn right above it; elsewhere it sits on the half-beat grid (D-009).
+ */
 @Serializable
 data class ChordEvent(
     val id: String,
-    /** Beat relative to the section start; a multiple of 0.5. */
+    /**
+     * Beat relative to the section start; a multiple of 0.5. For a chord on a syllable this is the
+     * syllable's start beat, estimated from its place in the line until the syllable is sung.
+     */
     val beat: Double,
     val symbol: ChordSymbol,
     /** Id of the chosen voicing in the chord dictionary (frets and fingers). */
     val voicingId: String,
+    /** The main-voice syllable the chord is placed on, or null for a chord on the beat grid. */
+    val syllableId: String? = null,
 )
 
 @Serializable

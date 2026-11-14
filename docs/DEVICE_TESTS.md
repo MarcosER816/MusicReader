@@ -97,17 +97,16 @@ How: Library ⋮ → "Load demo song (debug)" → "View".
 
 ### Stage 4 — chords
 APK: `MusicReader-stage-04-chords-55.apk` or later (PR [#6](https://github.com/MarcosER816/MusicReader/pull/6), branch `stage-04-chords`)
-Date tested:
+Date tested: 2026-11-14 (round 1, APK run 55)
 Audio route: not relevant (no audio yet)
 
 How: a song's Sections → ⋮ on a section → "Chords". Viewer: "View", long-press a chord.
 
 | # | Check | Expected | Result |
 |---|---|---|---|
-| 1 | Look up ten chords you really use | All there, with the shapes you play | |
-| 2 | Finger numbers and colors on the diagrams | Correct | |
-| 3 | Tap a beat to add a chord | Lands on the tapped beat (half-beat grid) | |
-| 4 | Lyrics under the chord grid | Clear which syllable/word is under each chord | |
-| 5 | Viewer long-press | Shows the chosen shape | |
-| 6 | Update over Stage 3 | No data lost, no crash | |
-
+| 1 | Look up ten chords you really use | All there, with the shapes you play | OK |
+| 2 | Finger numbers and colors on the diagrams | Correct | OK |
+| 3 | Tap a beat to add a chord | Lands on the tapped beat (half-beat grid) | Round 1: wants chords per syllable → round 2 (D-025) |
+| 4 | Lyrics under the chord grid | Clear which syllable/word is under each chord | Round 1: not totally clear → round 2 (D-025) |
+| 5 | Viewer long-press | Shows the chosen shape | OK |
+| 6 | Update over Stage 3 | No data lost, no crash | OK; change wanted: chords per syllable |

@@ -133,9 +133,10 @@
     <!-- Acordes -->
     <string name="chords">Acordes</string>
     <string name="chords_of">Acordes · %1$s</string>
-    <string name="chord_editor_hint">Toca la cuadrícula para añadir un acorde: se ajusta al medio tiempo más cercano. Arrastra un acorde para moverlo, tócalo para cambiarlo y mantenlo pulsado para borrarlo. La letra de abajo muestra en qué palabra cae cada acorde.</string>
+    <string name="chord_editor_hint">Toca una sílaba para ponerle un acorde; el acorde queda justo encima de esa sílaba. Arrastra un acorde a otra sílaba para moverlo, tócalo para cambiarlo y mantenlo pulsado para borrarlo. Las filas sin letra tienen una cuadrícula de medio tiempo: toca la cuadrícula para añadir un acorde ahí.</string>
     <string name="chord_deleted">Acorde %1$s borrado</string>
     <string name="chord_grid_description">Cuadrícula de acordes desde el compás %1$d</string>
+    <string name="syllable_description">Sílaba %1$s</string>
     <string name="bar_number">Compás %1$d</string>
     <string name="chord_root_label">Fundamental</string>
     <string name="chord_type_label">Tipo</string>

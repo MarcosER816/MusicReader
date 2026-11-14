@@ -356,6 +356,14 @@ class SongViewModel(
     fun addChord(sectionId: String, beat: Double, symbol: ChordSymbol, voicingId: String) =
         editContent(sectionId) { _, content -> ChordOps.add(content, beat, symbol, voicingId, ids.newId()) }
 
+    /** Places a chord on a main-voice syllable (D-025); a chord already on it is replaced. */
+    fun addChordOnSyllable(sectionId: String, syllableId: String, symbol: ChordSymbol, voicingId: String) =
+        editContent(sectionId) { s, content -> ChordOps.addOnSyllable(content, s.timeSignature, syllableId, symbol, voicingId, ids.newId()) }
+
+    /** Moves a chord onto another syllable. */
+    fun moveChordToSyllable(sectionId: String, chordId: String, syllableId: String) =
+        editContent(sectionId) { s, content -> ChordOps.moveToSyllable(content, s.timeSignature, chordId, syllableId) }
+
     /** Moves a chord to [beat] (snapped). */
     fun moveChord(sectionId: String, chordId: String, beat: Double) =
         editContent(sectionId) { _, content -> ChordOps.move(content, chordId, beat) }
@@ -405,7 +413,13 @@ class SongViewModel(
     // --- Internals ------------------------------------------------------------------------------
 
     private fun edit(change: (Song, Long) -> Song) {
-        song.update { current -> current?.let { change(it, clock()) } }
+        song.update { current -> current?.let { realignChords(change(it, clock())) } }
+    }
+
+    /** Chords on syllables follow their syllables when lyrics, lengths or the time signature change (D-025). */
+    private fun realignChords(s: Song): Song {
+        val contents = s.sectionContents.map { ChordOps.realign(it, s.timeSignature) }
+        return if (contents == s.sectionContents) s else s.copy(sectionContents = contents)
     }
 
     /**

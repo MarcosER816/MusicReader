@@ -30,6 +30,18 @@ class DemoSongTest {
     }
 
     @Test
+    fun chordsInLyricSectionsSitOnTheIntendedSyllables() {
+        val texts = song.sectionContents.flatMap { c ->
+            val syllables = c.lyricLines.flatMap { l -> l.words.flatMap { it.syllables } }.associateBy { it.id }
+            c.chords.mapNotNull { ch -> ch.syllableId?.let { "${ch.symbol}@${syllables.getValue(it).text}" } }
+        }
+        assertEquals(
+            listOf("C@road", "Em@neath", "F@We", "G7@til", "Cmaj7@Shine", "D#@on,", "Bb9@And", "Am@sing", "D/F#@me"),
+            texts,
+        )
+    }
+
+    @Test
     fun isAValidSongThatLaysOut() {
         assertEquals(song, SongJson.decode(SongJson.encode(song)))
         val layout = SheetLayoutBuilder.build(song)
