@@ -10,6 +10,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.musicreader.app.ui.about.AboutScreen
+import com.musicreader.app.ui.chords.ChordEditorScreen
 import com.musicreader.app.ui.library.LibraryScreen
 import com.musicreader.app.ui.song.LyricsScreen
 import com.musicreader.app.ui.song.SectionsScreen
@@ -41,6 +42,9 @@ data class LyricsRoute(val sectionId: String)
 @Serializable
 object ViewerRoute
 
+@Serializable
+data class ChordsRoute(val sectionId: String)
+
 @Composable
 fun MusicReaderNavHost(navController: NavHostController = rememberNavController()) {
     NavHost(navController = navController, startDestination = LibraryRoute) {
@@ -63,6 +67,7 @@ fun MusicReaderNavHost(navController: NavHostController = rememberNavController(
                     onOpenSettings = { navController.navigate(SongSettingsRoute) },
                     onOpenLyrics = { sectionId -> navController.navigate(LyricsRoute(sectionId)) },
                     onOpenViewer = { navController.navigate(ViewerRoute) },
+                    onOpenChords = { sectionId -> navController.navigate(ChordsRoute(sectionId)) },
                 )
             }
             composable<SongSettingsRoute> { entry ->
@@ -73,8 +78,19 @@ fun MusicReaderNavHost(navController: NavHostController = rememberNavController(
             composable<ViewerRoute> { entry ->
                 val songEntry = remember(entry) { navController.getBackStackEntry<SongRoute>() }
                 val songViewModel: SongViewModel = viewModel(songEntry, factory = SongViewModel.Factory)
-                val viewerViewModel: ViewerViewModel = viewModel(factory = ViewerViewModel.factory(songViewModel.currentSong))
+                val viewerViewModel: ViewerViewModel = viewModel(
+                    factory = ViewerViewModel.factory(songViewModel.currentSong, songViewModel.chordDictionary),
+                )
                 ViewerScreen(viewModel = viewerViewModel, onBack = { navController.popBackStack() })
+            }
+            composable<ChordsRoute> { entry ->
+                val songEntry = remember(entry) { navController.getBackStackEntry<SongRoute>() }
+                val viewModel: SongViewModel = viewModel(songEntry, factory = SongViewModel.Factory)
+                ChordEditorScreen(
+                    viewModel = viewModel,
+                    sectionId = entry.toRoute<ChordsRoute>().sectionId,
+                    onBack = { navController.popBackStack() },
+                )
             }
             composable<LyricsRoute> { entry ->
                 val songEntry = remember(entry) { navController.getBackStackEntry<SongRoute>() }

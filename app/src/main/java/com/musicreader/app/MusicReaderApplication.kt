@@ -6,6 +6,8 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import com.musicreader.core.data.ChordDictionary
+import com.musicreader.core.data.ChordDictionaryRepository
 import com.musicreader.core.data.DataStoreSettingsRepository
 import com.musicreader.core.data.FileSongRepository
 import com.musicreader.core.data.SettingsRepository
@@ -13,6 +15,10 @@ import com.musicreader.core.data.SongRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import java.io.File
 
 /** Objects shared by the whole app (manual dependency injection). */
@@ -26,6 +32,12 @@ class AppContainer(application: Application) {
     )
 
     val settingsRepository: SettingsRepository = DataStoreSettingsRepository(application.settingsDataStore)
+
+    private val chordDictionaryRepository = ChordDictionaryRepository({ application.assets.open(ChordDictionaryRepository.ASSET_PATH) })
+
+    /** The chord dictionary, loaded once in the background at start; null until it is ready. */
+    val chordDictionary: StateFlow<ChordDictionary?> = flow { emit(chordDictionaryRepository.dictionary()) }
+        .stateIn(appScope, SharingStarted.Eagerly, null)
 }
 
 private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")

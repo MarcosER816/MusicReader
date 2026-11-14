@@ -7,7 +7,10 @@ import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -120,6 +123,19 @@ class AppFlowRobolectricTest {
         waitForText("Chorus")
         text("Verse").assertIsDisplayed()
 
+        // Chords: open the Chorus chord editor from its menu, tap the grid near bar 1, pick C major.
+        rule.onAllNodesWithContentDescription("More options")[0].performClick()
+        click("Chords")
+        waitForText("Chords · Chorus")
+        rule.onAllNodesWithContentDescription("Chord grid from bar 1")[0].performTouchInput { click(Offset(2f, centerY)) }
+        waitForText("Use this shape")
+        scrollTo("Use this shape").performClick()
+        waitForTextGone("Use this shape")
+        rule.onAllNodesWithContentDescription("Chord C")[0].assertIsDisplayed()
+        rule.onNodeWithContentDescription("Back").performClick()
+        waitForText("C") // the card shows the section's chords
+        letAutoSaveRun()
+
         // Lyrics: tapping a section opens its lyrics; text is split into syllables.
         click("Chorus")
         waitForText("Lyrics · Chorus")
@@ -145,10 +161,28 @@ class AppFlowRobolectricTest {
 
         val stored = runBlocking { repo.load(song.id) }!!
         val chorus = stored.sectionContents.first { c -> c.id == stored.sections[0].contentId }
+        assertEquals(listOf(0.0 to "C|major|0"), chorus.chords.map { it.beat to it.voicingId })
         assertEquals(listOf("Canta conmigo", "esta canción", "eco"), chorus.lyricLines.map { it.text })
         assertEquals(chorus.lyricLines[1].id, chorus.lyricLines[2].pairedLineId)
         assertEquals(listOf("Canta"), chorus.lyricLines[0].words[0].syllables.map { it.text })
         assertEquals(true, chorus.lyricLines[0].words[0].syllableOverride)
+
+        // A chord on a syllable: in the chord editor, tap "ta" and pick a chord.
+        rule.onAllNodesWithContentDescription("More options")[0].performClick()
+        click("Chords")
+        waitForText("Chords · Chorus")
+        rule.onAllNodesWithContentDescription("Syllable ta")[0].performClick()
+        waitForText("Use this shape")
+        click("A") // root A, major
+        scrollTo("Use this shape").performClick()
+        waitForTextGone("Use this shape")
+        rule.onAllNodesWithContentDescription("Chord A")[0].assertIsDisplayed()
+        rule.onNodeWithContentDescription("Back").performClick()
+        letAutoSaveRun()
+        val withChord = runBlocking { repo.load(song.id) }!!
+        val chorusChords = withChord.sectionContents.first { c -> c.id == withChord.sections[0].contentId }.chords
+        val taId = chorus.lyricLines[0].words[0].syllables[0].id // "Canta" was merged by hand above
+        kotlin.test.assertTrue(chorusChords.any { it.symbol.toString() == "A" && it.syllableId != null }, "$chorusChords $taId")
 
         // The manual split survives recreating the activity.
         rule.activityRule.scenario.recreate()

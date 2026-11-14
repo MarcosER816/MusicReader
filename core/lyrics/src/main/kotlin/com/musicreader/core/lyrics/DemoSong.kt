@@ -2,6 +2,8 @@ package com.musicreader.core.lyrics
 
 import com.musicreader.core.model.Accidental
 import com.musicreader.core.model.ChordEvent
+import com.musicreader.core.model.ChordNaming
+import com.musicreader.core.model.ChordOps
 import com.musicreader.core.model.ChordSymbol
 import com.musicreader.core.model.IdGenerator
 import com.musicreader.core.model.Language
@@ -34,7 +36,7 @@ object DemoSong {
 
         fun chord(beat: Double, root: NoteLetter, accidental: Accidental = Accidental.NONE, suffix: String = "", bass: NoteName? = null): ChordEvent {
             val symbol = ChordSymbol(root, accidental, suffix, bass)
-            return ChordEvent(ids.newId(), beat, symbol, voicingId = "$symbol-1")
+            return ChordEvent(ids.newId(), beat, symbol, voicingId = ChordNaming.firstVoicingId(symbol))
         }
 
         fun note(beat: Double, string: Int, fret: Int, finger: Int, technique: Technique = Technique.NONE, duration: Double = 0.5) =
@@ -108,6 +110,32 @@ object DemoSong {
                 chord(4.0, NoteLetter.A), chord(6.0, NoteLetter.B, suffix = "m"),
             ),
             tab = listOf(note(7.0, 1, 0, 0, duration = 1.0)),
+        )
+        // In the sections with lyrics, chords sit on syllables (D-025), as a user places them.
+        fun onSyllables(content: SectionContent, vararg placements: Pair<Pair<Int, Int>, ChordEvent>): SectionContent {
+            val lines = content.lyricLines.filter { it.voice == LyricLine.MAIN_VOICE }
+            var result = content.copy(chords = emptyList())
+            for ((where, chord) in placements) {
+                val (lineIndex, syllableIndex) = where
+                val syllable = lines[lineIndex].words.flatMap { it.syllables }[syllableIndex]
+                result = ChordOps.addOnSyllable(result, song.timeSignature, syllable.id, chord.symbol, chord.voicingId, chord.id)
+            }
+            return result
+        }
+        verseContent = onSyllables(
+            verseContent,
+            (0 to 1) to verseContent.chords[0], // C on "road"
+            (0 to 5) to verseContent.chords[1], // Em on "neath"
+            (1 to 0) to verseContent.chords[2], // F on "We"
+            (1 to 5) to verseContent.chords[3], // G7 on "til"
+        )
+        chorusContent = onSyllables(
+            chorusContent,
+            (0 to 0) to chorusContent.chords[0], // Cmaj7 on "Shine"
+            (0 to 3) to chorusContent.chords[1], // D# on "on,"
+            (1 to 0) to chorusContent.chords[2], // Bb9 on "And"
+            (1 to 5) to chorusContent.chords[3], // Am on "sing"
+            (1 to 7) to chorusContent.chords[4], // D/F# on "me"
         )
         val replaced: Map<String, SectionContent> = listOf(introContent, verseContent, chorusContent, outroContent)
             .associateBy { it.id }

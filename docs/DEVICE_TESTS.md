@@ -95,3 +95,41 @@ How: Library ⋮ → "Load demo song (debug)" → "View".
 | 5 | Text sizes ("Aa") at arm's length | Comfortable | OK |
 | 6 | Update over Stage 2, reopen songs | No data lost, no crash | OK — no crash |
 
+### Stage 4 — chords
+APK: `MusicReader-stage-04-chords-55.apk` or later (PR [#6](https://github.com/MarcosER816/MusicReader/pull/6), branch `stage-04-chords`)
+Date tested: 2026-11-14 (round 1, APK run 55)
+Audio route: not relevant (no audio yet)
+
+How: a song's Sections → ⋮ on a section → "Chords". Viewer: "View", long-press a chord.
+
+| # | Check | Expected | Result |
+|---|---|---|---|
+| 1 | Look up ten chords you really use | All there, with the shapes you play | OK |
+| 2 | Finger numbers and colors on the diagrams | Correct | OK |
+| 3 | Tap a beat to add a chord | Lands on the tapped beat (half-beat grid) | Round 1: wants chords per syllable → round 2 (D-025) |
+| 4 | Lyrics under the chord grid | Clear which syllable/word is under each chord | Round 1: not totally clear → round 2 (D-025) |
+| 5 | Viewer long-press | Shows the chosen shape | OK |
+| 6 | Update over Stage 3 | No data lost, no crash | OK; change wanted: chords per syllable |
+
+Round 2 (2026-11-14, APK run 59):
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Chords you use, with your shapes | OK |
+| 2 | Finger numbers and colors | Gm7 showed the same finger three times → fixed in round 3 (D-026: missing barres inferred) |
+| 3 | Chord lands on the tapped syllable; half beats in sections without lyrics | OK — yes, keep half beats |
+| 4 | Clear which syllable is under each chord | OK |
+| 5 | Viewer long-press shows the chosen shape | OK |
+| 6 | Update without losing data | OK |
+
+Round 3 (2026-11-14, APK run 61):
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Chords you use, with your shapes | OK |
+| 2 | Finger numbers and colors (Gm7 and others) | OK |
+| 3 | Chord lands on the tapped syllable | OK |
+| 4 | Clear which syllable is under each chord | OK |
+| 5 | Viewer long-press shows the chosen shape | OK |
+| 6 | Update without losing data; crash or change | OK — no crash, no change |
+

@@ -28,9 +28,27 @@ data class SheetRow(
     val lyrics: List<PlacedText>,
     /** The second-voice line sung with this row's lyric line (D-022). */
     val secondLyrics: List<PlacedText>,
+    /** The main-voice syllables of the row's lyric line, in order (empty without lyrics). */
+    val syllables: List<RowSyllable> = emptyList(),
 )
 
-data class PlacedChord(val id: String, val x: Double, val symbol: ChordSymbol, val voicingId: String)
+/**
+ * A syllable of a row's lyric line. [x] is its position as a fraction of the row: its start beat
+ * when sung, otherwise its character position in the line.
+ */
+data class RowSyllable(val id: String, val text: String, val startsWord: Boolean, val x: Double)
+
+/**
+ * A chord in a row. [syllableId] is the syllable it is drawn above: the one it is placed on, or,
+ * for a grid chord in a row with lyrics, the syllable nearest to its beat (D-025).
+ */
+data class PlacedChord(
+    val id: String,
+    val x: Double,
+    val symbol: ChordSymbol,
+    val voicingId: String,
+    val syllableId: String? = null,
+)
 
 data class PlacedTabNote(
     val id: String,
@@ -81,6 +99,7 @@ object SheetLayoutBuilder {
             (0 until count).map { i -> i * rowBeats to minOf(total, (i + 1) * rowBeats) }
         }
         val beatsPerBar = timeSignature.beatsPerBar.toDouble()
+        val allSyllableIds = mainLines.flatMap { l -> l.words.flatMap { w -> w.syllables.map { it.id } } }.toHashSet()
         return spans.mapIndexed { i, (start, end) ->
             val length = end - start
             val last = i == spans.lastIndex
@@ -89,18 +108,51 @@ object SheetLayoutBuilder {
 
             val line = mainLines.getOrNull(i)
             val second = line?.let { m -> content.lyricLines.firstOrNull { it.voice == LyricLine.SECOND_VOICE && it.pairedLineId == m.id } }
+            val syllables = line?.let { rowSyllables(it, ::x) }.orEmpty()
+            val ids = syllables.mapTo(HashSet()) { it.id }
+            // A chord on a syllable belongs to that syllable's row; other chords go by beat.
+            val rowChords = content.chords.filter { c ->
+                if (c.syllableId != null && c.syllableId in allSyllableIds) c.syllableId in ids else inRow(c.beat)
+            }
             SheetRow(
                 startBeat = start,
                 lengthBeats = length,
                 barLines = barLines(start, end, beatsPerBar).map { x(it) },
-                chords = content.chords.filter { inRow(it.beat) }.sortedBy { it.beat }
-                    .map { PlacedChord(it.id, x(it.beat), it.symbol, it.voicingId) },
+                chords = rowChords.map { c ->
+                    val anchor = c.syllableId?.takeIf { it in ids }
+                    val shown = anchor ?: syllables.minByOrNull { kotlin.math.abs(it.x - x(c.beat)) }?.id
+                    val cx = syllables.firstOrNull { it.id == anchor }?.x ?: x(c.beat)
+                    PlacedChord(c.id, cx, c.symbol, c.voicingId, shown)
+                }.sortedBy { it.x },
                 tab = content.tab.filter { inRow(it.beat) }.sortedBy { it.beat }
                     .map { PlacedTabNote(it.id, x(it.beat), it.string, it.fret, it.finger, it.technique) },
                 lyrics = line?.let { placeLine(it, ::x) }.orEmpty(),
                 secondLyrics = second?.let { placeLine(it, ::x) }.orEmpty(),
+                syllables = syllables,
             )
         }
+    }
+
+    /**
+     * The syllables of a line with their x: the start beat when every syllable is timed,
+     * otherwise the character position of the syllable in the line text.
+     */
+    private fun rowSyllables(line: LyricLine, x: (Double) -> Double): List<RowSyllable> {
+        val all = line.words.flatMap { it.syllables }
+        val timed = all.isNotEmpty() && all.all { it.startBeat != null }
+        val totalChars = line.words.sumOf { it.text.length } + (line.words.size - 1).coerceAtLeast(0)
+        var offset = 0
+        val out = mutableListOf<RowSyllable>()
+        line.words.forEachIndexed { w, word ->
+            if (w > 0) offset += 1
+            word.syllables.forEachIndexed { s, syllable ->
+                val position = if (timed) x(syllable.startBeat!!)
+                else if (totalChars == 0) 0.0 else offset.toDouble() / totalChars
+                out += RowSyllable(syllable.id, syllable.text, startsWord = s == 0, x = position)
+                offset += syllable.text.length
+            }
+        }
+        return out
     }
 
     /** Bar starts within [start, end), as beats. */

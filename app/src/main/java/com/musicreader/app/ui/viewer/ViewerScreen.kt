@@ -79,7 +79,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.musicreader.app.R
 import com.musicreader.app.ui.common.AppIcon
 import com.musicreader.app.ui.common.AppIcons
+import com.musicreader.app.ui.common.ChordLyricsLayout
+import com.musicreader.app.ui.common.LyricLane
+import com.musicreader.app.ui.common.PlacedLane
 import com.musicreader.app.ui.common.sectionDisplayName
+import com.musicreader.app.ui.chords.FretboardDiagram
+import com.musicreader.core.data.ChordShape
 import com.musicreader.core.model.AppSettings
 import com.musicreader.core.model.ChordSymbol
 import com.musicreader.core.model.Layer
@@ -184,7 +189,7 @@ fun ViewerContent(
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
 ) {
-    var sheetChord by remember { mutableStateOf<ChordSymbol?>(null) }
+    var sheetChord by remember { mutableStateOf<PlacedChord?>(null) }
     val density = LocalDensity.current
     val speedPx = with(density) { state.speedDpPerSecond.toFloat().dp.toPx() }
     val reachedEnd by rememberUpdatedState(onReachedEnd)
@@ -253,7 +258,7 @@ fun ViewerContent(
 
     sheetChord?.let { chord ->
         ModalBottomSheet(onDismissRequest = { sheetChord = null }) {
-            ChordSheet(chord, Color(state.chordColor(chord).toInt()))
+            ChordSheet(chord.symbol, Color(state.chordColor(chord.symbol).toInt()), state.shapeOf(chord), state.settings)
         }
     }
 }
@@ -313,76 +318,58 @@ private fun SheetRowView(
     row: SheetRow,
     state: ViewerUiState,
     glistenPhase: State<Float>,
-    onChordLongPress: (ChordSymbol) -> Unit,
+    onChordLongPress: (PlacedChord) -> Unit,
 ) {
     val barColor = MaterialTheme.colorScheme.outlineVariant
     val scale = state.fontScale
+    val lyricStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp * scale)
+    val lyricColor = MaterialTheme.colorScheme.onSurface
+    val textLayout = row.syllables.isNotEmpty()
     Column(
         Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp)
             .drawBehind {
-                // Bar lines across the whole row.
-                row.barLines.forEach { x ->
-                    val px = (x * size.width).toFloat()
-                    drawLine(barColor, Offset(px, 0f), Offset(px, size.height), strokeWidth = 1.dp.toPx())
+                // Bar lines only where items are placed by beat (rows without lyrics).
+                if (!textLayout) {
+                    row.barLines.forEach { x ->
+                        val px = (x * size.width).toFloat()
+                        drawLine(barColor, Offset(px, 0f), Offset(px, size.height), strokeWidth = 1.dp.toPx())
+                    }
                 }
             },
     ) {
-        if (state.layers.chords && row.chords.isNotEmpty()) {
-            PlacedLane(row.chords.map { it.x }) {
-                row.chords.forEach { chord ->
+        val showTab = state.layers.tab && row.tab.isNotEmpty()
+        if (textLayout && (state.layers.chords || state.layers.lyrics)) {
+            // Lyrics as text with every chord right above its syllable (D-025); the tab lane in between.
+            ChordLyricsLayout(
+                syllables = row.syllables,
+                chords = row.chords,
+                showChords = state.layers.chords,
+                showLyrics = state.layers.lyrics,
+                syllableContent = { Text(it.text, style = lyricStyle, color = lyricColor, maxLines = 1) },
+                chordContent = { chord ->
                     ChordLabel(chord, Color(state.chordColor(chord.symbol).toInt()), scale, glistenPhase, onChordLongPress)
+                },
+                middle = if (showTab) ({ TabLane(row.tab, state, scale) }) else null,
+            )
+        } else {
+            if (state.layers.chords && row.chords.isNotEmpty()) {
+                PlacedLane(row.chords.map { it.x }) {
+                    row.chords.forEach { chord ->
+                        ChordLabel(chord, Color(state.chordColor(chord.symbol).toInt()), scale, glistenPhase, onChordLongPress)
+                    }
                 }
             }
+            if (showTab) TabLane(row.tab, state, scale)
+            if (state.layers.lyrics && row.lyrics.isNotEmpty()) LyricLane(row.lyrics, lyricStyle, lyricColor)
         }
-        if (state.layers.tab && row.tab.isNotEmpty()) {
-            TabLane(row.tab, state, scale)
-        }
-        if (state.layers.lyrics) {
-            if (row.lyrics.isNotEmpty()) {
-                LyricLane(row.lyrics, MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp * scale), MaterialTheme.colorScheme.onSurface)
-            }
-            if (row.secondLyrics.isNotEmpty()) {
-                LyricLane(
-                    row.secondLyrics,
-                    MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp * scale, fontStyle = FontStyle.Italic),
-                    MaterialTheme.colorScheme.secondary,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun LyricLane(texts: List<PlacedText>, style: TextStyle, color: Color) {
-    PlacedLane(texts.map { it.x }) {
-        texts.forEach { Text(it.text, style = style, color = color, maxLines = 1) }
-    }
-}
-
-/**
- * Places its children at x fractions of the width. A child never overlaps the one before it
- * (it is pushed right), and when the row overflows everything is shifted left as far as possible.
- */
-@Composable
-private fun PlacedLane(xs: List<Double>, content: @Composable () -> Unit) {
-    val gap = with(LocalDensity.current) { 6.dp.roundToPx() }
-    Layout(content = content, modifier = Modifier.fillMaxWidth()) { measurables, constraints ->
-        val width = constraints.maxWidth
-        val placeables = measurables.map { it.measure(Constraints()) }
-        val lefts = IntArray(placeables.size)
-        var right = -gap
-        placeables.forEachIndexed { i, p ->
-            val wanted = ((xs.getOrElse(i) { 0.0 }) * width).toInt()
-            lefts[i] = maxOf(wanted, right + gap)
-            right = lefts[i] + p.width
-        }
-        val overflow = (right - width).coerceAtMost(lefts.firstOrNull() ?: 0)
-        if (overflow > 0) for (i in lefts.indices) lefts[i] -= overflow
-        val height = placeables.maxOfOrNull { it.height } ?: 0
-        layout(width, height) {
-            placeables.forEachIndexed { i, p -> p.place(lefts[i], 0) }
+        if (state.layers.lyrics && row.secondLyrics.isNotEmpty()) {
+            Text(
+                row.secondLyrics.joinToString(" ") { it.text },
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp * scale, fontStyle = FontStyle.Italic),
+                color = MaterialTheme.colorScheme.secondary,
+            )
         }
     }
 }
@@ -394,7 +381,7 @@ private fun ChordLabel(
     color: Color,
     scale: Float,
     glistenPhase: State<Float>,
-    onLongPress: (ChordSymbol) -> Unit,
+    onLongPress: (PlacedChord) -> Unit,
 ) {
     val name = chord.symbol.toString()
     val description = stringResource(R.string.chord_label_description, name)
@@ -404,7 +391,7 @@ private fun ChordLabel(
         style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp * scale, fontWeight = FontWeight.Bold),
         modifier = Modifier
             .semantics { contentDescription = description }
-            .pointerInput(chord.symbol) { detectTapGestures(onLongPress = { onLongPress(chord.symbol) }) }
+            .pointerInput(chord) { detectTapGestures(onLongPress = { onLongPress(chord) }) }
             .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
             .drawWithCache {
                 // Built once per size; each frame only moves it (no allocation per frame).
@@ -467,14 +454,23 @@ private fun TabLane(notes: List<PlacedTabNote>, state: ViewerUiState, scale: Flo
     }
 }
 
-/** Long-press sheet: the chord name in its color, with root, type and bass. */
+/** Long-press sheet: the chord name in its color, the chosen shape's diagram, root, type and bass. */
 @Composable
-private fun ChordSheet(chord: ChordSymbol, color: Color) {
+private fun ChordSheet(chord: ChordSymbol, color: Color, shape: ChordShape?, settings: AppSettings) {
     Column(
         Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp).navigationBarsPadding(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(chord.toString(), style = MaterialTheme.typography.displayMedium, color = color, fontWeight = FontWeight.Bold)
+        if (shape != null) {
+            FretboardDiagram(
+                shape = shape,
+                fingerColors = settings.fingerColors,
+                leftHanded = settings.leftHanded,
+                width = 220.dp,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+        }
         Text(stringResource(R.string.chord_root, chord.root.name + chord.accidental.symbol), style = MaterialTheme.typography.bodyLarge)
         Text(
             stringResource(R.string.chord_type, chord.suffix.ifEmpty { stringResource(R.string.chord_type_major) }),
@@ -489,4 +485,3 @@ internal fun SheetRow.hasVisibleContent(layers: LayerVisibility): Boolean =
     (layers.chords && chords.isNotEmpty()) ||
         (layers.tab && tab.isNotEmpty()) ||
         (layers.lyrics && (lyrics.isNotEmpty() || secondLyrics.isNotEmpty()))
-

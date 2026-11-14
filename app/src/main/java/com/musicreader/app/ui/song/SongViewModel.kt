@@ -12,7 +12,16 @@ import com.musicreader.app.ui.common.appContainer
 import com.musicreader.core.data.SongRepository
 import com.musicreader.core.lyrics.LyricsOps
 import com.musicreader.core.lyrics.WordSyllabifier
+import com.musicreader.core.data.ChordDictionary
+import com.musicreader.core.data.SettingsRepository
+import com.musicreader.core.model.AccidentalPreference
+import com.musicreader.core.model.AppSettings
 import com.musicreader.core.model.BeatTime
+import com.musicreader.core.model.ChordEvent
+import com.musicreader.core.model.ChordOps
+import com.musicreader.core.model.ChordSymbol
+import com.musicreader.core.model.SheetLayoutBuilder
+import com.musicreader.core.model.SheetRow
 import com.musicreader.core.model.IdGenerator
 import com.musicreader.core.model.Language
 import com.musicreader.core.model.LyricLine
@@ -64,6 +73,8 @@ data class SectionRow(
     val linkedCount: Int,
     /** First line of the main voice, or null when the section has no lyrics. */
     val lyricsPreview: String?,
+    /** The section's chords in order ("C · Am · F · G"), or null when it has none. */
+    val chordsPreview: String? = null,
 )
 
 data class SongEditorState(
@@ -111,7 +122,23 @@ sealed interface SongUiState {
     data class Ready(val editor: SongEditorState) : SongUiState
 }
 
+/** The chord editor of one section: rows like the viewer, with every chord of the section. */
+data class ChordEditorUiState(
+    val sectionId: String,
+    val type: SectionType,
+    val label: String?,
+    val number: Int?,
+    val linkedCount: Int,
+    val lengthBeats: Int,
+    val beatsPerBar: Int,
+    val rows: List<SheetRow>,
+    val chords: List<ChordEvent>,
+)
+
 sealed interface SongEvent {
+    /** Show the "chord deleted" snackbar with Undo. */
+    data class ChordDeleted(val name: String) : SongEvent
+
     /** Show the "deleted" snackbar with Undo. */
     data class SectionDeleted(val type: SectionType, val label: String?, val number: Int?) : SongEvent
 }
@@ -128,6 +155,9 @@ class SongViewModel(
     private val openSettingsRequested: Boolean,
     private val repository: SongRepository,
     private val appScope: CoroutineScope,
+    private val settingsRepository: SettingsRepository,
+    /** The chord dictionary; null until loaded. */
+    val chordDictionary: StateFlow<ChordDictionary?>,
     private val ids: IdGenerator = IdGenerator.RANDOM,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
@@ -140,8 +170,17 @@ class SongViewModel(
     private val events = Channel<SongEvent>(Channel.BUFFERED)
     private var lastSaved: Song? = null
     private var undoSnapshot: Song? = null
+    private var chordUndoSnapshot: Song? = null
 
     val eventFlow: Flow<SongEvent> = events.receiveAsFlow()
+
+    /** User settings (finger colors, left-handed diagrams, sharps or flats). */
+    val settings: StateFlow<AppSettings> = settingsRepository.settings
+        .stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
+
+    fun setAccidentalPreference(preference: AccidentalPreference) {
+        appScope.launch { settingsRepository.update { it.copy(accidentals = preference) } }
+    }
 
     /** The song as currently edited (null until loaded or when missing), for the viewer. */
     val currentSong: StateFlow<Song?> get() = song
@@ -307,6 +346,63 @@ class SongViewModel(
         )
     }
 
+    // --- Chords ---------------------------------------------------------------------------------
+
+    /** The chord editor state of one section; null when the section does not exist (any more). */
+    fun chordEditorState(sectionId: String): Flow<ChordEditorUiState?> =
+        song.map { s -> s?.let { chordEditorUiState(it, sectionId) } }.distinctUntilChanged()
+
+    /** Adds a chord at [beat]; it snaps to the half-beat grid (D-009) and replaces a chord already there. */
+    fun addChord(sectionId: String, beat: Double, symbol: ChordSymbol, voicingId: String) =
+        editContent(sectionId) { _, content -> ChordOps.add(content, beat, symbol, voicingId, ids.newId()) }
+
+    /** Places a chord on a main-voice syllable (D-025); a chord already on it is replaced. */
+    fun addChordOnSyllable(sectionId: String, syllableId: String, symbol: ChordSymbol, voicingId: String) =
+        editContent(sectionId) { s, content -> ChordOps.addOnSyllable(content, s.timeSignature, syllableId, symbol, voicingId, ids.newId()) }
+
+    /** Moves a chord onto another syllable. */
+    fun moveChordToSyllable(sectionId: String, chordId: String, syllableId: String) =
+        editContent(sectionId) { s, content -> ChordOps.moveToSyllable(content, s.timeSignature, chordId, syllableId) }
+
+    /** Moves a chord to [beat] (snapped). */
+    fun moveChord(sectionId: String, chordId: String, beat: Double) =
+        editContent(sectionId) { _, content -> ChordOps.move(content, chordId, beat) }
+
+    fun changeChord(sectionId: String, chordId: String, symbol: ChordSymbol, voicingId: String) =
+        editContent(sectionId) { _, content -> ChordOps.change(content, chordId, symbol, voicingId) }
+
+    /** Deletes a chord; [undoDeleteChord] brings it back. */
+    fun deleteChord(sectionId: String, chordId: String) {
+        val current = song.value ?: return
+        val section = current.sections.firstOrNull { it.id == sectionId } ?: return
+        val chord = current.contentOf(section).chords.firstOrNull { it.id == chordId } ?: return
+        chordUndoSnapshot = current
+        editContent(sectionId) { _, content -> ChordOps.delete(content, chordId) }
+        viewModelScope.launch { events.send(SongEvent.ChordDeleted(chord.symbol.toString())) }
+    }
+
+    fun undoDeleteChord() {
+        val snapshot = chordUndoSnapshot ?: return
+        chordUndoSnapshot = null
+        song.value = snapshot.copy(updatedAt = clock())
+    }
+
+    private fun chordEditorUiState(s: Song, sectionId: String): ChordEditorUiState? {
+        val section = s.sections.firstOrNull { it.id == sectionId } ?: return null
+        val content = s.contentOf(section)
+        return ChordEditorUiState(
+            sectionId = sectionId,
+            type = section.type,
+            label = section.label,
+            number = s.occurrenceNumbers()[sectionId],
+            linkedCount = s.linkedCount(section),
+            lengthBeats = content.lengthBeats,
+            beatsPerBar = s.timeSignature.beatsPerBar,
+            rows = SheetLayoutBuilder.rows(content, s.timeSignature),
+            chords = content.chords,
+        )
+    }
+
     /** Moves a section while it is dragged over another one. */
     fun moveSection(fromId: String, toId: String) = edit { s, now ->
         val from = s.sections.indexOfFirst { it.id == fromId }
@@ -317,7 +413,13 @@ class SongViewModel(
     // --- Internals ------------------------------------------------------------------------------
 
     private fun edit(change: (Song, Long) -> Song) {
-        song.update { current -> current?.let { change(it, clock()) } }
+        song.update { current -> current?.let { realignChords(change(it, clock())) } }
+    }
+
+    /** Chords on syllables follow their syllables when lyrics, lengths or the time signature change (D-025). */
+    private fun realignChords(s: Song): Song {
+        val contents = s.sectionContents.map { ChordOps.realign(it, s.timeSignature) }
+        return if (contents == s.sectionContents) s else s.copy(sectionContents = contents)
     }
 
     /**
@@ -351,6 +453,7 @@ class SongViewModel(
                 duration = BeatTime.formatMinutesSeconds(BeatTime.beatsToSeconds(content.lengthBeats.toDouble(), s.tempoBpm)),
                 linkedCount = s.linkedCount(section),
                 lyricsPreview = content.lyricLines.firstOrNull { it.voice == LyricLine.MAIN_VOICE }?.text,
+                chordsPreview = content.chords.takeIf { it.isNotEmpty() }?.joinToString(" · ") { it.symbol.toString() },
             )
         }
         return SongEditorState(
@@ -385,6 +488,8 @@ class SongViewModel(
                     openSettingsRequested = route.openSettings,
                     repository = container.songRepository,
                     appScope = container.appScope,
+                    settingsRepository = container.settingsRepository,
+                    chordDictionary = container.chordDictionary,
                 )
             }
         }

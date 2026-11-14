@@ -253,3 +253,54 @@ Checked again for Stage 0 against Google Maven, Maven Central, services.gradle.o
 - **Opening the viewer:** the "View" button on a song's Sections screen.
 - **Screenshot tests:** Roborazzi 1.79.0. Three images of the demo song (all layers, lyrics + chords, tab only) at 411×891 dp, compared with the references in `app/src/test/screenshots` on every test run, with a 1 % pixel-difference tolerance. The references are recorded on Linux with Robolectric native graphics (same as CI). To update them: `./gradlew :app:testDebugUnitTest -Proborazzi.test.record=true`.
 
+## D-024 — Chord dictionary and chord placement (2026-11-14)
+
+- **Source:** tombatossals/chords-db `lib/guitar.json`, commit df06fa7b425cf5fd29485ff6591236b3557e3fac (MIT License, Copyright (c) 2016 David Rubert).
+  - Layout checked on the real file: 12 keys (C, C#, D, Eb, E, F, F#, G, Ab, A, Bb, B), 82 suffixes, 828 chords, 3,283 positions (2–7 per chord).
+  - Each position has `frets` (relative to `baseFret`; −1 muted, 0 open; low E first), `fingers` (0–4), `baseFret` (1–14), `barres` (relative frets), optional `capo` and `midi`.
+  - All 3,283 `midi` lists equal standard tuning + absolute fret.
+- **Converter:** `tools/convert_chords_db.py <guitar.json> <LICENSE> <commit>` writes `core/data/src/main/assets/chords/guitar.json` (frets still relative) and `LICENSE-chords-db.txt`. It checks every position and turns the one −1 finger (F major shape 2, on a muted string) into 0. About shows the credit.
+- **Loader** (`ChordDictionary`, core/data): absolute fret = baseFret + fret − 1 for fret > 0. A barre spans from the lowest to the highest string pressed at its fret, with the finger used there. The dictionary loads once in the background at app start.
+- **21 shapes do not contain their root note**: rootless jazz voicings (maj9, 7b9, …) and a few upstream data slips (e.g. Bb m7 shape 1 sounds Am7; all four E madd9 shapes). They are kept as published; a test pins the list so any change in the data is noticed.
+- **Names:** the dictionary suffix "major" is our "" and "minor" is "m". Slash suffixes ("/E", "m/B", "m9/Bb", "7/G") become a suffix plus a bass note.
+- **voicingId:** `key|suffix|index`, e.g. `Eb|9|0`. Unknown ids fall back to the first shape of the chord type.
+- **Enharmonics:** C#/Db, D#/Eb, F#/Gb, G#/Ab, A#/Bb find the same dictionary chords; the chord keeps the spelling the user chose (D#9 uses the Eb 9 shapes). The new setting `AppSettings.accidentals` (SHARPS by default, ♯/♭ in the picker) decides how the picker spells the 12 roots.
+- **Picker:**
+  - root (12), then type: major, m, 7, maj7, m7, 9, sus4, sus2, add9, 6, m6, dim, dim7, aug, 5, 7sus4, m9, maj9, m7b5, 11, 13 first, then every other type, slash chords last;
+  - then a pager with every shape and its diagram. "Use this shape" saves the `voicingId`.
+- **Diagram:**
+  - strings vertical, low E on the left (mirrored when left-handed);
+  - a nut at base fret 1, otherwise "Nfr";
+  - × muted, o open (white outline);
+  - dots in the finger colors with the number inside, and barres drawn as a bar in the finger's color.
+- **Chord editor:** "Chords" in a section card's ⋮ menu.
+  - Rows match the viewer, with a half-beat grid: short ticks on half beats, longer ones on beats, full lines on bars. The row's lyrics are under the grid.
+  - Tap → picker → the chord lands on the nearest half beat (D-009). Adding on an occupied beat replaces that chord.
+  - Drag a chord sideways to move it; it snaps when released.
+  - Tap a chord to change it; long-press to delete it (Undo).
+  - Section cards list their chords.
+- **Viewer:** a long-press on a chord shows the chosen shape's diagram above root, type and bass.
+
+## D-025 — Chords on syllables (2026-11-14, Mark's Stage 4 test)
+
+Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllable sits under a chord was "not totally" clear.
+
+- **In rows with lyrics, a chord is placed on a syllable.** `ChordEvent.syllableId` names the main-voice syllable. It is a new optional field, so schemaVersion stays 1.
+- **Drawn above its syllable:** the chord is always drawn right above its syllable, in the chord editor and in the viewer.
+- **Lyrics as text:** in rows with lyrics, the line is laid out as normal text (syllables of a word together, a gap between words, wrapping at word boundaries), with each chord above its syllable. A chord that would overlap the previous one moves right just enough. The tab lane stays between chords and lyrics; bar lines are only drawn in rows without lyrics.
+- **Beat of a chord on a syllable:** the syllable's start beat once sung (Stage 8). Until then it is estimated from the syllable's character position in its line (the line's share of the section, D-023), snapped to the half-beat grid.
+  - The beat is updated after every edit, so chords follow their syllables when lyrics, section lengths or the time signature change.
+  - If the syllable is deleted, the chord keeps its beat and becomes a grid chord.
+- **Rows without lyrics** (intros, solos) keep the half-beat grid (D-009). A grid chord in a row with lyrics is shown above the syllable nearest to its beat; dragging it onto a syllable places it there.
+- **Chord editor:**
+  - Tap a syllable (each has a dotted underline) to put a chord on it, or to change the chord above it.
+  - Drag a chord onto another syllable to move it; tap a chord to change it; long-press to delete (Undo).
+- **Demo song:** its chords in Verse and Chorus sit on syllables.
+
+## D-026 — Barres the dictionary does not list (2026-11-14, Mark's Stage 4 round 2)
+
+- **Problem:** Mark found Gm7 showing "three times the same finger". Its first shape (3x333x) presses D, G and B at fret 3 with finger 3, but chords-db lists no barre, so the diagram drew three separate "3" dots. 119 shapes have this gap.
+- **Fix:** the loader adds the missing barre when one finger presses two or more strings at the same fret and every string between them is pressed at that fret or higher. Other fingers may press higher over a barre (as in a barre F).
+- **Not inferred:** when a string in between is at a lower fret or muted, a bar there would be wrong, so the separate dots stay. Example: C6/9 x32233, finger 3 on A and B with D and G at fret 2.
+- **Tests:** Gm7 and C6/9, plus a screenshot of Gm7.
+

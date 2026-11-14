@@ -60,6 +60,11 @@ private fun AboutContent(info: AboutInfo, onBack: () -> Unit) {
                 style = MaterialTheme.typography.bodyLarge,
             )
             Text(
+                text = stringResource(R.string.about_credits),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
                 text = stringResource(R.string.about_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
