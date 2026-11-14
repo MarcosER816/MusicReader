@@ -22,8 +22,9 @@ android {
 dependencies {
     api(project(":core:model"))
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.androidx.datastore.preferences)
+    api(libs.androidx.datastore.preferences)
     api(libs.kotlinx.coroutines.core)
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

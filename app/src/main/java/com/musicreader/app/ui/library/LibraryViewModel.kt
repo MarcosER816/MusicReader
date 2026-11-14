@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.musicreader.app.ui.common.appContainer
 import com.musicreader.core.data.SongRepository
 import com.musicreader.core.data.SongSummary
+import com.musicreader.core.lyrics.DemoSong
 import com.musicreader.core.model.IdGenerator
 import com.musicreader.core.model.Language
 import com.musicreader.core.model.SongOps
@@ -75,6 +76,15 @@ class LibraryViewModel(
             val song = SongOps.newSong(ids.newId(), clean, language, clock())
             repository.save(song)
             events.send(LibraryEvent.OpenSong(song.id, openSettings = true))
+        }
+    }
+
+    /** Debug: creates the demo song (lyrics, chords of every root, tab notes) and opens it. */
+    fun loadDemoSong() {
+        viewModelScope.launch {
+            val song = DemoSong.create(ids.newId(), ids, clock())
+            repository.save(song)
+            events.send(LibraryEvent.OpenSong(song.id, openSettings = false))
         }
     }
 

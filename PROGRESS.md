@@ -4,26 +4,25 @@ Update this file at the end of every stage. A stage is **done** only when every 
 
 Status values: `not started` · `in progress` · `waiting for Mark` · `done`
 
-Stage numbers follow Mark's stage requests (D-021): his Stage 1 covered the old stages 1–2 and his Stage 2 the old stage 3, so the later stages moved up by one.
+Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–3 are as Mark asked; Mark's Stage 3 request says chords and tabs come in Stages 4–5. The order after that is the remaining plan, to be renumbered if Mark asks for a different order.
 
 | # | Stage | Branch | Status | PR | Approved |
 |---|---|---|---|---|---|
 | 0 | Project skeleton: Gradle modules, versions, CI that builds and uploads the APK | stage-00-skeleton | done | [#1](https://github.com/MarcosER816/MusicReader/pull/1) | 2026-11-13 (device checks passed; Mark moved on to Stage 1) |
 | 1 | Core model, JSON storage, beat/time helpers, song library, song settings (tempo, tap tempo, time signature), sections (types, descriptions, length, reorder, linked copies) | stage-01-model | done | [#2](https://github.com/MarcosER816/MusicReader/pull/2), [#3](https://github.com/MarcosER816/MusicReader/pull/3) | 2026-11-13 ("Stage 1 approved") |
-| 2 | Lyrics editor (per section, two voices), Spanish syllabifier (rules), English syllabifier (Liang + hyph-en-us), syllable view with tap split/merge, edits keep unchanged words | stage-02-lyrics | waiting for Mark | [#4](https://github.com/MarcosER816/MusicReader/pull/4) | |
-| 3 | Audio core: C++ Oboe engine, JNI, audio clock, metronome/count-in, latency calibration per route | stage-03-audio | not started | | |
-| 4 | DSP: pitch tracking and onset detection, tested on synthetic signals | stage-04-dsp | not started | | |
-| 5 | Lyric capture by singing: select word range, count-in, record take, align to syllables, last take wins | stage-05-capture | not started | | |
-| 6 | Note editor: per-syllable pitch and duration, free drag with no snapping | stage-06-note-editor | not started | | |
-| 7 | Chord dictionary: chord symbols, all voicings, finger numbers, fretboard diagram | stage-07-chord-dictionary | not started | | |
-| 8 | Chord editor: place chords on the beat grid above the lyrics, choose voicing, one strumming pattern per section, half-beat grid | stage-08-chord-editor | not started | | |
-| 9 | Tab editor: tab events between chords and lyrics, techniques (bend, hammer-on, pull-off, slide, vibrato, harmonics, mute) | stage-09-tab-editor | not started | | |
-| 10 | Song viewer: layer checkboxes, chord colors, synchronized glisten, long-press diagram, tab finger colors, slow autoscroll | stage-10-viewer | not started | | |
-| 11 | User configuration: chord colors, finger colors, practice lower layers, judge windows | stage-11-settings | not started | | |
-| 12 | Practice — singing: right-to-left note line, pitch arrow with trail, gold/green/red, particles | stage-12-practice-sing | not started | | |
-| 13 | Practice — chords and tab: right-to-left lanes, timing judge, gold/green/red, particles, lower layers | stage-13-practice-play | not started | | |
-| 14 | Recordings: record practice, keep as official (one per type), synced mix playback, export to Downloads | stage-14-recordings | not started | | |
-| 15 | Follow mode: lyrics and chords advance as Mark plays the chords | stage-15-follow | not started | | |
+| 2 | Lyrics editor (per section, two voices), Spanish syllabifier (rules), English syllabifier (Liang + hyph-en-us), syllable view with tap split/merge, edits keep unchanged words | stage-02-lyrics | done | [#4](https://github.com/MarcosER816/MusicReader/pull/4) | 2026-11-13 ("Stage 2 approved") |
+| 3 | Song viewer: sections with chords/tab/lyrics on shared beat positions, layer checkboxes, chord colors, synchronized glisten, slow autoscroll, long-press chord sheet, font size, demo song, screenshot tests | stage-03-viewer | waiting for Mark | [#5](https://github.com/MarcosER816/MusicReader/pull/5) | |
+| 4 | Chords: chord dictionary (all voicings, finger numbers, fretboard diagram), chord editor on the half-beat grid above the lyrics, one strumming pattern per section, long-press diagram in the viewer | stage-04-chords | not started | | |
+| 5 | Tab editor: tab events between chords and lyrics, techniques (bend, hammer-on, pull-off, slide, vibrato, harmonics, mute) | stage-05-tab-editor | not started | | |
+| 6 | Audio core: C++ Oboe engine, JNI, audio clock, metronome/count-in, latency calibration per route | stage-06-audio | not started | | |
+| 7 | DSP: pitch tracking and onset detection, tested on synthetic signals | stage-07-dsp | not started | | |
+| 8 | Lyric capture by singing: select word range, count-in, record take, align to syllables, last take wins | stage-08-capture | not started | | |
+| 9 | Note editor: per-syllable pitch and duration, free drag with no snapping | stage-09-note-editor | not started | | |
+| 10 | User configuration: chord colors, finger colors, practice lower layers, judge windows | stage-10-settings | not started | | |
+| 11 | Practice — singing: right-to-left note line, pitch arrow with trail, gold/green/red, particles | stage-11-practice-sing | not started | | |
+| 12 | Practice — chords and tab: right-to-left lanes, timing judge, gold/green/red, particles, lower layers | stage-12-practice-play | not started | | |
+| 13 | Recordings: record practice, keep as official (one per type), synced mix playback, export to Downloads | stage-13-recordings | not started | | |
+| 14 | Follow mode: lyrics and chords advance as Mark plays the chords | stage-14-follow | not started | | |
 
 ## Log
 
@@ -51,4 +50,12 @@ Stage numbers follow Mark's stage requests (D-021): his Stage 1 covered the old 
 - Tests: 84 Spanish words, 69 English words, lyrics operations, ViewModel lyrics flow, Robolectric UI flow (type lyrics → syllables → join by tap → restart keeps it).
 - Decisions D-020 (syllable splitting, hyph-en-us license) and D-021 (lyrics editing, stage renumbering).
 - Round 2 after Mark's device test: English syllables placed as sung (ma-king, des-pite, o-ther, you), second voice per line (`LyricLine.pairedLineId`), clearer syllable hint; hyph-en-us license exception accepted (D-020, D-022).
+
+### Stage 3 — song viewer (2026-11-13)
+- Stage 2 approved by Mark (round 2 device test all OK).
+- `SheetLayoutBuilder` (core/model): rows per lyric line on a shared beat grid; chords, tab notes and lyrics placed by beat; `TabNotation`.
+- `DataStoreSettingsRepository` (core/data): `AppSettings` in DataStore (layers, autoscroll speed, new `viewerFontScale`).
+- Viewer screen ("View" on a song): layer checkboxes (last one locked), root-colored chord labels with one shared glisten, tab lane in finger colors, lyrics and second voice, bar lines, frame-driven autoscroll with logarithmic speed and pause on touch, text size, long-press chord sheet.
+- Debug "Load demo song" (every root letter incl. D#, Bb9, Cmaj7; tab with fingers 0–4 and techniques).
+- Tests: layout, tab notation, demo song, settings DataStore, viewer ViewModel, Roborazzi screenshots (all layers, lyrics + chords, tab only). Decision D-023.
 

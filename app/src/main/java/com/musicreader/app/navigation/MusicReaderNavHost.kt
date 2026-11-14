@@ -15,6 +15,8 @@ import com.musicreader.app.ui.song.LyricsScreen
 import com.musicreader.app.ui.song.SectionsScreen
 import com.musicreader.app.ui.song.SongSettingsScreen
 import com.musicreader.app.ui.song.SongViewModel
+import com.musicreader.app.ui.viewer.ViewerScreen
+import com.musicreader.app.ui.viewer.ViewerViewModel
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -35,6 +37,9 @@ object SongSettingsRoute
 
 @Serializable
 data class LyricsRoute(val sectionId: String)
+
+@Serializable
+object ViewerRoute
 
 @Composable
 fun MusicReaderNavHost(navController: NavHostController = rememberNavController()) {
@@ -57,12 +62,19 @@ fun MusicReaderNavHost(navController: NavHostController = rememberNavController(
                     onBack = { navController.popBackStack(LibraryRoute, inclusive = false) },
                     onOpenSettings = { navController.navigate(SongSettingsRoute) },
                     onOpenLyrics = { sectionId -> navController.navigate(LyricsRoute(sectionId)) },
+                    onOpenViewer = { navController.navigate(ViewerRoute) },
                 )
             }
             composable<SongSettingsRoute> { entry ->
                 val songEntry = remember(entry) { navController.getBackStackEntry<SongRoute>() }
                 val viewModel: SongViewModel = viewModel(songEntry, factory = SongViewModel.Factory)
                 SongSettingsScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
+            }
+            composable<ViewerRoute> { entry ->
+                val songEntry = remember(entry) { navController.getBackStackEntry<SongRoute>() }
+                val songViewModel: SongViewModel = viewModel(songEntry, factory = SongViewModel.Factory)
+                val viewerViewModel: ViewerViewModel = viewModel(factory = ViewerViewModel.factory(songViewModel.currentSong))
+                ViewerScreen(viewModel = viewerViewModel, onBack = { navController.popBackStack() })
             }
             composable<LyricsRoute> { entry ->
                 val songEntry = remember(entry) { navController.getBackStackEntry<SongRoute>() }

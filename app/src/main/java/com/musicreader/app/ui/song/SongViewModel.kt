@@ -143,6 +143,9 @@ class SongViewModel(
 
     val eventFlow: Flow<SongEvent> = events.receiveAsFlow()
 
+    /** The song as currently edited (null until loaded or when missing), for the viewer. */
+    val currentSong: StateFlow<Song?> get() = song
+
     val state: StateFlow<SongUiState> = combine(load, song, tapTempo) { loadState, current, tap ->
         when (loadState) {
             Load.LOADING -> SongUiState.Loading

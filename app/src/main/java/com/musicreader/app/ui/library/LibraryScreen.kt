@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.musicreader.app.BuildConfig
 import com.musicreader.app.R
 import com.musicreader.app.ui.common.AppIcon
 import com.musicreader.app.ui.common.AppIcons
@@ -92,7 +93,24 @@ fun LibraryScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text(stringResource(R.string.library_title)) },
-                actions = { TextButton(onClick = onAbout) { Text(stringResource(R.string.about)) } },
+                actions = {
+                    var menuOpen by remember { mutableStateOf(false) }
+                    Box {
+                        IconButton(onClick = { menuOpen = true }) { AppIcon(AppIcons.More, stringResource(R.string.more_options)) }
+                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.about)) },
+                                onClick = { menuOpen = false; onAbout() },
+                            )
+                            if (BuildConfig.DEBUG) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.load_demo_song)) },
+                                    onClick = { menuOpen = false; viewModel.loadDemoSong() },
+                                )
+                            }
+                        }
+                    }
+                },
             )
         },
         floatingActionButton = {

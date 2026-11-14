@@ -113,6 +113,23 @@
         <item quantity="other">Compartida con las %d secciones vinculadas.</item>
     </plurals>
 
+    <!-- Visor -->
+    <string name="view_song">Ver</string>
+    <string name="layer_lyrics">Letra</string>
+    <string name="layer_chords">Acordes</string>
+    <string name="layer_tabs">Tablatura</string>
+    <string name="autoscroll_play">Empezar a desplazar</string>
+    <string name="autoscroll_pause">Pausar el desplazamiento</string>
+    <string name="autoscroll_speed">Velocidad</string>
+    <string name="text_size">Tamaño del texto</string>
+    <string name="chord_label_description">Acorde %1$s</string>
+    <string name="chord_root">Fundamental: %1$s</string>
+    <string name="chord_bass">Bajo: %1$s</string>
+    <string name="chord_type">Tipo: %1$s</string>
+    <string name="chord_type_major">mayor</string>
+    <string name="song_is_empty">Esta canción todavía no tiene secciones.</string>
+    <string name="load_demo_song">Cargar canción de prueba (depuración)</string>
+
     <!-- Acerca de -->
     <string name="about">Acerca de</string>
     <string name="about_title">Acerca de MusicReader</string>

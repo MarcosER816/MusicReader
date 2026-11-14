@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.roborazzi)
 }
 
 // versionCode = GitHub Actions run number, so every CI build installs as an update over the
@@ -97,5 +98,16 @@ dependencies {
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(platform(libs.compose.bom))
     testImplementation(libs.compose.ui.test.junit4)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.junit.rule)
     debugImplementation(libs.compose.ui.test.manifest)
 }
+
+// Screenshot tests (Roborazzi): reference images live in src/test/screenshots and are compared
+// on every test run (gradle.properties: roborazzi.test.verify=true). To update them after an
+// intended UI change: ./gradlew :app:testDebugUnitTest -Proborazzi.test.record=true
+roborazzi {
+    outputDir.set(file("src/test/screenshots"))
+}
+

@@ -19,4 +19,6 @@ object AppIcons {
     val DragHandle = R.drawable.ic_drag_handle
     val Link = R.drawable.ic_link
     val Remove = R.drawable.ic_remove
+    val Play = R.drawable.ic_play
+    val Pause = R.drawable.ic_pause
 }

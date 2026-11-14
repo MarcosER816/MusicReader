@@ -55,4 +55,6 @@ jobs:
           path: |
             **/build/reports/
             **/build/test-results/
+            app/src/test/screenshots/
+            app/build/outputs/roborazzi/
           if-no-files-found: ignore

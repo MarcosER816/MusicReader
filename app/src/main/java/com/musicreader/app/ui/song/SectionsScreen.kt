@@ -70,6 +70,7 @@ fun SectionsScreen(
     onBack: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenLyrics: (sectionId: String) -> Unit,
+    onOpenViewer: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -114,7 +115,10 @@ fun SectionsScreen(
                     IconButton(onClick = onBack) { AppIcon(AppIcons.Back, stringResource(R.string.back)) }
                 },
                 actions = {
-                    if (editor != null) TextButton(onClick = onOpenSettings) { Text(stringResource(R.string.settings)) }
+                    if (editor != null) {
+                        TextButton(onClick = onOpenViewer) { Text(stringResource(R.string.view_song)) }
+                        TextButton(onClick = onOpenSettings) { Text(stringResource(R.string.settings)) }
+                    }
                 },
             )
         },
