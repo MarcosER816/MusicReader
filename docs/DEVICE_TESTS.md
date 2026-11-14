@@ -149,7 +149,7 @@ How: a song's Sections → ⋮ on a section → "Tab". Viewer: "View" with Tabs 
 | 5 | Update over Stage 4 | No data lost, no crash | OK |
 
 ### Stage 6 — user configuration
-APK: `MusicReader-stage-06-settings-<run>.apk` or later (PR [#8](https://github.com/MarcosER816/MusicReader/pull/8), branch `stage-06-settings`)
+APK: `MusicReader-stage-06-settings-81.apk` or later (PR [#8](https://github.com/MarcosER816/MusicReader/pull/8), branch `stage-06-settings`)
 Date tested:
 Audio route: not relevant (no audio yet)
 
