@@ -16,6 +16,7 @@ import com.musicreader.app.ui.song.LyricsScreen
 import com.musicreader.app.ui.song.SectionsScreen
 import com.musicreader.app.ui.song.SongSettingsScreen
 import com.musicreader.app.ui.song.SongViewModel
+import com.musicreader.app.ui.tab.TabEditorScreen
 import com.musicreader.app.ui.viewer.ViewerScreen
 import com.musicreader.app.ui.viewer.ViewerViewModel
 import kotlinx.serialization.Serializable
@@ -45,6 +46,9 @@ object ViewerRoute
 @Serializable
 data class ChordsRoute(val sectionId: String)
 
+@Serializable
+data class TabRoute(val sectionId: String)
+
 @Composable
 fun MusicReaderNavHost(navController: NavHostController = rememberNavController()) {
     NavHost(navController = navController, startDestination = LibraryRoute) {
@@ -68,6 +72,7 @@ fun MusicReaderNavHost(navController: NavHostController = rememberNavController(
                     onOpenLyrics = { sectionId -> navController.navigate(LyricsRoute(sectionId)) },
                     onOpenViewer = { navController.navigate(ViewerRoute) },
                     onOpenChords = { sectionId -> navController.navigate(ChordsRoute(sectionId)) },
+                    onOpenTab = { sectionId -> navController.navigate(TabRoute(sectionId)) },
                 )
             }
             composable<SongSettingsRoute> { entry ->
@@ -89,6 +94,15 @@ fun MusicReaderNavHost(navController: NavHostController = rememberNavController(
                 ChordEditorScreen(
                     viewModel = viewModel,
                     sectionId = entry.toRoute<ChordsRoute>().sectionId,
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable<TabRoute> { entry ->
+                val songEntry = remember(entry) { navController.getBackStackEntry<SongRoute>() }
+                val viewModel: SongViewModel = viewModel(songEntry, factory = SongViewModel.Factory)
+                TabEditorScreen(
+                    viewModel = viewModel,
+                    sectionId = entry.toRoute<TabRoute>().sectionId,
                     onBack = { navController.popBackStack() },
                 )
             }

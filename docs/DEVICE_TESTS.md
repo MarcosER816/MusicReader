@@ -133,3 +133,18 @@ Round 3 (2026-11-14, APK run 61):
 | 5 | Viewer long-press shows the chosen shape | OK |
 | 6 | Update without losing data; crash or change | OK — no crash, no change |
 
+### Stage 5 — tabs
+APK: `MusicReader-stage-05-tabs-<run>.apk` (branch `stage-05-tabs`)
+Date tested:
+Audio route: not relevant (no audio yet)
+
+How: a song's Sections → ⋮ on a section → "Tab". Viewer: "View" with Tabs checked.
+
+| # | Check | Expected | Result |
+|---|---|---|---|
+| 1 | Type a riff with a bend, hammer-on, pull-off, slide, vibrato and a harmonic | Each one readable | |
+| 2 | Order in the viewer | Chords, then tab, then lyrics | |
+| 3 | Finger color on each number | Clear | |
+| 4 | Typing speed (number pad, "Save + next") | Fast enough | |
+| 5 | Update over Stage 4 | No data lost, no crash | |
+

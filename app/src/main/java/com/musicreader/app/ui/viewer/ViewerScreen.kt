@@ -79,9 +79,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.musicreader.app.R
 import com.musicreader.app.ui.common.AppIcon
 import com.musicreader.app.ui.common.AppIcons
-import com.musicreader.app.ui.common.ChordLyricsLayout
-import com.musicreader.app.ui.common.LyricLane
-import com.musicreader.app.ui.common.PlacedLane
+import com.musicreader.app.ui.common.SheetRowLayout
+import com.musicreader.app.ui.tab.TabStaff
 import com.musicreader.app.ui.common.sectionDisplayName
 import com.musicreader.app.ui.chords.FretboardDiagram
 import com.musicreader.core.data.ChordShape
@@ -320,50 +319,22 @@ private fun SheetRowView(
     glistenPhase: State<Float>,
     onChordLongPress: (PlacedChord) -> Unit,
 ) {
-    val barColor = MaterialTheme.colorScheme.outlineVariant
     val scale = state.fontScale
     val lyricStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp * scale)
     val lyricColor = MaterialTheme.colorScheme.onSurface
-    val textLayout = row.syllables.isNotEmpty()
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp)
-            .drawBehind {
-                // Bar lines only where items are placed by beat (rows without lyrics).
-                if (!textLayout) {
-                    row.barLines.forEach { x ->
-                        val px = (x * size.width).toFloat()
-                        drawLine(barColor, Offset(px, 0f), Offset(px, size.height), strokeWidth = 1.dp.toPx())
-                    }
-                }
+    Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+        // Chords, tab and lyrics on one beat grid (D-025, D-027).
+        SheetRowLayout(
+            row = row,
+            showChords = state.layers.chords,
+            showTab = state.layers.tab,
+            showLyrics = state.layers.lyrics,
+            syllableContent = { Text(it.text, style = lyricStyle, color = lyricColor, maxLines = 1) },
+            chordContent = { chord ->
+                ChordLabel(chord, Color(state.chordColor(chord.symbol).toInt()), scale, glistenPhase, onChordLongPress)
             },
-    ) {
-        val showTab = state.layers.tab && row.tab.isNotEmpty()
-        if (textLayout && (state.layers.chords || state.layers.lyrics)) {
-            // Lyrics as text with every chord right above its syllable (D-025); the tab lane in between.
-            ChordLyricsLayout(
-                syllables = row.syllables,
-                chords = row.chords,
-                showChords = state.layers.chords,
-                showLyrics = state.layers.lyrics,
-                syllableContent = { Text(it.text, style = lyricStyle, color = lyricColor, maxLines = 1) },
-                chordContent = { chord ->
-                    ChordLabel(chord, Color(state.chordColor(chord.symbol).toInt()), scale, glistenPhase, onChordLongPress)
-                },
-                middle = if (showTab) ({ TabLane(row.tab, state, scale) }) else null,
-            )
-        } else {
-            if (state.layers.chords && row.chords.isNotEmpty()) {
-                PlacedLane(row.chords.map { it.x }) {
-                    row.chords.forEach { chord ->
-                        ChordLabel(chord, Color(state.chordColor(chord.symbol).toInt()), scale, glistenPhase, onChordLongPress)
-                    }
-                }
-            }
-            if (showTab) TabLane(row.tab, state, scale)
-            if (state.layers.lyrics && row.lyrics.isNotEmpty()) LyricLane(row.lyrics, lyricStyle, lyricColor)
-        }
+            staff = { line -> TabStaff(line, state.settings.fingerColors, scale) },
+        )
         if (state.layers.lyrics && row.secondLyrics.isNotEmpty()) {
             Text(
                 row.secondLyrics.joinToString(" ") { it.text },
@@ -414,44 +385,6 @@ private fun ChordLabel(
                 }
             },
     )
-}
-
-/** Six string lines with fret numbers in finger colors (open strings: white outline). */
-@Composable
-private fun TabLane(notes: List<PlacedTabNote>, state: ViewerUiState, scale: Float) {
-    val measurer = rememberTextMeasurer()
-    val lineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-    val background = MaterialTheme.colorScheme.background
-    val style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.sp * scale, fontWeight = FontWeight.Bold)
-    val spacing = 11.dp * scale
-    Canvas(Modifier.fillMaxWidth().height(spacing * 6).padding(vertical = 2.dp)) {
-        val gap = size.height / TabEvent.LOWEST_STRING
-        fun y(string: Int) = gap * (string - 0.5f)
-        for (string in TabEvent.HIGHEST_STRING..TabEvent.LOWEST_STRING) {
-            drawLine(lineColor, Offset(0f, y(string)), Offset(size.width, y(string)), strokeWidth = 1.dp.toPx())
-        }
-        notes.forEach { note ->
-            val color = Color(state.fingerColor(note.finger).toInt())
-            val layout = measurer.measure(TabNotation.label(note.fret, note.technique), style.copy(color = color))
-            val x = (note.x * size.width).toFloat().coerceIn(0f, size.width - layout.size.width)
-            val top = y(note.string) - layout.size.height / 2f
-            val pad = 2.dp.toPx()
-            drawRect(background, Offset(x - pad, top), Size(layout.size.width + 2 * pad, layout.size.height.toFloat()))
-            if (note.finger == 0) {
-                // Open string: an outline around the label (a circle for "0", a pill for "<12>").
-                val h = layout.size.height.toFloat()
-                val w = maxOf(layout.size.width.toFloat(), h)
-                drawRoundRect(
-                    color = color,
-                    topLeft = Offset(x + layout.size.width / 2f - w / 2f - pad, top),
-                    size = Size(w + 2 * pad, h),
-                    cornerRadius = CornerRadius(h / 2f),
-                    style = Stroke(width = 1.dp.toPx()),
-                )
-            }
-            drawText(layout, topLeft = Offset(x, top))
-        }
-    }
 }
 
 /** Long-press sheet: the chord name in its color, the chosen shape's diagram, root, type and bass. */

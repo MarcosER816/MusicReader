@@ -144,6 +144,37 @@
     <string name="use_this_shape">Use this shape</string>
     <string name="about_credits">Chord shapes: chords-db by David Rubert (MIT License). English hyphenation patterns: hyph-en-us by Gerard D.C. Kuiken.</string>
 
+    <!-- Tab -->
+    <string name="tab_title">Tab</string>
+    <string name="tab_of">Tab · %1$s</string>
+    <string name="tab_editor_hint">Tap a string on the staff to add a note there (it snaps to the nearest quarter beat). Tap a note to edit it, drag it to move it, long-press it to delete it. "Save + next" saves and opens the next note on the same string.</string>
+    <string name="tab_staff_description">Tab staff, line %1$d</string>
+    <string name="redo">Redo</string>
+    <string name="export">Export</string>
+    <string name="export_tab">Export tab</string>
+    <string name="share">Share</string>
+    <string name="copy">Copy</string>
+    <string name="close">Close</string>
+    <string name="note_position">String %1$d · bar %2$d, beat %3$s</string>
+    <string name="fret">Fret</string>
+    <string name="delete_digit">Delete digit</string>
+    <string name="finger">Finger</string>
+    <string name="finger_open">open</string>
+    <string name="note_length">Length (beats)</string>
+    <string name="technique">Technique</string>
+    <string name="save_and_next">Save + next</string>
+    <string name="technique_none">None</string>
+    <string name="technique_hammer_on">h hammer-on</string>
+    <string name="technique_pull_off">p pull-off</string>
+    <string name="technique_slide_up">/ slide up</string>
+    <string name="technique_slide_down">\\ slide down</string>
+    <string name="technique_bend">bend %1$s</string>
+    <string name="technique_bend_release">bend %1$s + release</string>
+    <string name="technique_vibrato">~ vibrato</string>
+    <string name="technique_natural_harmonic">&lt;12&gt; harmonic</string>
+    <string name="technique_artificial_harmonic">[12] artificial harmonic</string>
+    <string name="technique_mute">x muted</string>
+
     <!-- About -->
     <string name="about">About</string>
     <string name="about_title">About MusicReader</string>

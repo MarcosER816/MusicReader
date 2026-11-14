@@ -71,3 +71,8 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–3 are as M
 - Stage 4 approved by Mark on 2026-11-14 after three device-test rounds.
 
 ### Stage 5 — tabs (2026-11-14)
+- `TabOps` (quarter-beat grid, add/update/move/delete, legato targets, number-pad typing), `BeatAxis` and `LineAxes` (one beat grid for chords, tab and lyrics), `EditHistory` (undo/redo), `TabExport` (alphaTex and ASCII).
+- `SheetRowLayout` (chords, tab staff and lyrics per visual line) used by the viewer and both editors; `TabStaff` draws every technique in finger colors.
+- Tab editor per section (tap/drag/long-press, note sheet with number pad, finger, length, technique, "Save + next", undo/redo, export with Copy/Share).
+- Tests: tab ops, beat axes, history, export, ViewModel, UI flow types a hammer-on, screenshots (every technique, viewer). Decision D-027.
+
