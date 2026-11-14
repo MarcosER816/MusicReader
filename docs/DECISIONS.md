@@ -253,3 +253,31 @@ Checked again for Stage 0 against Google Maven, Maven Central, services.gradle.o
 - **Opening the viewer:** the "View" button on a song's Sections screen.
 - **Screenshot tests:** Roborazzi 1.79.0. Three images of the demo song (all layers, lyrics + chords, tab only) at 411×891 dp, compared with the references in `app/src/test/screenshots` on every test run, with a 1 % pixel-difference tolerance. The references are recorded on Linux with Robolectric native graphics (same as CI). To update them: `./gradlew :app:testDebugUnitTest -Proborazzi.test.record=true`.
 
+## D-024 — Chord dictionary and chord placement (2026-11-14)
+
+- **Source:** tombatossals/chords-db `lib/guitar.json`, commit df06fa7b425cf5fd29485ff6591236b3557e3fac (MIT License, Copyright (c) 2016 David Rubert).
+  - Layout checked on the real file: 12 keys (C, C#, D, Eb, E, F, F#, G, Ab, A, Bb, B), 82 suffixes, 828 chords, 3,283 positions (2–7 per chord).
+  - Each position has `frets` (relative to `baseFret`; −1 muted, 0 open; low E first), `fingers` (0–4), `baseFret` (1–14), `barres` (relative frets), optional `capo` and `midi`.
+  - All 3,283 `midi` lists equal standard tuning + absolute fret.
+- **Converter:** `tools/convert_chords_db.py <guitar.json> <LICENSE> <commit>` writes `core/data/src/main/assets/chords/guitar.json` (frets still relative) and `LICENSE-chords-db.txt`. It checks every position and turns the one −1 finger (F major shape 2, on a muted string) into 0. About shows the credit.
+- **Loader** (`ChordDictionary`, core/data): absolute fret = baseFret + fret − 1 for fret > 0. A barre spans from the lowest to the highest string pressed at its fret, with the finger used there. The dictionary loads once in the background at app start.
+- **21 shapes do not contain their root note**: rootless jazz voicings (maj9, 7b9, …) and a few upstream data slips (e.g. Bb m7 shape 1 sounds Am7; all four E madd9 shapes). They are kept as published; a test pins the list so any change in the data is noticed.
+- **Names:** the dictionary suffix "major" is our "" and "minor" is "m". Slash suffixes ("/E", "m/B", "m9/Bb", "7/G") become a suffix plus a bass note.
+- **voicingId:** `key|suffix|index`, e.g. `Eb|9|0`. Unknown ids fall back to the first shape of the chord type.
+- **Enharmonics:** C#/Db, D#/Eb, F#/Gb, G#/Ab, A#/Bb find the same dictionary chords; the chord keeps the spelling the user chose (D#9 uses the Eb 9 shapes). The new setting `AppSettings.accidentals` (SHARPS by default, ♯/♭ in the picker) decides how the picker spells the 12 roots.
+- **Picker:**
+  - root (12), then type: major, m, 7, maj7, m7, 9, sus4, sus2, add9, 6, m6, dim, dim7, aug, 5, 7sus4, m9, maj9, m7b5, 11, 13 first, then every other type, slash chords last;
+  - then a pager with every shape and its diagram. "Use this shape" saves the `voicingId`.
+- **Diagram:**
+  - strings vertical, low E on the left (mirrored when left-handed);
+  - a nut at base fret 1, otherwise "Nfr";
+  - × muted, o open (white outline);
+  - dots in the finger colors with the number inside, and barres drawn as a bar in the finger's color.
+- **Chord editor:** "Chords" in a section card's ⋮ menu.
+  - Rows match the viewer, with a half-beat grid: short ticks on half beats, longer ones on beats, full lines on bars. The row's lyrics are under the grid.
+  - Tap → picker → the chord lands on the nearest half beat (D-009). Adding on an occupied beat replaces that chord.
+  - Drag a chord sideways to move it; it snaps when released.
+  - Tap a chord to change it; long-press to delete it (Undo).
+  - Section cards list their chords.
+- **Viewer:** a long-press on a chord shows the chosen shape's diagram above root, type and bass.
+

@@ -71,6 +71,7 @@ fun SectionsScreen(
     onOpenSettings: () -> Unit,
     onOpenLyrics: (sectionId: String) -> Unit,
     onOpenViewer: () -> Unit,
+    onOpenChords: (sectionId: String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -84,6 +85,7 @@ fun SectionsScreen(
     LaunchedEffect(viewModel) {
         viewModel.eventFlow.collect { event ->
             when (event) {
+                is SongEvent.ChordDeleted -> Unit // shown by the chord editor
                 is SongEvent.SectionDeleted -> scope.launch {
                     snackbarHostState.currentSnackbarData?.dismiss()
                     val name = event.label
@@ -144,6 +146,7 @@ fun SectionsScreen(
                     editor = s.editor,
                     onEdit = { sheetTarget = SheetTarget.Existing(it) },
                     onOpenLyrics = onOpenLyrics,
+                    onOpenChords = onOpenChords,
                     onMove = viewModel::moveSection,
                     onDuplicate = viewModel::duplicateSection,
                     onUnlink = viewModel::unlinkSection,
@@ -190,6 +193,7 @@ private fun SectionList(
     editor: SongEditorState,
     onEdit: (String) -> Unit,
     onOpenLyrics: (String) -> Unit,
+    onOpenChords: (String) -> Unit,
     onMove: (String, String) -> Unit,
     onDuplicate: (String, Boolean) -> Unit,
     onUnlink: (String) -> Unit,
@@ -226,6 +230,7 @@ private fun SectionList(
                 dragState = dragState,
                 onEdit = { onEdit(row.id) },
                 onOpenLyrics = { onOpenLyrics(row.id) },
+                onOpenChords = { onOpenChords(row.id) },
                 onDuplicate = { linked -> onDuplicate(row.id, linked) },
                 onUnlink = { onUnlink(row.id) },
                 onDelete = { onDelete(row.id) },
@@ -258,6 +263,7 @@ private fun SectionCard(
     dragState: DragReorderState,
     onEdit: () -> Unit,
     onOpenLyrics: () -> Unit,
+    onOpenChords: () -> Unit,
     onDuplicate: (linked: Boolean) -> Unit,
     onUnlink: () -> Unit,
     onDelete: () -> Unit,
@@ -290,6 +296,15 @@ private fun SectionCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                if (row.chordsPreview != null) {
+                    Text(
+                        row.chordsPreview,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.secondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 Text(
                     row.lyricsPreview ?: stringResource(R.string.tap_to_add_lyrics),
                     style = MaterialTheme.typography.bodySmall,
@@ -328,6 +343,10 @@ private fun SectionCard(
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.lyrics)) },
                         onClick = { menuOpen = false; onOpenLyrics() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.chords)) },
+                        onClick = { menuOpen = false; onOpenChords() },
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.edit_section)) },

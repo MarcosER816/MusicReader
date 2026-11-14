@@ -96,7 +96,7 @@ The curve is stored at most one point per 10 ms of the take. Because `t` is rela
 | id | String | |
 | beat | Double | snapped to a half-beat grid (multiples of 0.5) (D-009) |
 | symbol | `{ root: A..G, accidental: NONE \| SHARP \| FLAT, suffix: String, bass: Note? }` | e.g. Bb9 = root B, FLAT, "9"; color comes from the root letter only (D-011) |
-| voicingId | String | id in the chord dictionary (frets + fingers) |
+| voicingId | String | chosen shape in the chord dictionary: `key\|suffix\|index`, e.g. `Eb\|9\|0` (D-024) |
 
 ## StrumPattern (one per SectionContent, D-008)
 
@@ -144,6 +144,7 @@ The curve is stored at most one point per 10 ms of the take. Because `t` is rela
 - `viewerFontScale`: viewer text size, 0.8–2.0 × normal, default 1.0 (D-023)
 - `judgeWindows`: `{ goldMs: 50, greenMs: 120, redMs: 250, goldCents: 35, greenCents: 100 }`
 - `latencyProfiles`: per audio route (speaker, wired, Bluetooth, USB)
+- `accidentals`: `SHARPS` \| `FLATS`, how the chord picker spells roots (D-024)
 - `uiLanguage`: `SYSTEM` \| `en` \| `es` (D-006)
 
 ## Storage layout

@@ -2,6 +2,7 @@ package com.musicreader.core.lyrics
 
 import com.musicreader.core.model.Accidental
 import com.musicreader.core.model.ChordEvent
+import com.musicreader.core.model.ChordNaming
 import com.musicreader.core.model.ChordSymbol
 import com.musicreader.core.model.IdGenerator
 import com.musicreader.core.model.Language
@@ -34,7 +35,7 @@ object DemoSong {
 
         fun chord(beat: Double, root: NoteLetter, accidental: Accidental = Accidental.NONE, suffix: String = "", bass: NoteName? = null): ChordEvent {
             val symbol = ChordSymbol(root, accidental, suffix, bass)
-            return ChordEvent(ids.newId(), beat, symbol, voicingId = "$symbol-1")
+            return ChordEvent(ids.newId(), beat, symbol, voicingId = ChordNaming.firstVoicingId(symbol))
         }
 
         fun note(beat: Double, string: Int, fret: Int, finger: Int, technique: Technique = Technique.NONE, duration: Double = 0.5) =

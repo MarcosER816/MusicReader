@@ -27,6 +27,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.MutableStateFlow
+import com.musicreader.core.model.Accidental
+import com.musicreader.core.model.ChordSymbol
+import com.musicreader.core.model.NoteLetter
 import com.musicreader.app.ui.song.WordUi
 import com.musicreader.core.model.Language
 
@@ -49,6 +53,8 @@ class SongViewModelTest {
         openSettingsRequested = openSettings,
         repository = repo,
         appScope = backgroundScope,
+        settingsRepository = FakeSettingsRepository(),
+        chordDictionary = MutableStateFlow(null),
         ids = ids,
         clock = { now++ },
     )
@@ -267,6 +273,42 @@ class SongViewModelTest {
         val vm = viewModel(repoWithSong())
         advanceUntilIdle()
         assertNull(vm.lyricsState("nope").first())
+    }
+
+    @Test
+    fun chordsArePlacedMovedChangedAndDeleted() = runTest(dispatcher) {
+        val repo = repoWithSong()
+        val vm = viewModel(repo)
+        advanceUntilIdle()
+        vm.addSection(SectionType.VERSE, 2, null) // 8 beats in 4/4
+        advanceUntilIdle()
+        val section = ready(vm).sections.single().id
+        val c = ChordSymbol(NoteLetter.C)
+        val g = ChordSymbol(NoteLetter.G)
+
+        vm.addChord(section, 0.2, c, "C|major|0")
+        vm.addChord(section, 4.3, g, "G|major|1")
+        advanceUntilIdle()
+        var editor = vm.chordEditorState(section).first()!!
+        assertEquals(listOf(0.0 to "C", 4.5 to "G"), editor.chords.map { it.beat to it.symbol.toString() })
+        assertEquals("C · G", ready(vm).sections.single().chordsPreview)
+
+        val gId = editor.chords[1].id
+        vm.moveChord(section, gId, 6.1)
+        vm.changeChord(section, gId, ChordSymbol(NoteLetter.B, Accidental.FLAT, "9"), "Bb|9|1")
+        advanceUntilIdle()
+        editor = vm.chordEditorState(section).first()!!
+        assertEquals(6.0, editor.chords[1].beat)
+        assertEquals("Bb9", editor.chords[1].symbol.toString())
+        assertEquals("Bb|9|1", editor.chords[1].voicingId)
+
+        vm.deleteChord(section, gId)
+        advanceUntilIdle()
+        assertEquals(1, repo.songs.getValue("song").sectionContents.single().chords.size)
+        vm.undoDeleteChord()
+        advanceUntilIdle()
+        assertEquals(listOf("C", "Bb9"), repo.songs.getValue("song").sectionContents.single().chords.map { it.symbol.toString() })
+        assertEquals(1, editor.rows.size)
     }
 
     @Test

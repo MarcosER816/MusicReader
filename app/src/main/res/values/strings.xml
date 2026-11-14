@@ -129,6 +129,20 @@
     <string name="song_is_empty">This song has no sections yet.</string>
     <string name="load_demo_song">Load demo song (debug)</string>
 
+    <!-- Chords -->
+    <string name="chords">Chords</string>
+    <string name="chords_of">Chords · %1$s</string>
+    <string name="chord_editor_hint">Tap the grid to add a chord: it snaps to the nearest half beat. Drag a chord to move it, tap it to change it, long-press it to delete it. The lyrics below show which word each chord falls on.</string>
+    <string name="chord_deleted">Chord %1$s deleted</string>
+    <string name="chord_grid_description">Chord grid from bar %1$d</string>
+    <string name="bar_number">Bar %1$d</string>
+    <string name="chord_root_label">Root</string>
+    <string name="chord_type_label">Type</string>
+    <string name="chord_shape_of">Shape %1$d of %2$d</string>
+    <string name="chord_swipe_hint">Swipe sideways to see every shape of this chord.</string>
+    <string name="use_this_shape">Use this shape</string>
+    <string name="about_credits">Chord shapes: chords-db by David Rubert (MIT License). English hyphenation patterns: hyph-en-us by Gerard D.C. Kuiken.</string>
+
     <!-- About -->
     <string name="about">About</string>
     <string name="about_title">About MusicReader</string>

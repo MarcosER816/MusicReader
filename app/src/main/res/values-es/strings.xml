@@ -130,6 +130,20 @@
     <string name="song_is_empty">Esta canción todavía no tiene secciones.</string>
     <string name="load_demo_song">Cargar canción de prueba (depuración)</string>
 
+    <!-- Acordes -->
+    <string name="chords">Acordes</string>
+    <string name="chords_of">Acordes · %1$s</string>
+    <string name="chord_editor_hint">Toca la cuadrícula para añadir un acorde: se ajusta al medio tiempo más cercano. Arrastra un acorde para moverlo, tócalo para cambiarlo y mantenlo pulsado para borrarlo. La letra de abajo muestra en qué palabra cae cada acorde.</string>
+    <string name="chord_deleted">Acorde %1$s borrado</string>
+    <string name="chord_grid_description">Cuadrícula de acordes desde el compás %1$d</string>
+    <string name="bar_number">Compás %1$d</string>
+    <string name="chord_root_label">Fundamental</string>
+    <string name="chord_type_label">Tipo</string>
+    <string name="chord_shape_of">Posición %1$d de %2$d</string>
+    <string name="chord_swipe_hint">Desliza a los lados para ver todas las posiciones de este acorde.</string>
+    <string name="use_this_shape">Usar esta posición</string>
+    <string name="about_credits">Posiciones de acordes: chords-db de David Rubert (licencia MIT). Patrones de silabeo en inglés: hyph-en-us de Gerard D.C. Kuiken.</string>
+
     <!-- Acerca de -->
     <string name="about">Acerca de</string>
     <string name="about_title">Acerca de MusicReader</string>

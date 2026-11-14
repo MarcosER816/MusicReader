@@ -42,7 +42,7 @@ class ViewerViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     private fun TestScope.viewModel(song: Song?, settings: FakeSettingsRepository = FakeSettingsRepository()) =
-        ViewerViewModel(MutableStateFlow(song), settings, backgroundScope)
+        ViewerViewModel(MutableStateFlow(song), MutableStateFlow(TestDictionary.dictionary), settings, backgroundScope)
 
     @Test
     fun buildsTheLayoutFromTheSong() = runTest(dispatcher) {
@@ -53,6 +53,20 @@ class ViewerViewModelTest {
         assertEquals(4, state.layout.sections.size)
         assertEquals(3, state.visibleLayerCount)
         assertNull(viewModel(null).state.value)
+    }
+
+    @Test
+    fun everyDemoChordHasItsExactShape() = runTest(dispatcher) {
+        val vm = viewModel(demo)
+        advanceUntilIdle()
+        val state = vm.state.value!!
+        val chords = state.layout.sections.flatMap { s -> s.rows.flatMap { it.chords } }
+        assertEquals(demo.sectionContents.sumOf { it.chords.size }, chords.size)
+        for (chord in chords) {
+            val exact = TestDictionary.dictionary.shape(chord.voicingId)
+            assertEquals(exact, state.shapeOf(chord), "${chord.symbol} ${chord.voicingId}")
+            kotlin.test.assertNotNull(exact, "${chord.symbol} ${chord.voicingId}")
+        }
     }
 
     @Test

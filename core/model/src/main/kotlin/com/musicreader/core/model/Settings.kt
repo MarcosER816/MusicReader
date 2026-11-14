@@ -70,6 +70,8 @@ data class AppSettings(
     /** Measured round-trip latency in milliseconds per audio route. */
     val latencyProfiles: Map<AudioRoute, Double> = emptyMap(),
     val uiLanguage: UiLanguage = UiLanguage.SYSTEM,
+    /** How the chord picker spells roots with an accidental (D-024). */
+    val accidentals: AccidentalPreference = AccidentalPreference.SHARPS,
 ) {
     companion object {
         const val MIN_AUTOSCROLL_DP_PER_SECOND: Double = 2.0

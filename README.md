@@ -73,3 +73,6 @@ The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
 MIT, see [LICENSE](LICENSE).
 
 The English hyphenation patterns (`core/lyrics/src/main/resources/hyphenation/hyph-en-us.*`) are Copyright (C) 1990, 2004, 2005 Gerard D.C. Kuiken, distributed under the permissive notice in `hyph-en-us.LICENSE.txt`.
+
+The chord shapes (`core/data/src/main/assets/chords/guitar.json`) are converted from [chords-db](https://github.com/tombatossals/chords-db) by David Rubert, MIT License (`LICENSE-chords-db.txt` next to the file). To regenerate: `python3 tools/convert_chords_db.py <chords-db>/lib/guitar.json <chords-db>/LICENSE <commit>`.
+

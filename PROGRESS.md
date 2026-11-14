@@ -61,4 +61,8 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–3 are as M
 
 ### Stage 4 — chords (2026-11-14)
 - Stage 3 approved by Mark (device test all OK).
+- Chord dictionary from tombatossals/chords-db (MIT): converter `tools/convert_chords_db.py`, asset `core/data/src/main/assets/chords/guitar.json` (828 chords, 3,283 shapes), loader with relative → absolute frets and barres, credit in About.
+- Enharmonics and dictionary names (`ChordNaming`), sharps/flats setting, chord placement on the half-beat grid (`ChordOps`).
+- Fretboard diagram (Canvas), chord picker (root → type → every shape), chord editor per section (tap/drag/tap/long-press), diagram in the viewer's long-press sheet.
+- Tests: dictionary (all shapes, midi = tuning + fret, enharmonics, voicing ids), naming and placement, ViewModel chord edits, demo chords resolve to their shapes, UI flow places a chord, screenshots of open C, barre F, Bb9, Cmaj7, D#. Decision D-024.
 

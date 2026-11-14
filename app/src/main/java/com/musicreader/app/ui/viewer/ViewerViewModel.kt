@@ -5,11 +5,14 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.musicreader.app.ui.common.appContainer
+import com.musicreader.core.data.ChordDictionary
+import com.musicreader.core.data.ChordShape
 import com.musicreader.core.data.SettingsRepository
 import com.musicreader.core.model.AppSettings
 import com.musicreader.core.model.ChordSymbol
 import com.musicreader.core.model.Layer
 import com.musicreader.core.model.LayerVisibility
+import com.musicreader.core.model.PlacedChord
 import com.musicreader.core.model.SheetLayout
 import com.musicreader.core.model.SheetLayoutBuilder
 import com.musicreader.core.model.Song
@@ -41,7 +44,12 @@ data class ViewerUiState(
     val speedSliderPosition: Float,
     val playing: Boolean,
     val settings: AppSettings,
+    /** The chord dictionary for the long-press diagrams; null while it loads. */
+    val dictionary: ChordDictionary? = null,
 ) {
+    /** The chosen shape of a chord (or the first shape of its type when the id is unknown). */
+    fun shapeOf(chord: PlacedChord): ChordShape? = dictionary?.shapeFor(chord.symbol, chord.voicingId)
+
     fun chordColor(symbol: ChordSymbol): Long = settings.chordColor(symbol)
     fun fingerColor(finger: Int): Long = settings.fingerColor(finger)
 }
@@ -53,6 +61,7 @@ data class ViewerUiState(
  */
 class ViewerViewModel(
     song: Flow<Song?>,
+    dictionary: Flow<ChordDictionary?>,
     private val settingsRepository: SettingsRepository,
     private val appScope: CoroutineScope,
 ) : ViewModel() {
@@ -64,7 +73,7 @@ class ViewerViewModel(
         .distinctUntilChanged()
 
     val state: StateFlow<ViewerUiState?> =
-        combine(layout, settingsRepository.settings, playing) { titled, settings, isPlaying ->
+        combine(layout, settingsRepository.settings, playing, dictionary) { titled, settings, isPlaying, dict ->
             titled?.let { (title, sheet) ->
                 ViewerUiState(
                     title = title,
@@ -76,6 +85,7 @@ class ViewerViewModel(
                     speedSliderPosition = speedToSlider(settings.autoscrollSpeed),
                     playing = isPlaying,
                     settings = settings,
+                    dictionary = dict,
                 )
             }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -116,10 +126,10 @@ class ViewerViewModel(
         fun speedToSlider(speed: Double): Float =
             (ln(speed.coerceIn(MIN, MAX) / MIN) / ln(MAX / MIN)).toFloat()
 
-        fun factory(song: Flow<Song?>) = viewModelFactory {
+        fun factory(song: Flow<Song?>, dictionary: Flow<ChordDictionary?>) = viewModelFactory {
             initializer {
                 val container = appContainer
-                ViewerViewModel(song, container.settingsRepository, container.appScope)
+                ViewerViewModel(song, dictionary, container.settingsRepository, container.appScope)
             }
         }
     }

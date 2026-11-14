@@ -95,3 +95,19 @@ How: Library ⋮ → "Load demo song (debug)" → "View".
 | 5 | Text sizes ("Aa") at arm's length | Comfortable | OK |
 | 6 | Update over Stage 2, reopen songs | No data lost, no crash | OK — no crash |
 
+### Stage 4 — chords
+APK: `MusicReader-stage-04-chords-<run>.apk` (branch `stage-04-chords`)
+Date tested:
+Audio route: not relevant (no audio yet)
+
+How: a song's Sections → ⋮ on a section → "Chords". Viewer: "View", long-press a chord.
+
+| # | Check | Expected | Result |
+|---|---|---|---|
+| 1 | Look up ten chords you really use | All there, with the shapes you play | |
+| 2 | Finger numbers and colors on the diagrams | Correct | |
+| 3 | Tap a beat to add a chord | Lands on the tapped beat (half-beat grid) | |
+| 4 | Lyrics under the chord grid | Clear which syllable/word is under each chord | |
+| 5 | Viewer long-press | Shows the chosen shape | |
+| 6 | Update over Stage 3 | No data lost, no crash | |
+
