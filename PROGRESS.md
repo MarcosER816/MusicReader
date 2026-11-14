@@ -15,7 +15,7 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 | 4 | Chords: chord dictionary (all voicings, finger numbers, fretboard diagram), chord editor (chords on syllables, half-beat grid without lyrics), long-press diagram in the viewer | stage-04-chords | done | [#6](https://github.com/MarcosER816/MusicReader/pull/6) | 2026-11-14 ("Stage 4 approved") |
 | 5 | Tab editor: tab events between chords and lyrics, techniques (bend, hammer-on, pull-off, slide, vibrato, harmonics, mute) | stage-05-tabs | done | [#7](https://github.com/MarcosER816/MusicReader/pull/7) | 2026-11-14 ("Stage 5 approved") |
 | 6 | User configuration: chord colors, finger colors, default viewer layers, app language, sharps/flats, left-handed diagrams | stage-06-settings | done | [#8](https://github.com/MarcosER816/MusicReader/pull/8) | 2026-11-14 ("Stage 6 approved") |
-| 7 | Audio core: C++ Oboe engine, JNI, audio clock, metronome, latency calibration per route, diagnostics | stage-07-audio | in progress | | |
+| 7 | Audio core: C++ Oboe engine, JNI, audio clock, metronome, latency calibration per route, diagnostics | stage-07-audio | waiting for Mark | [#9](https://github.com/MarcosER816/MusicReader/pull/9) | |
 | 8 | DSP: pitch tracking and onset detection, tested on synthetic signals | stage-08-dsp | not started | | |
 | 9 | Lyric capture by singing: select word range, count-in, record take, align to syllables, last take wins | stage-09-capture | not started | | |
 | 10 | Note editor: per-syllable pitch and duration, free drag with no snapping | stage-10-note-editor | not started | | |

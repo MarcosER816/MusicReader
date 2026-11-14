@@ -164,7 +164,7 @@ How: Library ⋮ → "Settings".
 | 5 | Update over Stage 5 | No data lost, no crash | OK — no data lost, no crash, no change wanted |
 
 ### Stage 7 — audio core
-APK: `MusicReader-stage-07-audio-<run>.apk` or later (PR [#9](https://github.com/MarcosER816/MusicReader/pull/9), branch `stage-07-audio`)
+APK: `MusicReader-stage-07-audio-90.apk` or later (PR [#9](https://github.com/MarcosER816/MusicReader/pull/9), branch `stage-07-audio`)
 Date tested:
 Audio route: speaker and wired headphones
 
