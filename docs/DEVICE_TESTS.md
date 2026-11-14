@@ -150,15 +150,15 @@ How: a song's Sections → ⋮ on a section → "Tab". Viewer: "View" with Tabs 
 
 ### Stage 6 — user configuration
 APK: `MusicReader-stage-06-settings-81.apk` or later (PR [#8](https://github.com/MarcosER816/MusicReader/pull/8), branch `stage-06-settings`)
-Date tested:
+Date tested: 2026-11-14 (APK run 81)
 Audio route: not relevant (no audio yet)
 
 How: Library ⋮ → "Settings".
 
 | # | Check | Expected | Result |
 |---|---|---|---|
-| 1 | Change the color of C; open a song's viewer and the chord editor | C chords in the new color in both, and in the chord picker | |
-| 2 | Change a finger color; look at a tab and at chord diagrams (viewer long-press, chord picker) | The finger's numbers and dots in the new color | |
-| 3 | Force-stop and reopen; then "Reset to default" and "Reset all" | Colors kept after restart; resets restore the defaults | |
-| 4 | Switch the language to Español and back | Every screen in the chosen language | |
-| 5 | Update over Stage 5 | No data lost, no crash | |
+| 1 | Change the color of C; open a song's viewer and the chord editor | C chords in the new color in both, and in the chord picker | OK |
+| 2 | Change a finger color; look at a tab and at chord diagrams (viewer long-press, chord picker) | The finger's numbers and dots in the new color | OK |
+| 3 | Force-stop and reopen; then "Reset to default" and "Reset all" | Colors kept after restart; resets restore the defaults | OK |
+| 4 | Switch the language to Español and back | Every screen in the chosen language | OK |
+| 5 | Update over Stage 5 | No data lost, no crash | OK — no data lost, no crash, no change wanted |
