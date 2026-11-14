@@ -357,3 +357,57 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
 
   The chord editor's dotted underline now uses the theme's outline color.
 - **Robust reading:** if the stored settings miss a letter or finger (e.g. written by an older version), the default fills in. Unknown fingers are dropped, and unreadable settings fall back to the defaults.
+
+## D-029 — Audio engine, audio clock, metronome, latency calibration (Stage 7, 2026-11-14)
+- **Engine (C++17, Oboe 1.11.0):**
+  - The output stream is the master: LowLatency, Exclusive (Oboe falls back to Shared), 48 kHz float, stereo, Usage Media. The buffer starts at two bursts, and Oboe's `LatencyTuner` raises it after underruns.
+  - The microphone stream (mono, VoiceRecognition preset) is opened **only for calibration**. It is read without blocking inside the output callback, so input and output share one frame counter, as in Oboe's full-duplex helper. The first 8 callbacks drop what piled up while the streams started.
+  - Callbacks never allocate, lock, log or block:
+    - commands reach the callback through a lock-free SPSC queue;
+    - microphone samples leave through a lock-free SPSC ring buffer (about 11 s);
+    - sounds are generated once, when the engine is created.
+  - Engine frames continue across stream restarts, so the metronome and the clock do not jump when the route changes. During a restart the clock pauses.
+- **Audio clock:** the output stream's `getTimestamp(CLOCK_MONOTONIC)` (presented frame plus time).
+  - It is queried at most every 20 ms by whichever thread reads the clock, never in the callback (Oboe guards it with a lock), and published through a seqlock.
+  - Reads extrapolate with the monotonic clock. They are capped at the written frame and never go backwards.
+  - Until the first timestamp exists, the clock uses "written frame at the last callback minus the buffer".
+  - Kotlin reads it through `AudioService` (`metronomeBeat()`, `clockSeconds()`). All musical timing comes from it, never from frame time; the screen only polls it to redraw.
+- **Metronome:**
+  - Rendered sample by sample in the callback. Beat k sits at `anchorFrame + round((k − anchorBeat) × framesPerBeat)`, so beats never drift (tested to be sample exact for any block size).
+  - Beat 1 of the bar is accented (higher, louder click). A beat is one denominator note (D-018), so 6/8 clicks six eighths.
+  - Start and tempo or meter changes take effect 120 ms ahead, on the next beat. Beats already heard stay where they were, and a new meter starts a new bar.
+  - A metronome button on the song's Sections screen shows a beat light read from the audio clock. The metronome follows tempo and time-signature edits while it plays, and stops when the song is closed.
+- **Lifecycle:**
+  - Streams run only while something needs them: the metronome, a calibration, or the diagnostics screen.
+  - Everything stops when the app goes to the background (not on rotation).
+  - The screen stays on while audio runs.
+  - The microphone permission is asked only when a calibration starts. If it is refused, a screen explains why it is needed, with "Try again" and "Open app settings".
+- **Route changes:**
+  - Oboe's disconnect callback only sets a flag. A watchdog (every 200 ms) reopens the streams on the control side.
+  - An Android `AudioDeviceCallback` also reopens running streams 300 ms after an output device is added or removed, because a plug-in does not always disconnect the stream.
+  - The route comes from the stream's device id: USB, wired, Bluetooth or speaker.
+- **Latency calibration (Settings → Latency calibration):**
+  - **Automatic:** 5 chirps (40 ms, 600 Hz to 6 kHz, 1 s apart) are played and recorded.
+    - Each chirp is searched up to 800 ms after it was played, by normalized cross-correlation (absolute value, so an inverted mic still matches) with a parabolic sub-sample peak.
+    - A chirp counts as heard at a peak of 0.2 or more (noise alone peaks near 0.1).
+    - The result is the mean of the measurements within 1 ms of the median.
+    - Confidence = (share of chirps within 1 ms of the median) × min(1, median peak / 0.3).
+  - **Manual:** 16 clicks at 80 BPM, after 1.5 s to get ready. The user claps or strums on each click.
+    - Onsets are found as energy rises (1 ms hop, 5 ms window against the 25 ms before, at least 10 dB above the quiet level).
+    - For each click, the strongest onset from ¼ interval before to ¾ after is taken.
+    - The result is the median offset. Confidence = found share × (1 − MAD / 30 ms).
+    - On the speaker, the microphone also hears the click itself, at the same round trip as an on-time clap, so this does not bias the median.
+  - The result is shown with its confidence, found count and spread. Below 50 % confidence the screen asks to measure again.
+  - "Save for <route>" stores one `LatencyProfile` per route (`AppSettings.latencyProfiles`), and saved profiles can be cleared.
+  - Bluetooth shows a warning that it is too slow for practice (150–300 ms). `LatencyOps.tooSlowForPractice` is true for Bluetooth, or for any route measured above 100 ms.
+- **Diagnostics (Settings → Audio diagnostics):**
+  - status, route, saved latency for the route;
+  - sample rate, burst, buffer size and capacity (frames and ms), sharing and performance mode, audio API;
+  - underruns (xRunCount), output latency from the timestamps, channels, device id, audio clock, callbacks, stream restarts;
+  - microphone details while it is open.
+
+  It keeps the streams running while open and refreshes twice a second.
+- **Tests without a device:**
+  - The DSP (`audio/src/main/cpp/dsp`: ring buffer, clock math, beat grid, renderer, chirp, correlation, onsets, calibration) is pure C++. It is built for the host and tested with GoogleTest (BSD-3-Clause) through `cmake` + `ctest` in its own CI job (`audio/src/test/cpp`).
+  - Kotlin tests use a fake engine for the controller and a fake `AudioService` for the ViewModels.
+- **Count-in:** not part of this stage. It comes with lyric capture (Stage 9), on the same metronome.

@@ -42,4 +42,9 @@ android {
 
 dependencies {
     implementation(libs.oboe)
+    api(project(":core:model"))
+    api(libs.kotlinx.coroutines.core)
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

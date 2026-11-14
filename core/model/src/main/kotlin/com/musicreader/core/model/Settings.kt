@@ -67,8 +67,8 @@ data class AppSettings(
     /** Text size of the song viewer, as a multiple of the normal size. */
     val viewerFontScale: Float = 1.0f,
     val judgeWindows: JudgeWindows = JudgeWindows(),
-    /** Measured round-trip latency in milliseconds per audio route. */
-    val latencyProfiles: Map<AudioRoute, Double> = emptyMap(),
+    /** Measured round-trip latency per audio route (D-029). */
+    val latencyProfiles: Map<AudioRoute, LatencyProfile> = emptyMap(),
     val uiLanguage: UiLanguage = UiLanguage.SYSTEM,
     /** How the chord picker spells roots with an accidental (D-024). */
     val accidentals: AccidentalPreference = AccidentalPreference.SHARPS,

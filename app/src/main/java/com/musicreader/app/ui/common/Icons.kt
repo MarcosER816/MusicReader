@@ -24,4 +24,5 @@ object AppIcons {
     val Undo = R.drawable.ic_undo
     val Redo = R.drawable.ic_redo
     val Backspace = R.drawable.ic_backspace
+    val Metronome = R.drawable.ic_metronome
 }

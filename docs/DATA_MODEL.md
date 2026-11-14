@@ -144,7 +144,7 @@ The curve is stored at most one point per 10 ms of the take. Because `t` is rela
 - `autoscrollSpeed`: viewer autoscroll in dp per second, 2–150, default 15 (D-023)
 - `viewerFontScale`: viewer text size, 0.8–2.0 × normal, default 1.0 (D-023)
 - `judgeWindows`: `{ goldMs: 50, greenMs: 120, redMs: 250, goldCents: 35, greenCents: 100 }`
-- `latencyProfiles`: per audio route (speaker, wired, Bluetooth, USB)
+- `latencyProfiles`: per audio route (`SPEAKER`, `WIRED`, `BLUETOOTH`, `USB`) a `LatencyProfile { roundTripMs: Double, method: AUTOMATIC | MANUAL, confidence: 0..1, measuredAt: epoch ms }` (D-029)
 - `accidentals`: `SHARPS` \| `FLATS`, how the chord picker spells roots (D-024)
 - `uiLanguage`: `SYSTEM` \| `en` \| `es` (D-006)
 

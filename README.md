@@ -57,6 +57,17 @@ Requirements: JDK 21 and the Android SDK (`ANDROID_HOME` set, or `sdk.dir` in
 
 The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
 
+The audio DSP (chirps, cross-correlation, onsets, click scheduling) also builds on a desktop
+computer, with GoogleTest (on Ubuntu: `sudo apt-get install libgtest-dev ninja-build`):
+
+```bash
+cmake -S audio/src/test/cpp -B build/native-tests -G Ninja
+```
+
+```bash
+cmake --build build/native-tests && ctest --test-dir build/native-tests --output-on-failure
+```
+
 ## Project layout
 
 | Module | What it holds |
@@ -66,7 +77,7 @@ The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
 | `core/data` | Song files (JSON) and settings (DataStore) |
 | `core/dsp` | Pure Kotlin signal processing (pitch, onsets) |
 | `core/lyrics` | Pure Kotlin lyrics parsing and syllable splitting (Spanish rules, English Liang patterns) |
-| `audio` | C++17 audio core on Oboe, called from Kotlin through JNI |
+| `audio` | C++17 audio engine on Oboe (clock, metronome, calibration) called through JNI; host-testable DSP in `src/main/cpp/dsp` |
 
 ## License
 
