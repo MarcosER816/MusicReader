@@ -12,7 +12,7 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–3 are as M
 | 1 | Core model, JSON storage, beat/time helpers, song library, song settings (tempo, tap tempo, time signature), sections (types, descriptions, length, reorder, linked copies) | stage-01-model | done | [#2](https://github.com/MarcosER816/MusicReader/pull/2), [#3](https://github.com/MarcosER816/MusicReader/pull/3) | 2026-11-13 ("Stage 1 approved") |
 | 2 | Lyrics editor (per section, two voices), Spanish syllabifier (rules), English syllabifier (Liang + hyph-en-us), syllable view with tap split/merge, edits keep unchanged words | stage-02-lyrics | done | [#4](https://github.com/MarcosER816/MusicReader/pull/4) | 2026-11-13 ("Stage 2 approved") |
 | 3 | Song viewer: sections with chords/tab/lyrics on shared beat positions, layer checkboxes, chord colors, synchronized glisten, slow autoscroll, long-press chord sheet, font size, demo song, screenshot tests | stage-03-viewer | done | [#5](https://github.com/MarcosER816/MusicReader/pull/5) | 2026-11-14 ("Stage 3 approved") |
-| 4 | Chords: chord dictionary (all voicings, finger numbers, fretboard diagram), chord editor on the half-beat grid above the lyrics, one strumming pattern per section, long-press diagram in the viewer | stage-04-chords | waiting for Mark | [#6](https://github.com/MarcosER816/MusicReader/pull/6) | |
+| 4 | Chords: chord dictionary (all voicings, finger numbers, fretboard diagram), chord editor on the half-beat grid above the lyrics, one strumming pattern per section, long-press diagram in the viewer | stage-04-chords | done | [#6](https://github.com/MarcosER816/MusicReader/pull/6) | 2026-11-14 ("Stage 4 approved") |
 | 5 | Tab editor: tab events between chords and lyrics, techniques (bend, hammer-on, pull-off, slide, vibrato, harmonics, mute) | stage-05-tab-editor | not started | | |
 | 6 | Audio core: C++ Oboe engine, JNI, audio clock, metronome/count-in, latency calibration per route | stage-06-audio | not started | | |
 | 7 | DSP: pitch tracking and onset detection, tested on synthetic signals | stage-07-dsp | not started | | |
@@ -68,3 +68,4 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–3 are as M
 - Round 2 after Mark's device test: chords on syllables (`ChordEvent.syllableId`), lyrics laid out as text with each chord right above its syllable, tap a syllable to add, drag onto another syllable to move, chords follow lyric edits (D-025).
 - Round 3: barres the dictionary does not list are inferred (Gm7 showed finger 3 three times), Gm7 screenshot (D-026).
 
+- Stage 4 approved by Mark on 2026-11-14 after three device-test rounds.
