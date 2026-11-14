@@ -14,7 +14,7 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 | 3 | Song viewer: sections with chords/tab/lyrics on shared beat positions, layer checkboxes, chord colors, synchronized glisten, slow autoscroll, long-press chord sheet, font size, demo song, screenshot tests | stage-03-viewer | done | [#5](https://github.com/MarcosER816/MusicReader/pull/5) | 2026-11-14 ("Stage 3 approved") |
 | 4 | Chords: chord dictionary (all voicings, finger numbers, fretboard diagram), chord editor (chords on syllables, half-beat grid without lyrics), long-press diagram in the viewer | stage-04-chords | done | [#6](https://github.com/MarcosER816/MusicReader/pull/6) | 2026-11-14 ("Stage 4 approved") |
 | 5 | Tab editor: tab events between chords and lyrics, techniques (bend, hammer-on, pull-off, slide, vibrato, harmonics, mute) | stage-05-tabs | done | [#7](https://github.com/MarcosER816/MusicReader/pull/7) | 2026-11-14 ("Stage 5 approved") |
-| 6 | User configuration: chord colors, finger colors, default viewer layers, app language, sharps/flats, left-handed diagrams | stage-06-settings | in progress | | |
+| 6 | User configuration: chord colors, finger colors, default viewer layers, app language, sharps/flats, left-handed diagrams | stage-06-settings | waiting for Mark | [#8](https://github.com/MarcosER816/MusicReader/pull/8) | |
 | 7 | Audio core: C++ Oboe engine, JNI, audio clock, metronome/count-in, latency calibration per route | stage-07-audio | not started | | |
 | 8 | DSP: pitch tracking and onset detection, tested on synthetic signals | stage-08-dsp | not started | | |
 | 9 | Lyric capture by singing: select word range, count-in, record take, align to syllables, last take wins | stage-09-capture | not started | | |
@@ -78,4 +78,8 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 
 ### Stage 6 — user configuration (2026-11-14)
 - Stage 5 approved by Mark (device test all OK).
+- Settings screen (Library ⋮ → Settings): chord color per root letter with preview, finger colors (open, 1–4; no thumb per D-012), color picker (HSV sliders, palette, hex, live preview, reset to default), "Reset all", a warning when two finger colors look alike (ΔE < 20), default viewer layers (last one locked), sharps/flats, left-handed diagrams, app language (System / English / Español).
+- `ColorMath` and `SettingsOps` (core/model): HSV ↔ ARGB, hex, CIE76 ΔE, similar-finger check, pure setting edits. Stored settings that miss a color get the default.
+- Color audit: viewer, chord picker, diagrams, chord editor, tab editor and tab staff read colors from settings; the chord editor's gray underline now uses the theme. A unit test fails on any new fixed color.
+- Tests: color math and settings ops, DataStore (colors, language, resets across restart, missing/broken values), SettingsViewModel (incl. a change reaching an open viewer), no-fixed-colors scan, Robolectric flow (change C by hex, finger warning, reset). Decision D-028.
 

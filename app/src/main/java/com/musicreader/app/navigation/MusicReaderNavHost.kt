@@ -12,6 +12,7 @@ import androidx.navigation.toRoute
 import com.musicreader.app.ui.about.AboutScreen
 import com.musicreader.app.ui.chords.ChordEditorScreen
 import com.musicreader.app.ui.library.LibraryScreen
+import com.musicreader.app.ui.settings.SettingsScreen
 import com.musicreader.app.ui.song.LyricsScreen
 import com.musicreader.app.ui.song.SectionsScreen
 import com.musicreader.app.ui.song.SongSettingsScreen
@@ -26,6 +27,9 @@ object LibraryRoute
 
 @Serializable
 object AboutRoute
+
+@Serializable
+object AppSettingsRoute
 
 /** Nested graph for one song; its screens share one [SongViewModel]. */
 @Serializable
@@ -56,10 +60,14 @@ fun MusicReaderNavHost(navController: NavHostController = rememberNavController(
             LibraryScreen(
                 onOpenSong = { id, openSettings -> navController.navigate(SongRoute(id, openSettings)) },
                 onAbout = { navController.navigate(AboutRoute) },
+                onSettings = { navController.navigate(AppSettingsRoute) },
             )
         }
         composable<AboutRoute> {
             AboutScreen(onBack = { navController.popBackStack() })
+        }
+        composable<AppSettingsRoute> {
+            SettingsScreen(onBack = { navController.popBackStack() })
         }
         navigation<SongRoute>(startDestination = SectionsRoute) {
             composable<SectionsRoute> { entry ->

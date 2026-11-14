@@ -147,3 +147,18 @@ How: a song's Sections → ⋮ on a section → "Tab". Viewer: "View" with Tabs 
 | 3 | Finger color on each number | Clear | OK |
 | 4 | Typing speed (number pad, "Save + next") | Fast enough | OK — no other input method wanted |
 | 5 | Update over Stage 4 | No data lost, no crash | OK |
+
+### Stage 6 — user configuration
+APK: `MusicReader-stage-06-settings-<run>.apk` or later (PR [#8](https://github.com/MarcosER816/MusicReader/pull/8), branch `stage-06-settings`)
+Date tested:
+Audio route: not relevant (no audio yet)
+
+How: Library ⋮ → "Settings".
+
+| # | Check | Expected | Result |
+|---|---|---|---|
+| 1 | Change the color of C; open a song's viewer and the chord editor | C chords in the new color in both, and in the chord picker | |
+| 2 | Change a finger color; look at a tab and at chord diagrams (viewer long-press, chord picker) | The finger's numbers and dots in the new color | |
+| 3 | Force-stop and reopen; then "Reset to default" and "Reset all" | Colors kept after restart; resets restore the defaults | |
+| 4 | Switch the language to Español and back | Every screen in the chosen language | |
+| 5 | Update over Stage 5 | No data lost, no crash | |

@@ -60,6 +60,7 @@ import kotlinx.coroutines.launch
 fun LibraryScreen(
     onOpenSong: (songId: String, openSettings: Boolean) -> Unit,
     onAbout: () -> Unit,
+    onSettings: () -> Unit,
     viewModel: LibraryViewModel = viewModel(factory = LibraryViewModel.Factory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -98,6 +99,10 @@ fun LibraryScreen(
                     Box {
                         IconButton(onClick = { menuOpen = true }) { AppIcon(AppIcons.More, stringResource(R.string.more_options)) }
                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.app_settings)) },
+                                onClick = { menuOpen = false; onSettings() },
+                            )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.about)) },
                                 onClick = { menuOpen = false; onAbout() },

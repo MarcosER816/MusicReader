@@ -183,4 +183,28 @@
     <string name="about_version">Versión %1$s</string>
     <string name="about_build">Compilación %1$d</string>
     <string name="about_audio_core">Núcleo de audio: %1$s</string>
+    <!-- Ajustes (etapa 6) -->
+    <string name="app_settings">Ajustes</string>
+    <string name="chord_colors">Colores de acordes</string>
+    <string name="finger_colors">Colores de dedos</string>
+    <string name="reset_all">Restablecer todo</string>
+    <string name="similar_finger_colors">%1$s y %2$s se ven casi iguales. Elige otro color para uno de ellos.</string>
+    <string name="viewer_layers_default">Capas visibles al abrir una canción</string>
+    <string name="chord_names">Nombres de acordes</string>
+    <string name="sharps_example">Sostenidos (C♯, F♯)</string>
+    <string name="flats_example">Bemoles (D♭, G♭)</string>
+    <string name="left_handed">Diagramas para zurdos</string>
+    <string name="left_handed_hint">La cuerda Mi grave a la derecha en los diagramas.</string>
+    <string name="app_language">Idioma de la app</string>
+    <string name="language_system">Sistema</string>
+    <string name="color_of_chord">Color de los acordes %1$s</string>
+    <string name="color_of_finger">Color de %1$s</string>
+    <string name="finger_open_name">Cuerda al aire</string>
+    <string name="finger_number">Dedo %1$d</string>
+    <string name="hue">Tono</string>
+    <string name="saturation">Saturación</string>
+    <string name="brightness">Brillo</string>
+    <string name="color_swatch">Color %1$s</string>
+    <string name="hex_color">Color hexadecimal (#RRGGBB)</string>
+    <string name="reset_to_default">Restablecer</string>
 </resources>
