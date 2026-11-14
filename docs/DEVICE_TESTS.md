@@ -110,3 +110,15 @@ How: a song's Sections → ⋮ on a section → "Chords". Viewer: "View", long-p
 | 4 | Lyrics under the chord grid | Clear which syllable/word is under each chord | Round 1: not totally clear → round 2 (D-025) |
 | 5 | Viewer long-press | Shows the chosen shape | OK |
 | 6 | Update over Stage 3 | No data lost, no crash | OK; change wanted: chords per syllable |
+
+Round 2 (2026-11-14, APK run 59):
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Chords you use, with your shapes | OK |
+| 2 | Finger numbers and colors | Gm7 showed the same finger three times → fixed in round 3 (D-026: missing barres inferred) |
+| 3 | Chord lands on the tapped syllable; half beats in sections without lyrics | OK — yes, keep half beats |
+| 4 | Clear which syllable is under each chord | OK |
+| 5 | Viewer long-press shows the chosen shape | OK |
+| 6 | Update without losing data | OK |
+

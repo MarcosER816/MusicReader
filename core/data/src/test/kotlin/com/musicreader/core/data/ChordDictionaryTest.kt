@@ -72,6 +72,29 @@ class ChordDictionaryTest {
     }
 
     @Test
+    fun unlistedBarresAreInferred() {
+        // Gm7 3x333x: chords-db lists no barre, but finger 3 presses D, G and B at fret 3.
+        val gm7 = dictionary.find(chord(NoteLetter.G, suffix = "m7"))!!.shapes.first()
+        assertEquals(listOf(3, -1, 3, 3, 3, -1), gm7.frets)
+        assertEquals(listOf(Barre(fret = 3, fromString = 4, toString = 2, finger = 3)), gm7.barres)
+        // C6/9 x32233: finger 3 on A and B at fret 3, but D and G are at fret 2 in between: no barre there.
+        val c69 = dictionary.shape("C|69|0")!!
+        assertEquals(listOf(-1, 3, 2, 2, 3, 3), c69.frets)
+        assertEquals(listOf(2), c69.barres.map { it.fret })
+        // A listed barre is not doubled.
+        assertEquals(1, dictionary.find(chord(NoteLetter.F))!!.shapes.first().barres.size)
+        // Pure rule: strings between pressed higher still allow the barre.
+        assertEquals(
+            listOf(Barre(fret = 5, fromString = 6, toString = 1, finger = 1)),
+            ChordDictionary.withInferredBarres(emptyList(), listOf(5, 7, 7, 6, 5, 5), listOf(1, 3, 4, 2, 1, 1)),
+        )
+        assertEquals(
+            emptyList(),
+            ChordDictionary.withInferredBarres(emptyList(), listOf(5, -1, 5, 6, 6, -1), listOf(1, 0, 1, 2, 3, 0)),
+        )
+    }
+
+    @Test
     fun openCAndBarreF() {
         val c = dictionary.find(chord(NoteLetter.C))!!.shapes.first()
         assertEquals(listOf(-1, 3, 2, 0, 1, 0), c.frets)

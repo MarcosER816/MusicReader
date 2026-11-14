@@ -104,7 +104,7 @@ class ChordDictionary(val chords: List<DictionaryChord>, val fretsOnChord: Int) 
                             frets = frets,
                             fingers = p.fingers,
                             baseFret = p.baseFret,
-                            barres = p.barres.map { relative -> barre(p, relative) },
+                            barres = withInferredBarres(p.barres.map { relative -> barre(p, relative) }, frets, p.fingers),
                             midi = p.midi,
                         )
                     },
@@ -128,6 +128,29 @@ class ChordDictionary(val chords: List<DictionaryChord>, val fretsOnChord: Int) 
                 toString = 6 - high,
                 finger = finger,
             )
+        }
+
+        /**
+         * Adds barres the dictionary does not list: one finger on two or more strings at the same
+         * fret, where every string between them is pressed at that fret or higher, is a barre
+         * (Gm7 3x333x: finger 3 across D, G and B). Strings between at a lower fret or muted keep
+         * separate dots, because a bar there would be wrong.
+         */
+        internal fun withInferredBarres(listed: List<Barre>, frets: List<Int>, fingers: List<Int>): List<Barre> {
+            val inferred = frets.indices
+                .filter { frets[it] > 0 && fingers[it] > 0 }
+                .groupBy { fingers[it] to frets[it] }
+                .filter { (key, strings) ->
+                    val (_, fret) = key
+                    strings.size >= 2 &&
+                        listed.none { it.fret == fret } &&
+                        (strings.min()..strings.max()).all { s -> frets[s] >= fret }
+                }
+                .map { (key, strings) ->
+                    val (finger, fret) = key
+                    Barre(fret = fret, fromString = 6 - strings.min(), toString = 6 - strings.max(), finger = finger)
+                }
+            return listed + inferred
         }
 
         /** Root spellings offered by the picker: the 12 pitch classes in the preferred spelling. */

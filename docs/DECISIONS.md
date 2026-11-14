@@ -297,3 +297,10 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
   - Drag a chord onto another syllable to move it; tap a chord to change it; long-press to delete (Undo).
 - **Demo song:** its chords in Verse and Chorus sit on syllables.
 
+## D-026 — Barres the dictionary does not list (2026-11-14, Mark's Stage 4 round 2)
+
+- **Problem:** Mark found Gm7 showing "three times the same finger". Its first shape (3x333x) presses D, G and B at fret 3 with finger 3, but chords-db lists no barre, so the diagram drew three separate "3" dots. 119 shapes have this gap.
+- **Fix:** the loader adds the missing barre when one finger presses two or more strings at the same fret and every string between them is pressed at that fret or higher. Other fingers may press higher over a barre (as in a barre F).
+- **Not inferred:** when a string in between is at a lower fret or muted, a bar there would be wrong, so the separate dots stay. Example: C6/9 x32233, finger 3 on A and B with D and G at fret 2.
+- **Tests:** Gm7 and C6/9, plus a screenshot of Gm7.
+

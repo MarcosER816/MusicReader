@@ -64,5 +64,8 @@ class FretboardScreenshotTest {
     fun cMaj7() = capture("Cmaj7", ChordSymbol(NoteLetter.C, suffix = "maj7"), TestDictionary.dictionary.find(ChordSymbol(NoteLetter.C, suffix = "maj7"))!!.shapes.first().frets)
 
     @Test
+    fun gMinor7() = capture("Gm7", ChordSymbol(NoteLetter.G, suffix = "m7"), listOf(3, -1, 3, 3, 3, -1))
+
+    @Test
     fun dSharp() = capture("D_sharp", ChordSymbol(NoteLetter.D, Accidental.SHARP), listOf(-1, -1, 1, 3, 4, 3))
 }
