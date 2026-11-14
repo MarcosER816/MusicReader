@@ -4,7 +4,7 @@ Update this file at the end of every stage. A stage is **done** only when every 
 
 Status values: `not started` · `in progress` · `waiting for Mark` · `done`
 
-Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–3 are as Mark asked; Mark's Stage 3 request says chords and tabs come in Stages 4–5. The order after that is the remaining plan, to be renumbered if Mark asks for a different order.
+Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as Mark asked (6 = user configuration). The order after that is the remaining plan, to be renumbered if Mark asks for a different order.
 
 | # | Stage | Branch | Status | PR | Approved |
 |---|---|---|---|---|---|
@@ -13,12 +13,12 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–3 are as M
 | 2 | Lyrics editor (per section, two voices), Spanish syllabifier (rules), English syllabifier (Liang + hyph-en-us), syllable view with tap split/merge, edits keep unchanged words | stage-02-lyrics | done | [#4](https://github.com/MarcosER816/MusicReader/pull/4) | 2026-11-13 ("Stage 2 approved") |
 | 3 | Song viewer: sections with chords/tab/lyrics on shared beat positions, layer checkboxes, chord colors, synchronized glisten, slow autoscroll, long-press chord sheet, font size, demo song, screenshot tests | stage-03-viewer | done | [#5](https://github.com/MarcosER816/MusicReader/pull/5) | 2026-11-14 ("Stage 3 approved") |
 | 4 | Chords: chord dictionary (all voicings, finger numbers, fretboard diagram), chord editor (chords on syllables, half-beat grid without lyrics), long-press diagram in the viewer | stage-04-chords | done | [#6](https://github.com/MarcosER816/MusicReader/pull/6) | 2026-11-14 ("Stage 4 approved") |
-| 5 | Tab editor: tab events between chords and lyrics, techniques (bend, hammer-on, pull-off, slide, vibrato, harmonics, mute) | stage-05-tabs | waiting for Mark | [#7](https://github.com/MarcosER816/MusicReader/pull/7) | |
-| 6 | Audio core: C++ Oboe engine, JNI, audio clock, metronome/count-in, latency calibration per route | stage-06-audio | not started | | |
-| 7 | DSP: pitch tracking and onset detection, tested on synthetic signals | stage-07-dsp | not started | | |
-| 8 | Lyric capture by singing: select word range, count-in, record take, align to syllables, last take wins | stage-08-capture | not started | | |
-| 9 | Note editor: per-syllable pitch and duration, free drag with no snapping | stage-09-note-editor | not started | | |
-| 10 | User configuration: chord colors, finger colors, practice lower layers, judge windows | stage-10-settings | not started | | |
+| 5 | Tab editor: tab events between chords and lyrics, techniques (bend, hammer-on, pull-off, slide, vibrato, harmonics, mute) | stage-05-tabs | done | [#7](https://github.com/MarcosER816/MusicReader/pull/7) | 2026-11-14 ("Stage 5 approved") |
+| 6 | User configuration: chord colors, finger colors, default viewer layers, app language, sharps/flats, left-handed diagrams | stage-06-settings | in progress | | |
+| 7 | Audio core: C++ Oboe engine, JNI, audio clock, metronome/count-in, latency calibration per route | stage-07-audio | not started | | |
+| 8 | DSP: pitch tracking and onset detection, tested on synthetic signals | stage-08-dsp | not started | | |
+| 9 | Lyric capture by singing: select word range, count-in, record take, align to syllables, last take wins | stage-09-capture | not started | | |
+| 10 | Note editor: per-syllable pitch and duration, free drag with no snapping | stage-10-note-editor | not started | | |
 | 11 | Practice — singing: right-to-left note line, pitch arrow with trail, gold/green/red, particles | stage-11-practice-sing | not started | | |
 | 12 | Practice — chords and tab: one strumming pattern per section (D-008, not built yet), right-to-left lanes, timing judge, gold/green/red, particles, lower layers | stage-12-practice-play | not started | | |
 | 13 | Recordings: record practice, keep as official (one per type), synced mix playback, export to Downloads | stage-13-recordings | not started | | |
@@ -75,4 +75,7 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–3 are as M
 - `SheetRowLayout` (chords, tab staff and lyrics per visual line) used by the viewer and both editors; `TabStaff` draws every technique in finger colors.
 - Tab editor per section (tap/drag/long-press, note sheet with number pad, finger, length, technique, "Save + next", undo/redo, export with Copy/Share).
 - Tests: tab ops, beat axes, history, export, ViewModel, UI flow types a hammer-on, screenshots (every technique, viewer). Decision D-027.
+
+### Stage 6 — user configuration (2026-11-14)
+- Stage 5 approved by Mark (device test all OK).
 
