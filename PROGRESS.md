@@ -17,7 +17,7 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 | 6 | User configuration: chord colors, finger colors, default viewer layers, app language, sharps/flats, left-handed diagrams | stage-06-settings | done | [#8](https://github.com/MarcosER816/MusicReader/pull/8) | 2026-11-14 ("Stage 6 approved") |
 | 7 | Audio core: C++ Oboe engine, JNI, audio clock, metronome, latency calibration per route, diagnostics | stage-07-audio | done | [#9](https://github.com/MarcosER816/MusicReader/pull/9) | 2026-11-15 ("Stage 7 approved") |
 | 8 | Real-time pitch detection (YIN and MPM in C++, Kotlin reference YIN), voiced/unvoiced gate, smoothing, tuner/debug screen | stage-08-pitch | done | [#10](https://github.com/MarcosER816/MusicReader/pull/10) | 2026-11-15 ("Stage 8 approved") |
-| 9 | Lyric capture by singing: select word range, count-in, record take, align to syllables, last take wins | stage-09-capture | not started | | |
+| 9 | Lyric capture by singing: select words, count-in, record take, segment notes, align to syllables, review, last take wins, tap-along | stage-09-capture | in progress | | |
 | 10 | Note editor: per-syllable pitch and duration, free drag with no snapping | stage-10-note-editor | not started | | |
 | 11 | Practice — singing: right-to-left note line, pitch arrow with trail, gold/green/red, particles | stage-11-practice-sing | not started | | |
 | 12 | Practice — chords and tab: one strumming pattern per section (D-008, not built yet), right-to-left lanes, timing judge, gold/green/red, particles, lower layers | stage-12-practice-play | not started | | |
@@ -133,3 +133,6 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
   - 3 new C++ tests (softer octave leap, DC and rumble, sung phrase).
 - Round 4 (microphone Unprocessed, strings OK, "one drop"): a note right after a breath is no longer octave-corrected against the note before, with a new C++ test.
 - Stage 8 approved by Mark on 2026-11-15 after four device-test rounds (no drops, strings ring, voice followed quickly; MPM preferred).
+
+### Stage 9 — lyric capture (2026-11-15)
+- Stage 8 approved by Mark (four device-test rounds).
