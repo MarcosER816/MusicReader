@@ -183,7 +183,7 @@ How:
 | 5 | Plug and unplug headphones while the metronome runs | Keeps playing on the new route; route updates in Diagnostics | OK |
 | 6 | Update over Stage 6 | No data lost, no crash | OK — no data lost; see 2 for the bug |
 
-Round 2 (APK run after the fix):
+Round 2 (APK `MusicReader-stage-07-audio-94.apk` or later):
 
 | # | Check | Result |
 |---|---|---|
