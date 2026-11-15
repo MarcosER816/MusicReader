@@ -51,6 +51,9 @@ enum class SharingMode { EXCLUSIVE, SHARED, UNKNOWN }
 enum class PerformanceMode { NONE, POWER_SAVING, LOW_LATENCY, UNKNOWN }
 enum class AudioApiName { AAUDIO, OPENSL_ES, UNSPECIFIED }
 
+/** Microphone processing path (oboe::InputPreset). */
+enum class InputPresetName { UNPROCESSED, VOICE_RECOGNITION, OTHER }
+
 /** What the Diagnostics screen shows (the C++ EngineDiagnostics). */
 data class EngineDiagnostics(
     val running: Boolean = false,
@@ -75,6 +78,7 @@ data class EngineDiagnostics(
     val inputShortReads: Long = 0,
     val inputOverflows: Long = 0,
     val restarts: Int = 0,
+    val inputPreset: InputPresetName = InputPresetName.OTHER,
 ) {
     fun framesToMs(frames: Int): Double = if (sampleRate > 0) frames * 1000.0 / sampleRate else 0.0
 
@@ -115,7 +119,51 @@ data class EngineDiagnostics(
             inputShortReads = a[17].toLong(),
             inputOverflows = a[18].toLong(),
             restarts = a[19].toInt(),
+            inputPreset = when (a.getOrNull(20)?.toInt()) {
+                9 -> InputPresetName.UNPROCESSED
+                6 -> InputPresetName.VOICE_RECOGNITION
+                else -> InputPresetName.OTHER
+            },
         )
+    }
+}
+
+/**
+ * One pitch analysis frame (10 ms), from the C++ PitchTracker. [frame] is the engine frame the
+ * pitch belongs to (audio clock), already corrected for the window and the smoothing delay.
+ */
+data class PitchFrame(
+    val frame: Long,
+    /** Seconds on the audio clock ([frame] / sample rate). */
+    val seconds: Double,
+    /** Smoothed frequency; null when unvoiced. */
+    val hz: Double?,
+    /** Smoothed continuous MIDI note (69.0 = A4); null when unvoiced. */
+    val midi: Double?,
+    /** The detector's confidence, 0..1 (also when unvoiced). */
+    val confidence: Double,
+    /** RMS level of the newest 20 ms, dBFS. */
+    val levelDb: Double,
+) {
+    val voiced: Boolean get() = midi != null
+
+    companion object {
+        const val VALUES = 6
+
+        /** Decodes frame [i] of the poll array (frame, hz, midi, confidence, levelDb, voiced). */
+        fun fromArray(a: DoubleArray, i: Int, sampleRate: Int): PitchFrame {
+            val o = i * VALUES
+            val voiced = a[o + 5] != 0.0
+            val frame = a[o].toLong()
+            return PitchFrame(
+                frame = frame,
+                seconds = frame.toDouble() / sampleRate,
+                hz = if (voiced) a[o + 1] else null,
+                midi = if (voiced) a[o + 2] else null,
+                confidence = a[o + 3],
+                levelDb = a[o + 4],
+            )
+        }
     }
 }
 
@@ -155,4 +203,10 @@ interface AudioEngineApi {
 
     fun analyzeChirps(recording: FloatArray, length: Int, startFrame: Long, chirpFrames: LongArray): LatencyMeasurement
     fun analyzeTaps(recording: FloatArray, length: Int, startFrame: Long, clickFrames: LongArray): LatencyMeasurement
+
+    fun pitchConfigure(method: com.musicreader.core.model.PitchMethod, gateDb: Double)
+    fun pitchReset()
+
+    /** Analyzes the microphone samples waiting; returns the frames (at most 64). */
+    fun pitchPoll(): List<PitchFrame>
 }

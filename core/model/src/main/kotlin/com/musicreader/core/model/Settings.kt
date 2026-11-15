@@ -69,6 +69,8 @@ data class AppSettings(
     val judgeWindows: JudgeWindows = JudgeWindows(),
     /** Measured round-trip latency per audio route (D-029). */
     val latencyProfiles: Map<AudioRoute, LatencyProfile> = emptyMap(),
+    /** Pitch detector and noise gate (D-030). */
+    val pitch: PitchSettings = PitchSettings(),
     val uiLanguage: UiLanguage = UiLanguage.SYSTEM,
     /** How the chord picker spells roots with an accidental (D-024). */
     val accidentals: AccidentalPreference = AccidentalPreference.SHARPS,

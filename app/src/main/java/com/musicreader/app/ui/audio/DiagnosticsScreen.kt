@@ -28,6 +28,7 @@ import com.musicreader.app.R
 import com.musicreader.app.ui.common.AppIcon
 import com.musicreader.app.ui.common.AppIcons
 import com.musicreader.audio.AudioApiName
+import com.musicreader.audio.InputPresetName
 import com.musicreader.audio.PerformanceMode
 import com.musicreader.audio.SharingMode
 
@@ -83,6 +84,11 @@ fun DiagnosticsScreen(onBack: () -> Unit, viewModel: DiagnosticsViewModel = view
             Item(stringResource(R.string.diag_restarts), d.restarts.toString())
             HorizontalDivider()
             Item(stringResource(R.string.diag_input), stringResource(if (d.inputOpen) R.string.diag_input_open else R.string.diag_input_closed))
+            // The mode stays known after the microphone closed (it opens only for the tuner or calibration).
+            Item(
+                stringResource(if (d.inputOpen) R.string.diag_input_preset else R.string.diag_input_preset_last),
+                presetName(d.inputPreset),
+            )
             if (d.inputOpen) {
                 Item(stringResource(R.string.diag_sharing), sharingName(d.inputSharingMode))
                 Item(stringResource(R.string.diag_burst), d.inputFramesPerBurst.toString())
@@ -100,6 +106,15 @@ private fun Item(label: String, value: String) {
         Text(value, style = MaterialTheme.typography.bodyMedium, fontFamily = FontFamily.Monospace)
     }
 }
+
+@Composable
+fun presetName(preset: InputPresetName) = stringResource(
+    when (preset) {
+        InputPresetName.UNPROCESSED -> R.string.preset_unprocessed
+        InputPresetName.VOICE_RECOGNITION -> R.string.preset_voice_recognition
+        InputPresetName.OTHER -> R.string.not_available
+    },
+)
 
 @Composable
 private fun sharingName(mode: SharingMode) = stringResource(

@@ -20,6 +20,7 @@
 #include "BeatGrid.h"
 #include "ClockMath.h"
 #include "InputTimeline.h"
+#include "PitchTracker.h"
 #include "Renderer.h"
 #include "RingBuffer.h"
 
@@ -49,6 +50,7 @@ struct EngineDiagnostics {
     int inputSharingMode = 0;
     int inputDeviceId = 0;
     int inputFramesPerBurst = 0;
+    int inputPreset = 0;  // oboe::InputPreset of the open (or last opened) microphone
     double outputLatencyMs = -1.0;  // from the timestamps; -1 until known
     int64_t callbacks = 0;
     int64_t inputShortReads = 0;
@@ -98,6 +100,12 @@ public:
 
     EngineDiagnostics diagnostics();
 
+    // --- Pitch (analysis thread: whoever polls, never the audio callback) ---
+    void pitchConfigure(PitchMethod method, double gateDb);
+    void pitchReset();
+    /** Analyzes all microphone samples waiting; writes up to [capacity] frames. */
+    size_t pitchPoll(PitchFrame *out, size_t capacity);
+
     // Called by the Oboe callbacks.
     oboe::DataCallbackResult onAudioReady(oboe::AudioStream *stream, void *audioData, int32_t numFrames);
     void onErrorAfterClose(oboe::AudioStream *stream, oboe::Result error);
@@ -120,6 +128,7 @@ private:
     std::unique_ptr<oboe::LatencyTuner> tuner_;
     bool withInput_ = false;
     int restarts_ = 0;
+    int lastInputPreset_ = 0;  // kept after the microphone closes, for Diagnostics
     bool metronomeOn_ = false;
     BeatGrid grid_{};
 
@@ -141,6 +150,10 @@ private:
     SpscRingBuffer<float> inputRing_{1u << 19};  // ~10.9 s at 48 kHz
     std::vector<float> mono_;
     std::vector<float> inBuf_;
+
+    std::mutex pitchMutex_;  // pitch analysis only
+    PitchTracker pitch_{kSampleRate};
+    std::vector<float> pitchIn_;
 
     // Clock: timestamps of the presented frame (read on control threads) and, until those
     // exist, the written frame at each callback (published by the callback).

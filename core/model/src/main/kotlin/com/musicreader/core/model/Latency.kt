@@ -37,3 +37,21 @@ object LatencyOps {
     fun tooSlowForPractice(route: AudioRoute, profile: LatencyProfile?): Boolean =
         route == AudioRoute.BLUETOOTH || (profile != null && profile.roundTripMs > TOO_SLOW_FOR_PRACTICE_MS)
 }
+
+/** Pitch detector choice (D-030). */
+@Serializable
+enum class PitchMethod { YIN, MPM }
+
+/** Pitch detection settings, shared by the tuner and the later singing stages (D-030). */
+@Serializable
+data class PitchSettings(
+    val method: PitchMethod = PitchMethod.YIN,
+    /** Frames quieter than this (dBFS) are unvoiced; measured from 2 s of room noise. */
+    val noiseGateDb: Double = DEFAULT_NOISE_GATE_DB,
+    /** When the room noise was measured (epoch ms); null = default gate. */
+    val gateMeasuredAt: Long? = null,
+) {
+    companion object {
+        const val DEFAULT_NOISE_GATE_DB: Double = -55.0
+    }
+}

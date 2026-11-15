@@ -7,7 +7,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
+import com.musicreader.core.model.PitchSettings
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -69,6 +74,16 @@ interface AudioService : MetronomeControl {
     /** The app went to the background: stop everything. */
     fun stopAll()
 
+    /** Pitch frames (one per 10 ms) while pitch detection runs (D-030). */
+    val pitch: SharedFlow<PitchFrame>
+
+    /** Opens the microphone and starts pitch detection (needs the microphone permission). */
+    fun startPitch(settings: PitchSettings)
+
+    /** Switches YIN/MPM or the noise gate while running. */
+    fun updatePitch(settings: PitchSettings)
+    fun stopPitch()
+
     /**
      * Plays chirps (automatic) or clicks to play along with (manual), records the microphone
      * on the same frame counter and measures the round trip. Needs the microphone permission.
@@ -101,7 +116,7 @@ class AudioController(
     private val analysisDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : AudioService {
 
-    enum class User { METRONOME, CALIBRATION, DIAGNOSTICS }
+    enum class User { METRONOME, CALIBRATION, DIAGNOSTICS, PITCH }
 
     private val mutex = Mutex()
     private val users = mutableSetOf<User>()
@@ -110,6 +125,10 @@ class AudioController(
 
     private val _state = MutableStateFlow(AudioState())
     override val state: StateFlow<AudioState> = _state.asStateFlow()
+
+    private var pitchJob: Job? = null
+    private val _pitch = MutableSharedFlow<PitchFrame>(extraBufferCapacity = 256, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    override val pitch: SharedFlow<PitchFrame> = _pitch.asSharedFlow()
 
     private val _metronome = MutableStateFlow<MetronomeSettings?>(null)
     override val metronome: StateFlow<MetronomeSettings?> = _metronome.asStateFlow()
@@ -159,6 +178,44 @@ class AudioController(
         return MetronomeBeat(whole, grid.beatInBar(whole), b - whole)
     }
 
+    // --- Pitch ---
+
+    override fun startPitch(settings: PitchSettings) {
+        scope.launch {
+            mutex.withLock {
+                if (!acquireLocked(User.PITCH)) return@withLock
+                engine.pitchConfigure(settings.method, settings.noiseGateDb)
+                engine.pitchReset()
+                engine.discardInput()
+                if (pitchJob?.isActive != true) {
+                    pitchJob = scope.launch {
+                        while (isActive) {
+                            delay(PITCH_POLL_MS)
+                            val frames = withContext(analysisDispatcher) { engine.pitchPoll() }
+                            frames.forEach { _pitch.tryEmit(it) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    override fun updatePitch(settings: PitchSettings) {
+        scope.launch {
+            mutex.withLock { if (User.PITCH in users) engine.pitchConfigure(settings.method, settings.noiseGateDb) }
+        }
+    }
+
+    override fun stopPitch() {
+        scope.launch { mutex.withLock { stopPitchLocked() } }
+    }
+
+    private fun stopPitchLocked() {
+        pitchJob?.cancel()
+        pitchJob = null
+        if (User.PITCH in users) releaseLocked(User.PITCH)
+    }
+
     // --- Diagnostics ---
 
     override fun startDiagnostics() {
@@ -190,6 +247,7 @@ class AudioController(
     override suspend fun calibrate(mode: CalibrationMode, onProgress: (CalibrationProgress) -> Unit): CalibrationOutcome {
         val started = mutex.withLock {
             stopMetronomeLocked()
+            stopPitchLocked()  // both read the microphone
             acquireLocked(User.CALIBRATION)
         }
         if (!started) return CalibrationOutcome.Failed(_state.value.error ?: "")
@@ -264,7 +322,7 @@ class AudioController(
 
     private fun acquireLocked(user: User): Boolean {
         users += user
-        val needInput = User.CALIBRATION in users
+        val needInput = User.CALIBRATION in users || User.PITCH in users
         if (engine.isRunning && _state.value.withInput == needInput) return true
         val error = engine.start(needInput)
         if (error != null) {
@@ -291,6 +349,8 @@ class AudioController(
     }
 
     private fun stopEngineLocked() {
+        pitchJob?.cancel()
+        pitchJob = null
         watchdog?.cancel()
         watchdog = null
         engine.stop()
@@ -327,6 +387,8 @@ class AudioController(
         const val ROUTE_SETTLE_MS = 300L
         const val WARMUP_MS = 500L
         const val POLL_MS = 20L
+        /** Pitch frames are collected every 20 ms (two 10 ms frames each time). */
+        const val PITCH_POLL_MS = 20L
         const val NO_INPUT_TIMEOUT_MS = 2000L
 
         const val CHIRP_COUNT = 5

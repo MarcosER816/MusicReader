@@ -190,3 +190,45 @@ Round 2 (APK `MusicReader-stage-07-audio-94.apk` or later):
 | 1 | Automatic calibration twice in a row, then manual, without leaving the screen | OK |
 | 2 | Wired headphones (when available): OboeTester vs MusicReader | OK — within about 5 ms |
 | 3 | Update over round 1 | OK — no crash, no change wanted |
+
+### Stage 8 — pitch detection and tuner
+APK: `MusicReader-stage-08-pitch-104.apk` or later (PR [#10](https://github.com/MarcosER816/MusicReader/pull/10), branch `stage-08-pitch`)
+Date tested: 2026-11-15 (round 1, APK run 104)
+Audio route: speaker / built-in microphone
+
+How: Library ⋮ → Tuner (allow the microphone). Tap "Measure room noise" once in a quiet room.
+
+| # | Check | Expected | Result |
+|---|---|---|---|
+| 1 | Sing or play a steady A, compare with another tuner app | Same note and octave | OK |
+| 2 | The six open strings, low E to high E | Each within about 5 cents of the other tuner | Right, but recognized only for a short moment → round 2 (Unprocessed mic, hysteresis, fading-note tracking, display hold) |
+| 3 | Sing a melody and watch the trace | Follows quickly, no visible delay | OK |
+| 4 | Sing softly | No octave jumps, no drop-outs while the note sounds | OK — moves normally |
+| 5 | YIN vs MPM | Note which is better on your phone | MPM |
+| 6 | Update over Stage 7 | No data lost, no crash | OK — no crash |
+
+Round 2 (APK `MusicReader-stage-08-pitch-108.apk` or later):
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Pluck each open string and let it ring: the note stays until the string is nearly silent | OK |
+| 2 | Diagnostics (with the tuner open in another moment) shows Microphone mode "Unprocessed" | Showed "closed": the microphone closes when the tuner is left → round 3 shows the mode on the tuner, and the last mode in Diagnostics |
+| 3 | Voice still followed quickly, soft singing without octave jumps | Sometimes jumps; one sudden drop and spike → round 3 |
+| 4 | Update over round 1 | OK — no crash; change wanted: no spikes |
+
+Round 3 (APK `MusicReader-stage-08-pitch-112.apk` or later):
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Tuner screen, bottom: "Microphone mode" | Unprocessed |
+| 2 | Sing a melody with leaps (also an octave up, softer): no jumps, drops or spikes | One drop → round 4 (no octave correction across a breath) |
+| 3 | Open strings still ring until nearly silent | OK |
+| 4 | Update over round 2 | OK — no crash, no change |
+
+Round 4 (APK `MusicReader-stage-08-pitch-116.apk` or later):
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Sing a melody with leaps, with breaths between some notes: any drop? If one remains, describe it (how far, at the start or end of a note) | OK — no drop |
+| 2 | Voice still followed quickly; strings still ring | OK |
+| 3 | Update over round 3 | OK — no crash, no change |

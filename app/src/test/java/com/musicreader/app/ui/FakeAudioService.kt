@@ -17,7 +17,14 @@ class FakeAudioService : AudioService {
     override val metronome = MutableStateFlow<MetronomeSettings?>(null)
     val calls = mutableListOf<String>()
     var beat: MetronomeBeat? = null
-    var diagnostics = EngineDiagnostics(running = true, sampleRate = 48000, framesPerBurst = 96, bufferSize = 192)
+    var diagnostics = EngineDiagnostics(
+        running = true,
+        sampleRate = 48000,
+        framesPerBurst = 96,
+        bufferSize = 192,
+        inputOpen = true,
+        inputPreset = com.musicreader.audio.InputPresetName.UNPROCESSED,
+    )
     var clock = 12.5
 
     /** The next calibration's result; the calibration waits until it is completed. */
@@ -54,6 +61,24 @@ class FakeAudioService : AudioService {
     override fun clockSeconds() = clock
     override fun stopAll() {
         calls += "stop all"
+    }
+
+    override val pitch = kotlinx.coroutines.flow.MutableSharedFlow<com.musicreader.audio.PitchFrame>(extraBufferCapacity = 1024)
+    var pitchSettings: com.musicreader.core.model.PitchSettings? = null
+
+    override fun startPitch(settings: com.musicreader.core.model.PitchSettings) {
+        calls += "pitch on ${settings.method}"
+        pitchSettings = settings
+    }
+
+    override fun updatePitch(settings: com.musicreader.core.model.PitchSettings) {
+        calls += "pitch ${settings.method} ${settings.noiseGateDb}"
+        pitchSettings = settings
+    }
+
+    override fun stopPitch() {
+        calls += "pitch off"
+        pitchSettings = null
     }
 
     override suspend fun calibrate(mode: CalibrationMode, onProgress: (CalibrationProgress) -> Unit): CalibrationOutcome {

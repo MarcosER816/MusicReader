@@ -50,9 +50,26 @@ object NativeAudio : AudioEngineApi {
     override fun analyzeTaps(recording: FloatArray, length: Int, startFrame: Long, clickFrames: LongArray) =
         native { LatencyMeasurement.fromArray(nativeAnalyzeTaps(recording, length, startFrame, clickFrames)) }
 
+    private val pitchBuffer = DoubleArray(64 * PitchFrame.VALUES)
+
+    override fun pitchConfigure(method: com.musicreader.core.model.PitchMethod, gateDb: Double) =
+        native { nativePitchConfigure(if (method == com.musicreader.core.model.PitchMethod.MPM) 1 else 0, gateDb) }
+
+    override fun pitchReset() = native { nativePitchReset() }
+
+    /** Called from one analysis coroutine at a time (the buffer is shared). */
+    override fun pitchPoll(): List<PitchFrame> = native {
+        val n = nativePitchPoll(pitchBuffer)
+        val rate = nativeSampleRate()
+        List(n) { PitchFrame.fromArray(pitchBuffer, it, rate) }
+    }
+
     /** 0 is oboe::Result::OK. */
     private fun resultText(code: Int): String? = if (code == 0) null else nativeResultText(code)
 
+    private external fun nativePitchConfigure(method: Int, gateDb: Double)
+    private external fun nativePitchReset()
+    private external fun nativePitchPoll(out: DoubleArray): Int
     private external fun nativeStart(withInput: Boolean): Int
     private external fun nativeStop()
     private external fun nativeRestart(): Int

@@ -66,6 +66,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenCalibration: () -> Unit,
     onOpenDiagnostics: () -> Unit,
+    onOpenTuner: () -> Unit,
     viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -184,6 +185,7 @@ fun SettingsScreen(
             HorizontalDivider()
             Text(stringResource(R.string.audio_section), style = MaterialTheme.typography.titleMedium)
             LinkRow(stringResource(R.string.calibration_title), stringResource(R.string.calibration_summary), onOpenCalibration)
+            LinkRow(stringResource(R.string.tuner_title), stringResource(R.string.tuner_summary), onOpenTuner)
             LinkRow(stringResource(R.string.diagnostics_title), stringResource(R.string.diagnostics_summary), onOpenDiagnostics)
         }
     }

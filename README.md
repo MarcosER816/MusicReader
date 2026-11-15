@@ -75,7 +75,7 @@ cmake --build build/native-tests && ctest --test-dir build/native-tests --output
 | `app` | Android app, Compose Material 3 UI |
 | `core/model` | Pure Kotlin data model and music logic |
 | `core/data` | Song files (JSON) and settings (DataStore) |
-| `core/dsp` | Pure Kotlin signal processing (pitch, onsets) |
+| `core/dsp` | Pure Kotlin signal processing: reference YIN, noise gate, tuner math, pitch trace |
 | `core/lyrics` | Pure Kotlin lyrics parsing and syllable splitting (Spanish rules, English Liang patterns) |
 | `audio` | C++17 audio engine on Oboe (clock, metronome, calibration) called through JNI; host-testable DSP in `src/main/cpp/dsp` |
 

@@ -1,6 +1,7 @@
 // JNI bridge between Kotlin (com.musicreader.audio.NativeAudio, AudioCore) and the C++ core.
 #include <jni.h>
 
+#include <algorithm>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -131,7 +132,8 @@ JNIEXPORT jdoubleArray JNICALL Java_com_musicreader_audio_NativeAudio_nativeDiag
                         static_cast<double>(d.inputSharingMode), static_cast<double>(d.inputDeviceId),
                         static_cast<double>(d.inputFramesPerBurst), d.outputLatencyMs,
                         static_cast<double>(d.callbacks), static_cast<double>(d.inputShortReads),
-                        static_cast<double>(d.inputOverflows), static_cast<double>(d.restarts)});
+                        static_cast<double>(d.inputOverflows), static_cast<double>(d.restarts),
+                        static_cast<double>(d.inputPreset)});
 }
 
 /** [latencyMs, confidence, found, expected, spreadMs] */
@@ -164,6 +166,34 @@ JNIEXPORT jdoubleArray JNICALL Java_com_musicreader_audio_NativeAudio_nativeAnal
     const mr::LatencyResult r =
         mr::analyzeTaps(rec.data(), rec.size(), startFrame, frames.data(), frames.size(), mr::AudioEngine::kSampleRate);
     return toJava(env, resultToVector(r));
+}
+
+JNIEXPORT void JNICALL Java_com_musicreader_audio_NativeAudio_nativePitchConfigure(JNIEnv *, jobject, jint method,
+                                                                                   jdouble gateDb) {
+    engine().pitchConfigure(method == 1 ? mr::PitchMethod::kMpm : mr::PitchMethod::kYin, gateDb);
+}
+
+JNIEXPORT void JNICALL Java_com_musicreader_audio_NativeAudio_nativePitchReset(JNIEnv *, jobject) {
+    engine().pitchReset();
+}
+
+/** Fills [out] with 6 values per frame: frame, hz, midi, confidence, levelDb, voiced (0/1). */
+JNIEXPORT jint JNICALL Java_com_musicreader_audio_NativeAudio_nativePitchPoll(JNIEnv *env, jobject, jdoubleArray out) {
+    constexpr size_t kMaxFrames = 64;
+    const auto capacity = std::min(kMaxFrames, static_cast<size_t>(env->GetArrayLength(out)) / 6);
+    mr::PitchFrame frames[kMaxFrames];
+    const size_t n = engine().pitchPoll(frames, capacity);
+    double values[kMaxFrames * 6];
+    for (size_t i = 0; i < n; ++i) {
+        values[i * 6 + 0] = static_cast<double>(frames[i].frame);
+        values[i * 6 + 1] = frames[i].hz;
+        values[i * 6 + 2] = frames[i].midi;
+        values[i * 6 + 3] = frames[i].confidence;
+        values[i * 6 + 4] = frames[i].levelDb;
+        values[i * 6 + 5] = frames[i].voiced ? 1.0 : 0.0;
+    }
+    if (n > 0) env->SetDoubleArrayRegion(out, 0, static_cast<jsize>(n * 6), values);
+    return static_cast<jint>(n);
 }
 
 }  // extern "C"

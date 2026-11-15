@@ -17,7 +17,11 @@ private:
 };
 
 AudioEngine::AudioEngine()
-    : callback_(std::make_shared<Callback>(this)), renderer_(kSampleRate), mono_(kMaxBlock), inBuf_(kMaxBlock) {}
+    : callback_(std::make_shared<Callback>(this)),
+      renderer_(kSampleRate),
+      mono_(kMaxBlock),
+      inBuf_(kMaxBlock),
+      pitchIn_(kMaxBlock) {}
 
 AudioEngine::~AudioEngine() { stop(); }
 
@@ -88,21 +92,29 @@ oboe::Result AudioEngine::openAndStartLocked(bool withInput) {
     tuner_ = std::make_unique<oboe::LatencyTuner>(*output_);
 
     if (withInput) {
-        oboe::AudioStreamBuilder in;
-        in.setDirection(oboe::Direction::Input)
-            ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
-            ->setSharingMode(oboe::SharingMode::Exclusive)
-            ->setFormat(oboe::AudioFormat::Float)
-            ->setFormatConversionAllowed(true)
-            ->setChannelCount(oboe::ChannelCount::Mono)
-            ->setChannelConversionAllowed(true)
-            ->setSampleRate(kSampleRate)
-            ->setSampleRateConversionQuality(oboe::SampleRateConversionQuality::Medium)
-            ->setInputPreset(oboe::InputPreset::VoiceRecognition)
-            ->setBufferCapacityInFrames(kMaxBlock * 2);
-        r = in.openStream(input_);
-        if (r != oboe::Result::OK) {
+        // Unprocessed first: no noise suppression or automatic gain, which would fade out a
+        // sustained guitar note (Mark, Stage 8). Phones without that path get VoiceRecognition.
+        for (oboe::InputPreset preset : {oboe::InputPreset::Unprocessed, oboe::InputPreset::VoiceRecognition}) {
+            oboe::AudioStreamBuilder in;
+            in.setDirection(oboe::Direction::Input)
+                ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
+                ->setSharingMode(oboe::SharingMode::Exclusive)
+                ->setFormat(oboe::AudioFormat::Float)
+                ->setFormatConversionAllowed(true)
+                ->setChannelCount(oboe::ChannelCount::Mono)
+                ->setChannelConversionAllowed(true)
+                ->setSampleRate(kSampleRate)
+                ->setSampleRateConversionQuality(oboe::SampleRateConversionQuality::Medium)
+                ->setInputPreset(preset)
+                ->setBufferCapacityInFrames(kMaxBlock * 2);
+            r = in.openStream(input_);
+            if (r == oboe::Result::OK) {
+                lastInputPreset_ = static_cast<int>(input_->getInputPreset());
+                break;
+            }
             input_.reset();
+        }
+        if (r != oboe::Result::OK) {
             output_->close();
             output_.reset();
             tuner_.reset();
@@ -344,6 +356,7 @@ EngineDiagnostics AudioEngine::diagnostics() {
     d.callbacks = callbacks_.load();
     d.inputShortReads = inputShortReads_.load();
     d.inputOverflows = inputOverflows_.load();
+    d.inputPreset = lastInputPreset_;
     if (output_) {
         d.sampleRate = output_->getSampleRate();
         d.channelCount = output_->getChannelCount();
@@ -366,6 +379,29 @@ EngineDiagnostics AudioEngine::diagnostics() {
         d.inputFramesPerBurst = input_->getFramesPerBurst();
     }
     return d;
+}
+
+void AudioEngine::pitchConfigure(PitchMethod method, double gateDb) {
+    std::lock_guard<std::mutex> lock(pitchMutex_);
+    pitch_.setMethod(method);
+    pitch_.setGateDb(gateDb);
+}
+
+void AudioEngine::pitchReset() {
+    std::lock_guard<std::mutex> lock(pitchMutex_);
+    pitch_.reset();
+}
+
+size_t AudioEngine::pitchPoll(PitchFrame *out, size_t capacity) {
+    std::lock_guard<std::mutex> lock(pitchMutex_);
+    size_t produced = 0;
+    while (produced < capacity) {
+        int64_t first = -1;
+        const int32_t n = readInput(pitchIn_.data(), static_cast<int32_t>(pitchIn_.size()), &first);
+        if (n <= 0) break;
+        produced += pitch_.process(pitchIn_.data(), static_cast<size_t>(n), first, out + produced, capacity - produced);
+    }
+    return produced;
 }
 
 }  // namespace mr

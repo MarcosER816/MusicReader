@@ -13,6 +13,7 @@ import com.musicreader.app.ui.about.AboutScreen
 import com.musicreader.app.ui.audio.CalibrationScreen
 import com.musicreader.app.ui.audio.DiagnosticsScreen
 import com.musicreader.app.ui.audio.MetronomeViewModel
+import com.musicreader.app.ui.audio.TunerScreen
 import com.musicreader.app.ui.chords.ChordEditorScreen
 import com.musicreader.app.ui.library.LibraryScreen
 import com.musicreader.app.ui.settings.SettingsScreen
@@ -39,6 +40,9 @@ object CalibrationRoute
 
 @Serializable
 object DiagnosticsRoute
+
+@Serializable
+object TunerRoute
 
 /** Nested graph for one song; its screens share one [SongViewModel]. */
 @Serializable
@@ -70,6 +74,7 @@ fun MusicReaderNavHost(navController: NavHostController = rememberNavController(
                 onOpenSong = { id, openSettings -> navController.navigate(SongRoute(id, openSettings)) },
                 onAbout = { navController.navigate(AboutRoute) },
                 onSettings = { navController.navigate(AppSettingsRoute) },
+                onTuner = { navController.navigate(TunerRoute) },
             )
         }
         composable<AboutRoute> {
@@ -80,7 +85,11 @@ fun MusicReaderNavHost(navController: NavHostController = rememberNavController(
                 onBack = { navController.popBackStack() },
                 onOpenCalibration = { navController.navigate(CalibrationRoute) },
                 onOpenDiagnostics = { navController.navigate(DiagnosticsRoute) },
+                onOpenTuner = { navController.navigate(TunerRoute) },
             )
+        }
+        composable<TunerRoute> {
+            TunerScreen(onBack = { navController.popBackStack() })
         }
         composable<CalibrationRoute> {
             CalibrationScreen(onBack = { navController.popBackStack() })

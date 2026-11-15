@@ -4,8 +4,12 @@ add_library(musicreader_dsp STATIC
         Renderer.cpp
         Correlation.cpp
         Onsets.cpp
-        Calibration.cpp)
-target_include_directories(musicreader_dsp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+        Calibration.cpp
+        pitch/Fft.cpp
+        pitch/PitchDetector.cpp
+        pitch/PitchSmoother.cpp
+        pitch/PitchTracker.cpp)
+target_include_directories(musicreader_dsp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/pitch)
 target_compile_features(musicreader_dsp PUBLIC cxx_std_17)
 # Calibration analysis runs millions of multiply-adds: optimize even in debug builds.
 target_compile_options(musicreader_dsp PRIVATE -O2 -Wall -Wextra -Werror)

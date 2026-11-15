@@ -298,4 +298,29 @@
     <string name="hz_value">%1$d Hz</string>
     <string name="frames_ms">%1$d · %2$s ms</string>
     <string name="seconds_value">%1$s s</string>
+    <!-- Tuner (Stage 8) -->
+    <string name="tuner_title">Tuner</string>
+    <string name="tuner_summary">Note, cents and pitch trace; compare YIN and MPM</string>
+    <string name="tuner_mic_denied_text">The tuner listens to your voice or guitar with the microphone. Nothing is recorded or kept.</string>
+    <string name="tuner_no_pitch">No pitch</string>
+    <string name="tuner_reading">%1$s, %2$s cents</string>
+    <string name="cents_value">%1$s cents</string>
+    <string name="hz_decimal">%1$s Hz</string>
+    <string name="db_value">%1$s dB</string>
+    <string name="tuner_confidence">Confidence %1$d %%</string>
+    <string name="tuner_trace">Pitch, last 5 seconds</string>
+    <string name="tuner_method">Detector</string>
+    <string name="method_yin">YIN</string>
+    <string name="method_mpm">McLeod (MPM)</string>
+    <string name="tuner_gate_default">Noise gate: %1$s dB (default). Measure the room so quiet sounds are not mistaken for notes.</string>
+    <string name="tuner_gate_measured">Noise gate: %1$s dB (measured from this room).</string>
+    <string name="tuner_measure_noise">Measure room noise (2 s, stay quiet)</string>
+    <string name="tuner_measuring_noise">Measuring… %1$d %%</string>
+    <string name="tuner_hint">Sing or play one note at a time. The note shows when the sound is louder than the noise gate and clearly pitched.</string>
+    <string name="diag_input_preset">Microphone mode</string>
+    <string name="preset_unprocessed">Unprocessed (no noise suppression)</string>
+    <string name="preset_voice_recognition">Voice recognition</string>
+    <string name="tuner_held">last note</string>
+    <string name="diag_input_preset_last">Microphone mode (last used)</string>
+    <string name="tuner_mic_mode">Microphone mode: %1$s</string>
 </resources>
