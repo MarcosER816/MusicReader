@@ -220,7 +220,15 @@ Round 3 (APK `MusicReader-stage-08-pitch-112.apk` or later):
 
 | # | Check | Result |
 |---|---|---|
-| 1 | Tuner screen, bottom: "Microphone mode" | |
-| 2 | Sing a melody with leaps (also an octave up, softer): no jumps, drops or spikes | |
-| 3 | Open strings still ring until nearly silent | |
-| 4 | Update over round 2 | |
+| 1 | Tuner screen, bottom: "Microphone mode" | Unprocessed |
+| 2 | Sing a melody with leaps (also an octave up, softer): no jumps, drops or spikes | One drop → round 4 (no octave correction across a breath) |
+| 3 | Open strings still ring until nearly silent | OK |
+| 4 | Update over round 2 | OK — no crash, no change |
+
+Round 4 (APK run after the fix):
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Sing a melody with leaps, with breaths between some notes: any drop? If one remains, describe it (how far, at the start or end of a note) | |
+| 2 | Voice still followed quickly; strings still ring | |
+| 3 | Update over round 3 | |

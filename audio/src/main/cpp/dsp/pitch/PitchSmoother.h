@@ -32,6 +32,10 @@ private:
     double reference_ = 0.0;
     int sinceReference_ = 0;
     int folds_ = 0;
+    /** Unvoiced raw frames in a row; after a gap (a breath) the next note starts fresh. */
+    int silentRun_ = 0;
+    /** A gap is this many unvoiced frames (20 ms). */
+    static constexpr int kGapFrames = 2;
 };
 
 }  // namespace mr

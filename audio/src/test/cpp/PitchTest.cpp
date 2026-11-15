@@ -481,3 +481,30 @@ TEST(Tracker, ASungPhraseHasNoSpikesOrDrops) {
         EXPECT_GT(voiced, 300);
     }
 }
+
+// Mark, Stage 8 round 3: "one drop". A note an octave up right after a breath must start on
+// its own octave: octave correction only applies while the voice is continuous.
+TEST(Tracker, ANoteAfterABreathStartsInItsOwnOctave) {
+    for (PitchMethod m : {PitchMethod::kYin, PitchMethod::kMpm}) {
+        for (double second : {440.0, 110.0}) {
+            const size_t n = kRate * 2;
+            std::vector<float> x(n, 0.f);
+            double phase = 0.0;
+            for (size_t i = 0; i < n; ++i) {
+                const double t = static_cast<double>(i) / kRate;
+                if (t >= 1.0 && t < 1.08) continue;  // an 80 ms breath
+                const double f = t < 1.0 ? 220.0 : second;
+                phase += 2 * kPi * f / kRate;
+                x[i] = static_cast<float>(0.3 * (std::sin(phase) + 0.5 * std::sin(2 * phase) + 0.25 * std::sin(3 * phase)));
+            }
+            PitchTracker t(kRate);
+            t.setMethod(m);
+            for (const PitchFrame &f : track(t, x)) {
+                const double ts = f.frame / static_cast<double>(kRate);
+                if (ts < 1.08 || !f.voiced) continue;
+                EXPECT_NEAR(0.0, cents(f.hz, second), 30.0)
+                    << (m == PitchMethod::kYin ? "YIN" : "MPM") << " " << second << " Hz at " << ts << " s read " << f.hz;
+            }
+        }
+    }
+}

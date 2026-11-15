@@ -131,3 +131,4 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
   - a 45 Hz high-pass on the tracker input;
   - the microphone mode is shown on the tuner, and the last one in Diagnostics;
   - 3 new C++ tests (softer octave leap, DC and rumble, sung phrase).
+- Round 4 (microphone Unprocessed, strings OK, "one drop"): a note right after a breath is no longer octave-corrected against the note before, with a new C++ test.

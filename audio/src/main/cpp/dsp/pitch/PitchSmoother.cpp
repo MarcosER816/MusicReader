@@ -12,11 +12,20 @@ void PitchSmoother::reset() {
     hasReference_ = false;
     sinceReference_ = 0;
     folds_ = 0;
+    silentRun_ = 0;
 }
 
 PitchSmoother::Output PitchSmoother::push(bool voiced, double midi) {
     Output out;
-    // Octave correction against the last smoothed note (if it is recent: 100 ms).
+    if (voiced && silentRun_ >= kGapFrames) {
+        // A new note after a breath: nothing from the note before may pull it (no octave
+        // correction against it, no old values in the median).
+        voiced_.fill(false);
+        hasReference_ = false;
+        folds_ = 0;
+    }
+    silentRun_ = voiced ? 0 : silentRun_ + 1;
+    // Octave correction against the last smoothed note, only while the voice is continuous.
     if (voiced && hasReference_ && sinceReference_ <= 10) {
         const double d = midi - reference_;
         const double k = std::round(d / 12.0);
