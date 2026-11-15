@@ -234,7 +234,7 @@ Round 4 (APK `MusicReader-stage-08-pitch-116.apk` or later):
 | 3 | Update over round 3 | OK — no crash, no change |
 
 ### Stage 9 — lyric capture
-APK: `MusicReader-stage-09-capture-<run>.apk` or later (PR [#11](https://github.com/MarcosER816/MusicReader/pull/11), branch `stage-09-capture`)
+APK: `MusicReader-stage-09-capture-125.apk` or later (PR [#11](https://github.com/MarcosER816/MusicReader/pull/11), branch `stage-09-capture`)
 Date tested:
 Audio route:
 
