@@ -216,7 +216,7 @@ Round 2 (APK `MusicReader-stage-08-pitch-108.apk` or later):
 | 3 | Voice still followed quickly, soft singing without octave jumps | Sometimes jumps; one sudden drop and spike → round 3 |
 | 4 | Update over round 1 | OK — no crash; change wanted: no spikes |
 
-Round 3 (APK run after the fix):
+Round 3 (APK `MusicReader-stage-08-pitch-112.apk` or later):
 
 | # | Check | Result |
 |---|---|---|
