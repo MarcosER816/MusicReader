@@ -16,7 +16,7 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 | 5 | Tab editor: tab events between chords and lyrics, techniques (bend, hammer-on, pull-off, slide, vibrato, harmonics, mute) | stage-05-tabs | done | [#7](https://github.com/MarcosER816/MusicReader/pull/7) | 2026-11-14 ("Stage 5 approved") |
 | 6 | User configuration: chord colors, finger colors, default viewer layers, app language, sharps/flats, left-handed diagrams | stage-06-settings | done | [#8](https://github.com/MarcosER816/MusicReader/pull/8) | 2026-11-14 ("Stage 6 approved") |
 | 7 | Audio core: C++ Oboe engine, JNI, audio clock, metronome, latency calibration per route, diagnostics | stage-07-audio | done | [#9](https://github.com/MarcosER816/MusicReader/pull/9) | 2026-11-15 ("Stage 7 approved") |
-| 8 | DSP: pitch tracking and onset detection, tested on synthetic signals | stage-08-dsp | not started | | |
+| 8 | Real-time pitch detection (YIN and MPM in C++, Kotlin reference YIN), voiced/unvoiced gate, smoothing, tuner/debug screen | stage-08-pitch | in progress | | |
 | 9 | Lyric capture by singing: select word range, count-in, record take, align to syllables, last take wins | stage-09-capture | not started | | |
 | 10 | Note editor: per-syllable pitch and duration, free drag with no snapping | stage-10-note-editor | not started | | |
 | 11 | Practice — singing: right-to-left note line, pitch arrow with trail, gold/green/red, particles | stage-11-practice-sing | not started | | |
@@ -104,3 +104,6 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 - Fixed a flaky Stage 6 DataStore test (it now waits for the old store to close).
 - Round 2 after Mark's device test (speaker 85.6 ms, Bluetooth 682.7 ms, metronome steady, plugging OK): a second calibration in the same app run failed. The microphone samples' frame numbers still counted the first session's samples. Fixed with `InputTimeline`: frames are relative to each session's first sample. A host regression test covers it, and a controller test runs two calibrations in a row.
 - Stage 7 approved by Mark on 2026-11-15 after two device-test rounds (wired headphones within about 5 ms of OboeTester).
+
+### Stage 8 — pitch detection (2026-11-15)
+- Stage 7 approved by Mark (two device-test rounds).
