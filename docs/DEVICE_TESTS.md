@@ -207,7 +207,7 @@ How: Library ⋮ → Tuner (allow the microphone). Tap "Measure room noise" once
 | 5 | YIN vs MPM | Note which is better on your phone | MPM |
 | 6 | Update over Stage 7 | No data lost, no crash | OK — no crash |
 
-Round 2 (APK run after the fix):
+Round 2 (APK `MusicReader-stage-08-pitch-108.apk` or later):
 
 | # | Check | Result |
 |---|---|---|
