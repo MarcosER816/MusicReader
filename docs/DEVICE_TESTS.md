@@ -229,6 +229,6 @@ Round 4 (APK `MusicReader-stage-08-pitch-116.apk` or later):
 
 | # | Check | Result |
 |---|---|---|
-| 1 | Sing a melody with leaps, with breaths between some notes: any drop? If one remains, describe it (how far, at the start or end of a note) | |
-| 2 | Voice still followed quickly; strings still ring | |
-| 3 | Update over round 3 | |
+| 1 | Sing a melody with leaps, with breaths between some notes: any drop? If one remains, describe it (how far, at the start or end of a note) | OK — no drop |
+| 2 | Voice still followed quickly; strings still ring | OK |
+| 3 | Update over round 3 | OK — no crash, no change |
