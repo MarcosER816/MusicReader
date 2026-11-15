@@ -439,6 +439,12 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
   - the YIN/MPM switch and "Measure room noise".
 
   The microphone is asked for when the screen opens, with the same refusal screen as calibration. Detection restarts every time the screen comes back from the background. The trace uses a fixed ring buffer and one reused Path (no allocation per drawn frame).
+- **Round 2 (Mark: a guitar string was recognized "only for a short moment"):**
+  - **Microphone mode:** the input stream now opens with the **Unprocessed** preset (no noise suppression, no automatic gain) and falls back to VoiceRecognition. On many phones, noise suppression fades out a sustained tone within moments, while speech and singing pass. Diagnostics shows the mode in use.
+  - **Hysteresis:** a held note continues while it stays on that note (or an octave off) at up to 6 dB below the gate and 0.2 below the confidence a new note needs.
+  - **Fading note:** once the held note is 3 dB under its peak, octave jumps are always folded back. If the free choice lands on a sub- or overtone, the detector re-measures at the held note's period (±3 %, `estimateNear`) and the note continues there if it is still periodic. A new pluck is louder, so the strict rules decide again.
+  - **Display hold:** the tuner keeps the last note on screen, dimmed and marked "last note", for 0.6 s after it stopped.
+  - **Tests:** a realistic fading string (inharmonic, beating, echoes, noise) keeps the right note until it is a few dB above the noise and never shows another octave. A held note survives noise that could not start a note.
 - **Kotlin reference:** `core/dsp` `Yin` is the same algorithm with a direct difference sum (no FFT), used in JVM tests and as the readable description. `NoiseGate`, `TunerReading` and `PitchTrace` are pure and tested.
 - **Tests (synthetic):**
   - C++: pure and harmonic tones 70–1100 Hz within 5 cents (YIN and MPM); a strong 2nd harmonic (3× the fundamental) without an octave error; noise unvoiced; quiet tones below the gate unvoiced; vibrato ±50 cents at 5.5 Hz followed within 15 cents; a plucked low E within 5 cents; frame timing; gaps; smoothing and octave folding.

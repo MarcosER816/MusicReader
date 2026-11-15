@@ -28,8 +28,10 @@ data class TunerUiState(
     val permissionDenied: Boolean = false,
     val settings: PitchSettings = PitchSettings(),
     val accidentals: AccidentalPreference = AccidentalPreference.SHARPS,
-    /** Nearest note and cents; null while unvoiced. */
+    /** Nearest note and cents; null while unvoiced (after the short hold). */
     val reading: TunerReading? = null,
+    /** The reading is the last note, kept on screen for a moment after it stopped. */
+    val held: Boolean = false,
     val hz: Double? = null,
     val confidence: Double = 0.0,
     val levelDb: Double = -120.0,
@@ -54,6 +56,7 @@ class TunerViewModel(
     val trace = PitchTrace(capacity = (TRACE_SECONDS * 100).toInt() + 20)
 
     private var collector: Job? = null
+    private var lastVoiced: PitchFrame? = null
     private var noiseLevels: MutableList<Double>? = null
 
     init {
@@ -108,10 +111,14 @@ class TunerViewModel(
                 _state.update { it.copy(noiseProgress = levels.size) }
             }
         }
+        if (f.voiced) lastVoiced = f
+        // A short gap keeps the last note on screen (dimmed) instead of blanking it.
+        val shown = if (f.voiced) f else lastVoiced?.takeIf { f.seconds - it.seconds <= HOLD_SECONDS }
         _state.update {
             it.copy(
-                reading = f.midi?.let(TunerReading::of),
-                hz = f.hz,
+                reading = shown?.midi?.let(TunerReading::of),
+                held = shown != null && !f.voiced,
+                hz = shown?.hz,
                 confidence = f.confidence,
                 levelDb = f.levelDb,
                 traceVersion = trace.version,
@@ -125,6 +132,8 @@ class TunerViewModel(
 
     companion object {
         const val TRACE_SECONDS = 5.0
+        /** How long the last note stays on screen after it stopped. */
+        const val HOLD_SECONDS = 0.6
 
         val Factory = viewModelFactory {
             initializer {

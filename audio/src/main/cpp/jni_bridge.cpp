@@ -132,7 +132,8 @@ JNIEXPORT jdoubleArray JNICALL Java_com_musicreader_audio_NativeAudio_nativeDiag
                         static_cast<double>(d.inputSharingMode), static_cast<double>(d.inputDeviceId),
                         static_cast<double>(d.inputFramesPerBurst), d.outputLatencyMs,
                         static_cast<double>(d.callbacks), static_cast<double>(d.inputShortReads),
-                        static_cast<double>(d.inputOverflows), static_cast<double>(d.restarts)});
+                        static_cast<double>(d.inputOverflows), static_cast<double>(d.restarts),
+                        static_cast<double>(d.inputPreset)});
 }
 
 /** [latencyMs, confidence, found, expected, spreadMs] */

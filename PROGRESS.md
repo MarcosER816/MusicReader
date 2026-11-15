@@ -119,3 +119,9 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
   - 9 JVM tests;
   - controller and tuner ViewModel tests.
 - Decision D-030.
+- Round 2 after Mark's device test (A right, voice fast, soft singing fine, MPM preferred): guitar strings were recognized only briefly. Changes:
+  - the microphone is now Unprocessed (no noise suppression);
+  - hysteresis for held notes;
+  - a fading note keeps its octave and re-measures at its own period;
+  - the last note is held on screen for 0.6 s;
+  - 3 new C++ tests.

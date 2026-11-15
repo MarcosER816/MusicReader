@@ -294,3 +294,91 @@ TEST(Tracker, MidiConversions) {
     EXPECT_NEAR(40.0, PitchTracker::hzToMidi(82.4069), 1e-3);
     EXPECT_NEAR(261.6256, PitchTracker::midiToHz(60.0), 1e-3);
 }
+
+namespace {
+
+/**
+ * A realistic plucked string as a phone hears it: inharmonic partials, the fundamental fading
+ * first, beating between the string's two vibration planes, room echoes and noise at −50 dBFS.
+ */
+std::vector<float> realisticPluck(double f0, double seconds) {
+    const size_t n = static_cast<size_t>(seconds * kRate);
+    std::vector<float> x(n, 0.f);
+    for (size_t i = 0; i < n; ++i) {
+        const double t = static_cast<double>(i) / kRate;
+        double v = 0.0;
+        for (int h = 1; h <= 15; ++h) {
+            const double tau = h == 1 ? 0.5 : 1.6 / std::sqrt(h);
+            const double fh = f0 * h * std::sqrt(1 + 0.0004 * h * h);
+            const double beat = 1.0 + 0.6 * std::sin(2 * kPi * (0.7 + 0.3 * h) * t);
+            v += (0.25 / h) * beat * std::exp(-t / tau) * std::sin(2 * kPi * fh * t + h);
+        }
+        x[i] = static_cast<float>(v);
+    }
+    std::vector<float> y(x);
+    for (size_t d : {331u, 797u, 1601u, 2903u})
+        for (size_t i = d; i < n; ++i) y[i] += 0.25f * x[i - d];
+    std::mt19937 rng(1);
+    std::normal_distribution<float> g(0.f, 0.003f);
+    for (float &v : y) v += g(rng);
+    return y;
+}
+
+}  // namespace
+
+// Mark, Stage 8 round 1: a guitar string was recognized "only for a short moment".
+TEST(Tracker, AFadingStringKeepsItsNote) {
+    PitchTracker t(kRate);
+    t.setMethod(PitchMethod::kMpm);
+    t.setGateDb(-45.0);
+    const auto frames = track(t, realisticPluck(82.41, 5.0));
+    double lastRight = 0.0;
+    int wrong = 0;
+    for (const PitchFrame &f : frames) {
+        if (!f.voiced) continue;
+        if (std::fabs(cents(f.hz, 82.41)) < 30.0) lastRight = f.frame / static_cast<double>(kRate);
+        else ++wrong;
+    }
+    EXPECT_GE(lastRight, 3.5);  // until the string is only a few dB above the room noise
+    EXPECT_EQ(0, wrong);        // and never on another octave in the tail
+}
+
+TEST(Tracker, AHeldNoteSurvivesWhatCouldNotStartANote) {
+    // 220 Hz: clean for 0.5 s, then with noise that drops the confidence under the "new note"
+    // threshold but above the "held note" one.
+    const size_t n = kRate * 2;
+    auto x = tone(220.0, kHarmonic, n);
+    std::mt19937 rng(9);
+    std::normal_distribution<float> g(0.f, 0.25f);  // MPM clarity about 0.72: between 0.6 and 0.8
+    for (size_t i = kRate / 2; i < n; ++i) x[i] += g(rng);
+    std::vector<float> noisyOnly(x.begin() + kRate / 2, x.end());
+
+    auto voicedShare = [](const std::vector<PitchFrame> &frames, double fromSeconds) {
+        int v = 0, all = 0;
+        for (const PitchFrame &f : frames) {
+            if (f.frame / static_cast<double>(kRate) < fromSeconds) continue;
+            ++all;
+            v += f.voiced ? 1 : 0;
+        }
+        return all ? static_cast<double>(v) / all : 0.0;
+    };
+    PitchTracker held(kRate);
+    held.setMethod(PitchMethod::kMpm);
+    const double heldShare = voicedShare(track(held, x), 0.6);
+    PitchTracker fresh(kRate);
+    fresh.setMethod(PitchMethod::kMpm);
+    const double freshShare = voicedShare(track(fresh, noisyOnly), 0.0);
+    EXPECT_GT(heldShare, 0.9) << "the held note keeps sounding";
+    EXPECT_LT(freshShare, 0.5) << "the same noisy sound alone does not start a note (" << freshShare << ")";
+}
+
+TEST(Detector, EstimateNearFindsTheHeldPeriod) {
+    YinDetector yin(kRate);
+    MpmDetector mpm(kRate);
+    const auto x = tone(196.0, kHarmonic, PitchTracker::kWindow);
+    yin.detect(x.data());
+    mpm.detect(x.data());
+    EXPECT_NEAR(0.0, cents(yin.estimateNear(198.0).hz, 196.0), 5.0);
+    EXPECT_NEAR(0.0, cents(mpm.estimateNear(194.0).hz, 196.0), 5.0);
+    EXPECT_EQ(0.0, mpm.estimateNear(150.0).hz);  // nothing periodic there
+}

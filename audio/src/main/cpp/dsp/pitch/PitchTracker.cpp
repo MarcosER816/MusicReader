@@ -17,6 +17,7 @@ void PitchTracker::setMethod(PitchMethod m) {
 void PitchTracker::reset() {
     filled_ = 0;
     expectedFrame_ = -1;
+    holding_ = false;
     smoother_.reset();
 }
 
@@ -50,12 +51,44 @@ PitchFrame PitchTracker::analyze(int64_t endFrame) {
     PitchDetector &d = method_ == PitchMethod::kYin ? static_cast<PitchDetector &>(yin_) : static_cast<PitchDetector &>(mpm_);
     const PitchEstimate e = d.detect(window_.data());
     f.confidence = e.confidence;
-    const bool rawVoiced = e.hz > 0.0 && f.levelDb >= gateDb_ && e.confidence >= d.voicedConfidence();
-    const PitchSmoother::Output s = smoother_.push(rawVoiced, rawVoiced ? hzToMidi(e.hz) : 0.0);
+    bool rawVoiced = false;
+    double rawMidi = 0.0;
+    const bool decaying = holding_ && f.levelDb < notePeakDb_ - kDecayDb;
+    const bool holdLevel = holding_ && f.levelDb >= gateDb_ - kHoldGateDb;
+    const double holdConfidence = d.voicedConfidence() - kHoldConfidence;
+    auto nearHeld = [&](double m) {
+        const double diff = m - heldMidi_;
+        const double k = std::round(diff / 12.0);
+        return std::fabs(k) <= 1.0 && std::fabs(diff - 12.0 * k) < 1.0;  // same note or an octave off
+    };
+    if (e.hz > 0.0) {
+        rawMidi = hzToMidi(e.hz);
+        // A new note must pass the gate and the detector's confidence.
+        rawVoiced = f.levelDb >= gateDb_ && e.confidence >= d.voicedConfidence();
+        // Hysteresis: a held note keeps sounding with relaxed limits while it stays on that
+        // note (or an octave off, which the smoother folds back).
+        if (!rawVoiced && holdLevel && e.confidence >= holdConfidence && nearHeld(rawMidi)) rawVoiced = true;
+    }
+    // A fading note whose free choice landed elsewhere (a sub- or overtone in the noisy tail):
+    // if the window is still periodic at the held note, the note goes on there.
+    if (decaying && holdLevel && (!rawVoiced || !nearHeld(rawMidi))) {
+        const PitchEstimate alt = d.estimateNear(midiToHz(heldMidi_));
+        if (alt.hz > 0.0 && alt.confidence >= holdConfidence) {
+            rawVoiced = true;
+            rawMidi = hzToMidi(alt.hz);
+            f.confidence = alt.confidence;
+        }
+    }
+    const PitchSmoother::Output s = smoother_.push(rawVoiced, rawVoiced ? rawMidi : 0.0, decaying);
     f.voiced = s.voiced;
     if (s.voiced) {
         f.midi = s.midi;
         f.hz = midiToHz(s.midi);
+        notePeakDb_ = holding_ ? std::max(notePeakDb_, f.levelDb) : f.levelDb;
+        holding_ = true;
+        heldMidi_ = s.midi;
+    } else {
+        holding_ = false;
     }
     // The window's center, and the median of 5 lags by 2 frames.
     f.frame = endFrame - static_cast<int64_t>(kWindow / 2) - static_cast<int64_t>(2 * kHop);

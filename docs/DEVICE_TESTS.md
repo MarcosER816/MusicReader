@@ -193,16 +193,25 @@ Round 2 (APK `MusicReader-stage-07-audio-94.apk` or later):
 
 ### Stage 8 — pitch detection and tuner
 APK: `MusicReader-stage-08-pitch-104.apk` or later (PR [#10](https://github.com/MarcosER816/MusicReader/pull/10), branch `stage-08-pitch`)
-Date tested:
+Date tested: 2026-11-15 (round 1, APK run 104)
 Audio route: speaker / built-in microphone
 
 How: Library ⋮ → Tuner (allow the microphone). Tap "Measure room noise" once in a quiet room.
 
 | # | Check | Expected | Result |
 |---|---|---|---|
-| 1 | Sing or play a steady A, compare with another tuner app | Same note and octave | |
-| 2 | The six open strings, low E to high E | Each within about 5 cents of the other tuner | |
-| 3 | Sing a melody and watch the trace | Follows quickly, no visible delay | |
-| 4 | Sing softly | No octave jumps, no drop-outs while the note sounds | |
-| 5 | YIN vs MPM | Note which is better on your phone | |
-| 6 | Update over Stage 7 | No data lost, no crash | |
+| 1 | Sing or play a steady A, compare with another tuner app | Same note and octave | OK |
+| 2 | The six open strings, low E to high E | Each within about 5 cents of the other tuner | Right, but recognized only for a short moment → round 2 (Unprocessed mic, hysteresis, fading-note tracking, display hold) |
+| 3 | Sing a melody and watch the trace | Follows quickly, no visible delay | OK |
+| 4 | Sing softly | No octave jumps, no drop-outs while the note sounds | OK — moves normally |
+| 5 | YIN vs MPM | Note which is better on your phone | MPM |
+| 6 | Update over Stage 7 | No data lost, no crash | OK — no crash |
+
+Round 2 (APK run after the fix):
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Pluck each open string and let it ring: the note stays until the string is nearly silent | |
+| 2 | Diagnostics (with the tuner open in another moment) shows Microphone mode "Unprocessed" | |
+| 3 | Voice still followed quickly, soft singing without octave jumps | |
+| 4 | Update over round 1 | |

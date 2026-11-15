@@ -29,6 +29,17 @@ void PitchDetector::prepare(const float *x) {
     for (size_t i = 0; i < window_; ++i) energy_[i + 1] = energy_[i] + static_cast<double>(x[i]) * x[i];
 }
 
+bool PitchDetector::lagsNear(double hz, size_t &from, size_t &to) const {
+    if (hz <= 0.0) return false;
+    const double lag = sampleRate_ / hz;
+    const double lo = std::max(static_cast<double>(minLag_), std::floor(lag * 0.97));
+    const double hi = std::min(static_cast<double>(maxLag_), std::ceil(lag * 1.03));
+    if (lo > hi) return false;
+    from = static_cast<size_t>(lo);
+    to = static_cast<size_t>(hi);
+    return true;
+}
+
 // --- YIN ---
 
 YinDetector::YinDetector(int sampleRate, size_t window, PitchRange range, double threshold)
@@ -70,6 +81,21 @@ PitchEstimate YinDetector::detect(const float *x) {
         if (cmnd_[t2] < 0.5 * cmnd_[tau]) tau = t2;
     }
     const double off = (tau > 1 && tau < last) ? parabolicOffset(cmnd_[tau - 1], cmnd_[tau], cmnd_[tau + 1]) : 0.0;
+    e.hz = sampleRate_ / (static_cast<double>(tau) + off);
+    e.confidence = std::clamp(1.0 - cmnd_[tau], 0.0, 1.0);
+    return e;
+}
+
+PitchEstimate YinDetector::estimateNear(double hz) const {
+    PitchEstimate e;
+    size_t from = 0, to = 0;
+    if (!lagsNear(hz, from, to)) return e;
+    size_t tau = from;
+    for (size_t t = from; t <= to; ++t)
+        if (cmnd_[t] < cmnd_[tau]) tau = t;
+    // Must be a real dip, not the edge of the search range.
+    if (tau == from || tau == to || cmnd_[tau - 1] < cmnd_[tau] || cmnd_[tau + 1] < cmnd_[tau]) return e;
+    const double off = parabolicOffset(cmnd_[tau - 1], cmnd_[tau], cmnd_[tau + 1]);
     e.hz = sampleRate_ / (static_cast<double>(tau) + off);
     e.confidence = std::clamp(1.0 - cmnd_[tau], 0.0, 1.0);
     return e;
@@ -122,6 +148,20 @@ PitchEstimate MpmDetector::detect(const float *x) {
     const double peak = nsdf_[pick] - 0.25 * (nsdf_[pick - 1] - nsdf_[pick + 1]) * off;
     e.hz = sampleRate_ / (static_cast<double>(pick) + off);
     e.confidence = std::clamp(peak, 0.0, 1.0);
+    return e;
+}
+
+PitchEstimate MpmDetector::estimateNear(double hz) const {
+    PitchEstimate e;
+    size_t from = 0, to = 0;
+    if (!lagsNear(hz, from, to)) return e;
+    size_t tau = from;
+    for (size_t t = from; t <= to; ++t)
+        if (nsdf_[t] > nsdf_[tau]) tau = t;
+    if (tau == from || tau == to || nsdf_[tau] <= 0.0) return e;
+    const double off = parabolicOffset(nsdf_[tau - 1], nsdf_[tau], nsdf_[tau + 1]);
+    e.hz = sampleRate_ / (static_cast<double>(tau) + off);
+    e.confidence = std::clamp(nsdf_[tau] - 0.25 * (nsdf_[tau - 1] - nsdf_[tau + 1]) * off, 0.0, 1.0);
     return e;
 }
 

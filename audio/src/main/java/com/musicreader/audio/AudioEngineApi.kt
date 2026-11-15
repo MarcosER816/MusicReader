@@ -51,6 +51,9 @@ enum class SharingMode { EXCLUSIVE, SHARED, UNKNOWN }
 enum class PerformanceMode { NONE, POWER_SAVING, LOW_LATENCY, UNKNOWN }
 enum class AudioApiName { AAUDIO, OPENSL_ES, UNSPECIFIED }
 
+/** Microphone processing path (oboe::InputPreset). */
+enum class InputPresetName { UNPROCESSED, VOICE_RECOGNITION, OTHER }
+
 /** What the Diagnostics screen shows (the C++ EngineDiagnostics). */
 data class EngineDiagnostics(
     val running: Boolean = false,
@@ -75,6 +78,7 @@ data class EngineDiagnostics(
     val inputShortReads: Long = 0,
     val inputOverflows: Long = 0,
     val restarts: Int = 0,
+    val inputPreset: InputPresetName = InputPresetName.OTHER,
 ) {
     fun framesToMs(frames: Int): Double = if (sampleRate > 0) frames * 1000.0 / sampleRate else 0.0
 
@@ -115,6 +119,11 @@ data class EngineDiagnostics(
             inputShortReads = a[17].toLong(),
             inputOverflows = a[18].toLong(),
             restarts = a[19].toInt(),
+            inputPreset = when (a.getOrNull(20)?.toInt()) {
+                9 -> InputPresetName.UNPROCESSED
+                6 -> InputPresetName.VOICE_RECOGNITION
+                else -> InputPresetName.OTHER
+            },
         )
     }
 }

@@ -92,21 +92,26 @@ oboe::Result AudioEngine::openAndStartLocked(bool withInput) {
     tuner_ = std::make_unique<oboe::LatencyTuner>(*output_);
 
     if (withInput) {
-        oboe::AudioStreamBuilder in;
-        in.setDirection(oboe::Direction::Input)
-            ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
-            ->setSharingMode(oboe::SharingMode::Exclusive)
-            ->setFormat(oboe::AudioFormat::Float)
-            ->setFormatConversionAllowed(true)
-            ->setChannelCount(oboe::ChannelCount::Mono)
-            ->setChannelConversionAllowed(true)
-            ->setSampleRate(kSampleRate)
-            ->setSampleRateConversionQuality(oboe::SampleRateConversionQuality::Medium)
-            ->setInputPreset(oboe::InputPreset::VoiceRecognition)
-            ->setBufferCapacityInFrames(kMaxBlock * 2);
-        r = in.openStream(input_);
-        if (r != oboe::Result::OK) {
+        // Unprocessed first: no noise suppression or automatic gain, which would fade out a
+        // sustained guitar note (Mark, Stage 8). Phones without that path get VoiceRecognition.
+        for (oboe::InputPreset preset : {oboe::InputPreset::Unprocessed, oboe::InputPreset::VoiceRecognition}) {
+            oboe::AudioStreamBuilder in;
+            in.setDirection(oboe::Direction::Input)
+                ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
+                ->setSharingMode(oboe::SharingMode::Exclusive)
+                ->setFormat(oboe::AudioFormat::Float)
+                ->setFormatConversionAllowed(true)
+                ->setChannelCount(oboe::ChannelCount::Mono)
+                ->setChannelConversionAllowed(true)
+                ->setSampleRate(kSampleRate)
+                ->setSampleRateConversionQuality(oboe::SampleRateConversionQuality::Medium)
+                ->setInputPreset(preset)
+                ->setBufferCapacityInFrames(kMaxBlock * 2);
+            r = in.openStream(input_);
+            if (r == oboe::Result::OK) break;
             input_.reset();
+        }
+        if (r != oboe::Result::OK) {
             output_->close();
             output_.reset();
             tuner_.reset();
@@ -368,6 +373,7 @@ EngineDiagnostics AudioEngine::diagnostics() {
         d.inputSharingMode = static_cast<int>(input_->getSharingMode());
         d.inputDeviceId = input_->getDeviceId();
         d.inputFramesPerBurst = input_->getFramesPerBurst();
+        d.inputPreset = static_cast<int>(input_->getInputPreset());
     }
     return d;
 }

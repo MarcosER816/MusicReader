@@ -60,8 +60,12 @@ class TunerViewModelTest {
         assertEquals(0.95, s.confidence)
         audio.pitch.emit(frame(2, null, level = -70.0))
         advanceUntilIdle()
-        assertNull(vm.state.value.reading, "unvoiced: no note")
-        assertEquals(2, vm.trace.size)
+        assertEquals(69, vm.state.value.reading!!.note, "a short gap keeps the last note")
+        assertTrue(vm.state.value.held)
+        audio.pitch.emit(frame(2 + (TunerViewModel.HOLD_SECONDS * 100).toInt() + 1, null, level = -70.0))
+        advanceUntilIdle()
+        assertNull(vm.state.value.reading, "after the hold: no note")
+        assertEquals(3, vm.trace.size)
         assertTrue(vm.trace.midi(1).isNaN())
         // Back from the background: detection starts again, frames still arrive once.
         vm.start()
@@ -69,7 +73,7 @@ class TunerViewModelTest {
         assertEquals(listOf("pitch on MPM", "pitch on MPM"), audio.calls)
         audio.pitch.emit(frame(3, 60.0))
         advanceUntilIdle()
-        assertEquals(3, vm.trace.size)
+        assertEquals(4, vm.trace.size)
         vm.viewModelScope.coroutineContext.cancelChildren()
     }
 

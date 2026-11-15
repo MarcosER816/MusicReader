@@ -50,6 +50,7 @@ struct EngineDiagnostics {
     int inputSharingMode = 0;
     int inputDeviceId = 0;
     int inputFramesPerBurst = 0;
+    int inputPreset = 0;  // oboe::InputPreset
     double outputLatencyMs = -1.0;  // from the timestamps; -1 until known
     int64_t callbacks = 0;
     int64_t inputShortReads = 0;

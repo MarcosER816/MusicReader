@@ -29,6 +29,12 @@ public:
     virtual PitchEstimate detect(const float *window) = 0;
     /** Confidence from which a frame can count as voiced. */
     virtual double voicedConfidence() const = 0;
+    /**
+     * After detect(): the best period within ±3 % of [hz] in the same window, refined, with
+     * its confidence (hz = 0 if there is no dip/peak there). Used to keep following a fading
+     * note when the free choice lands on a sub- or overtone.
+     */
+    virtual PitchEstimate estimateNear(double hz) const = 0;
     size_t windowSize() const { return window_; }
 
 protected:
@@ -41,6 +47,9 @@ protected:
         const size_t n = window_;
         return (energy_[n - tau]) + (energy_[n] - energy_[tau]);
     }
+
+    /** Lag search range [from, to] around the period of [hz] (±3 %), clamped to the detector's range. */
+    bool lagsNear(double hz, size_t &from, size_t &to) const;
 
     int sampleRate_;
     size_t window_;
@@ -57,6 +66,7 @@ public:
     YinDetector(int sampleRate, size_t window = 2048, PitchRange range = {}, double threshold = 0.12);
     PitchEstimate detect(const float *window) override;
     double voicedConfidence() const override { return 0.85; }
+    PitchEstimate estimateNear(double hz) const override;
 
 private:
     double threshold_;
@@ -69,6 +79,7 @@ public:
     MpmDetector(int sampleRate, size_t window = 2048, PitchRange range = {}, double k = 0.9);
     PitchEstimate detect(const float *window) override;
     double voicedConfidence() const override { return 0.80; }
+    PitchEstimate estimateNear(double hz) const override;
 
 private:
     double k_;

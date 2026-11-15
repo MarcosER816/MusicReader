@@ -20,7 +20,11 @@ public:
         bool folded = false;
     };
 
-    Output push(bool voiced, double midi);
+    /**
+     * [decaying]: the held note is fading (level well under its peak). Then an octave jump is
+     * always folded back: a fading string loses its fundamental first, it does not leap.
+     */
+    Output push(bool voiced, double midi, bool decaying = false);
     void reset();
 
 private:

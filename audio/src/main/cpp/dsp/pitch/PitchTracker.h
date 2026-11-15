@@ -33,6 +33,12 @@ class PitchTracker {
 public:
     static constexpr size_t kWindow = 2048;
     static constexpr size_t kHop = 480;
+    /** While a note is held it may be this much quieter than the gate… */
+    static constexpr double kHoldGateDb = 6.0;
+    /** …and this much less confident than a new note must be (hysteresis). */
+    static constexpr double kHoldConfidence = 0.2;
+    /** A held note this far under its peak is fading. */
+    static constexpr double kDecayDb = 3.0;
 
     explicit PitchTracker(int sampleRate, PitchRange range = {});
 
@@ -65,6 +71,9 @@ private:
     std::vector<float> window_;
     size_t filled_ = 0;
     int64_t expectedFrame_ = -1;
+    bool holding_ = false;
+    double heldMidi_ = 0.0;
+    double notePeakDb_ = -120.0;
 };
 
 }  // namespace mr

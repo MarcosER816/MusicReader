@@ -28,6 +28,7 @@ import com.musicreader.app.R
 import com.musicreader.app.ui.common.AppIcon
 import com.musicreader.app.ui.common.AppIcons
 import com.musicreader.audio.AudioApiName
+import com.musicreader.audio.InputPresetName
 import com.musicreader.audio.PerformanceMode
 import com.musicreader.audio.SharingMode
 
@@ -85,6 +86,14 @@ fun DiagnosticsScreen(onBack: () -> Unit, viewModel: DiagnosticsViewModel = view
             Item(stringResource(R.string.diag_input), stringResource(if (d.inputOpen) R.string.diag_input_open else R.string.diag_input_closed))
             if (d.inputOpen) {
                 Item(stringResource(R.string.diag_sharing), sharingName(d.inputSharingMode))
+                Item(
+                    stringResource(R.string.diag_input_preset),
+                    when (d.inputPreset) {
+                        InputPresetName.UNPROCESSED -> stringResource(R.string.preset_unprocessed)
+                        InputPresetName.VOICE_RECOGNITION -> stringResource(R.string.preset_voice_recognition)
+                        InputPresetName.OTHER -> stringResource(R.string.not_available)
+                    },
+                )
                 Item(stringResource(R.string.diag_burst), d.inputFramesPerBurst.toString())
                 Item(stringResource(R.string.diag_input_short), d.inputShortReads.toString())
                 Item(stringResource(R.string.diag_input_overflows), d.inputOverflows.toString())

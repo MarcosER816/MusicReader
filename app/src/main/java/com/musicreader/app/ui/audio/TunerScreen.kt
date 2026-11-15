@@ -112,7 +112,7 @@ fun TunerScreen(onBack: () -> Unit, viewModel: TunerViewModel = viewModel(factor
                 return@Column
             }
             NoteDisplay(state)
-            CentsNeedle(state.reading)
+            CentsNeedle(state.reading.takeUnless { state.held })
             Details(state)
             PitchTraceView(viewModel.trace, state.traceVersion, state.accidentals)
             Text(stringResource(R.string.tuner_method), style = MaterialTheme.typography.titleMedium)
@@ -165,12 +165,18 @@ private fun NoteDisplay(state: TunerUiState) {
             r?.let { noteName(it.note, state.accidentals) } ?: "–",
             fontSize = 72.sp,
             fontWeight = FontWeight.Bold,
-            color = if (r != null && abs(r.cents) <= IN_TUNE_CENTS) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            color = when {
+                state.held -> MaterialTheme.colorScheme.onSurfaceVariant
+                r != null && abs(r.cents) <= IN_TUNE_CENTS -> MaterialTheme.colorScheme.primary
+                else -> MaterialTheme.colorScheme.onSurface
+            },
         )
         if (r != null) Text(r.octave.toString(), fontSize = 32.sp, modifier = Modifier.padding(bottom = 12.dp))
     }
     Text(
-        r?.let { stringResource(R.string.cents_value, formatCents(it.cents)) } ?: stringResource(R.string.tuner_no_pitch),
+        r?.let {
+            stringResource(R.string.cents_value, formatCents(it.cents)) + if (state.held) " · " + stringResource(R.string.tuner_held) else ""
+        } ?: stringResource(R.string.tuner_no_pitch),
         style = MaterialTheme.typography.titleLarge,
         modifier = Modifier.fillMaxWidth(),
         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
