@@ -59,6 +59,9 @@ public:
     /** Consumer: drops everything written so far. */
     void discardAll() { tail_.store(head_.load(std::memory_order_acquire), std::memory_order_release); }
 
+    /** Producer: total items ever written. */
+    uint64_t totalWritten() const { return head_.load(std::memory_order_relaxed); }
+
     /** Total items ever read by the consumer. */
     uint64_t totalRead() const { return tail_.load(std::memory_order_relaxed); }
 

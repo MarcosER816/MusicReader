@@ -215,4 +215,18 @@ class AudioControllerTest {
         assertFalse(rig.engine.isRunning)
         assertFalse(rig.controller.state.value.running)
     }
+
+    @Test
+    fun twoAutomaticCalibrationsInARowBothMeasure() = runTest {
+        val rig = Rig(this)
+        rig.engine.latencyFrames = 4110  // 85.6 ms, Mark's speaker
+        repeat(2) { round ->
+            val outcome = async { rig.controller.calibrate(CalibrationMode.AUTOMATIC) {} }
+            advanceUntilIdle()
+            val measured = assertIs<CalibrationOutcome.Measured>(outcome.await(), "round ${round + 1}")
+            assertEquals(85.625, measured.measurement.latencyMs!!, 0.01)
+            assertFalse(rig.engine.isRunning)
+        }
+        assertEquals(2, rig.engine.started)
+    }
 }

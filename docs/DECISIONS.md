@@ -410,4 +410,5 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
 - **Tests without a device:**
   - The DSP (`audio/src/main/cpp/dsp`: ring buffer, clock math, beat grid, renderer, chirp, correlation, onsets, calibration) is pure C++. It is built for the host and tested with GoogleTest (BSD-3-Clause) through `cmake` + `ctest` in its own CI job (`audio/src/test/cpp`).
   - Kotlin tests use a fake engine for the controller and a fake `AudioService` for the ViewModels.
+- **Microphone frame numbers per session** (round 2, Mark's device test): the input ring's counts grow for the engine's whole life. Each stream session stores the frame of its first sample and the ring's write count at that moment (`InputTimeline`), so a second calibration in the same app run is aligned too.
 - **Count-in:** not part of this stage. It comes with lyric capture (Stage 9), on the same metronome.

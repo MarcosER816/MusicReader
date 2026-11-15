@@ -115,7 +115,7 @@ oboe::Result AudioEngine::openAndStartLocked(bool withInput) {
     presented_.reset();
     written_.reset();
     lastTimestampQuery_.store(0);
-    inputStartFrame_.store(-1);
+    inputTimeline_.reset();
     inputRing_.discardAll();
     drainCallbacks_ = 8;
 
@@ -233,9 +233,7 @@ void AudioEngine::processInput(int32_t numFrames, int64_t firstFrame) {
         std::fill(inBuf_.begin() + got, inBuf_.begin() + numFrames, 0.f);
         inputShortReads_.fetch_add(1, std::memory_order_relaxed);
     }
-    if (inputStartFrame_.load(std::memory_order_relaxed) < 0) {
-        inputStartFrame_.store(firstFrame, std::memory_order_release);
-    }
+    if (!inputTimeline_.started()) inputTimeline_.begin(firstFrame, inputRing_.totalWritten());
     if (inputRing_.availableToWrite() >= static_cast<size_t>(numFrames)) {
         inputRing_.write(inBuf_.data(), static_cast<size_t>(numFrames));
     } else {
@@ -332,12 +330,9 @@ std::vector<int64_t> AudioEngine::scheduleSounds(int sound, int count, double in
 }
 
 int32_t AudioEngine::readInput(float *dst, int32_t max, int64_t *firstFrame) {
-    const int64_t start = inputStartFrame_.load(std::memory_order_acquire);
-    if (start < 0) {
-        *firstFrame = -1;
-        return 0;
-    }
-    *firstFrame = start + static_cast<int64_t>(inputRing_.totalRead());
+    // Relative to this session: the ring's counts keep growing across sessions.
+    *firstFrame = inputTimeline_.frameAt(inputRing_.totalRead());
+    if (*firstFrame < 0) return 0;
     return static_cast<int32_t>(inputRing_.read(dst, static_cast<size_t>(max)));
 }
 

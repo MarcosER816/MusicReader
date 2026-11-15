@@ -19,6 +19,7 @@
 
 #include "BeatGrid.h"
 #include "ClockMath.h"
+#include "InputTimeline.h"
 #include "Renderer.h"
 #include "RingBuffer.h"
 
@@ -131,7 +132,7 @@ private:
     std::atomic<int64_t> callbacks_{0};
     std::atomic<int64_t> inputShortReads_{0};
     std::atomic<int64_t> inputOverflows_{0};
-    std::atomic<int64_t> inputStartFrame_{-1};
+    InputTimeline inputTimeline_;
     std::atomic<int32_t> bufferSize_{0};
     int drainCallbacks_ = 0;  // callback only
 

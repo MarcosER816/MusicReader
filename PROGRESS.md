@@ -102,3 +102,4 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 - Host-buildable DSP (`audio/src/main/cpp/dsp`) with 27 GoogleTest tests run in CI (`cmake` + `ctest`): a delayed chirp is found within 1 ms, and clicks land on the exact sample.
 - Kotlin tests: controller (fake engine), route mapping, latency profiles, metronome/calibration/diagnostics ViewModels. Decision D-029.
 - Fixed a flaky Stage 6 DataStore test (it now waits for the old store to close).
+- Round 2 after Mark's device test (speaker 85.6 ms, Bluetooth 682.7 ms, metronome steady, plugging OK): a second calibration in the same app run failed. The microphone samples' frame numbers still counted the first session's samples. Fixed with `InputTimeline`: frames are relative to each session's first sample. A host regression test covers it, and a controller test runs two calibrations in a row.
