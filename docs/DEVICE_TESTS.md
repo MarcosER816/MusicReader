@@ -192,7 +192,7 @@ Round 2 (APK `MusicReader-stage-07-audio-94.apk` or later):
 | 3 | Update over round 1 | OK — no crash, no change wanted |
 
 ### Stage 8 — pitch detection and tuner
-APK: `MusicReader-stage-08-pitch-<run>.apk` or later (PR [#10](https://github.com/MarcosER816/MusicReader/pull/10), branch `stage-08-pitch`)
+APK: `MusicReader-stage-08-pitch-104.apk` or later (PR [#10](https://github.com/MarcosER816/MusicReader/pull/10), branch `stage-08-pitch`)
 Date tested:
 Audio route: speaker / built-in microphone
 
