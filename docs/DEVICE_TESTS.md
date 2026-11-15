@@ -225,7 +225,7 @@ Round 3 (APK `MusicReader-stage-08-pitch-112.apk` or later):
 | 3 | Open strings still ring until nearly silent | OK |
 | 4 | Update over round 2 | OK — no crash, no change |
 
-Round 4 (APK run after the fix):
+Round 4 (APK `MusicReader-stage-08-pitch-116.apk` or later):
 
 | # | Check | Result |
 |---|---|---|
