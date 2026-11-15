@@ -116,6 +116,23 @@ class FakeAudioEngine(private val nowMillis: () -> Long, var latencyFrames: Long
 
     override fun analyzeTaps(recording: FloatArray, length: Int, startFrame: Long, clickFrames: LongArray) =
         analyze(recording, length, startFrame, clickFrames)
+
+    val pitchLog = mutableListOf<String>()
+    val pitchQueue = ArrayDeque<PitchFrame>()
+
+    override fun pitchConfigure(method: com.musicreader.core.model.PitchMethod, gateDb: Double) {
+        pitchLog += "configure $method $gateDb"
+    }
+
+    override fun pitchReset() {
+        pitchLog += "reset"
+    }
+
+    override fun pitchPoll(): List<PitchFrame> {
+        val out = pitchQueue.toList()
+        pitchQueue.clear()
+        return out
+    }
 }
 
 class FakeRouteSource(var route: AudioRoute = AudioRoute.SPEAKER) : RouteSource {

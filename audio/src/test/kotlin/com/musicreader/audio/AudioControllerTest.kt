@@ -229,4 +229,41 @@ class AudioControllerTest {
         }
         assertEquals(2, rig.engine.started)
     }
+
+    @Test
+    fun pitchOpensTheMicrophoneAndStreamsFrames() = runTest {
+        val rig = Rig(this)
+        val received = mutableListOf<PitchFrame>()
+        val collector = launch { rig.controller.pitch.collect { received += it } }
+        rig.controller.startPitch(com.musicreader.core.model.PitchSettings(com.musicreader.core.model.PitchMethod.MPM, -50.0))
+        runCurrent()
+        assertTrue(rig.engine.isRunning)
+        assertTrue(rig.engine.withInput, "pitch needs the microphone")
+        assertEquals(listOf("configure MPM -50.0", "reset"), rig.engine.pitchLog)
+        rig.engine.pitchQueue += PitchFrame(480, 0.01, 440.0, 69.0, 0.97, -20.0)
+        rig.engine.pitchQueue += PitchFrame(960, 0.02, null, null, 0.3, -60.0)
+        advanceTimeBy(AudioController.PITCH_POLL_MS + 1)
+        assertEquals(listOf(69.0, null), received.map { it.midi })
+        rig.controller.updatePitch(com.musicreader.core.model.PitchSettings(com.musicreader.core.model.PitchMethod.YIN, -45.0))
+        runCurrent()
+        assertEquals("configure YIN -45.0", rig.engine.pitchLog.last())
+        rig.controller.stopPitch()
+        runCurrent()
+        assertFalse(rig.engine.isRunning)
+        rig.engine.pitchQueue += PitchFrame(1440, 0.03, 440.0, 69.0, 0.97, -20.0)
+        advanceTimeBy(200)
+        assertEquals(2, received.size, "no polling after stop")
+        collector.cancel()
+    }
+
+    @Test
+    fun calibrationStopsPitchDetection() = runTest {
+        val rig = Rig(this)
+        rig.controller.startPitch(com.musicreader.core.model.PitchSettings())
+        runCurrent()
+        val outcome = async { rig.controller.calibrate(CalibrationMode.AUTOMATIC) {} }
+        advanceUntilIdle()
+        assertIs<CalibrationOutcome.Measured>(outcome.await())
+        assertFalse(rig.engine.isRunning, "pitch was stopped, calibration released the engine")
+    }
 }

@@ -190,3 +190,19 @@ Round 2 (APK `MusicReader-stage-07-audio-94.apk` or later):
 | 1 | Automatic calibration twice in a row, then manual, without leaving the screen | OK |
 | 2 | Wired headphones (when available): OboeTester vs MusicReader | OK — within about 5 ms |
 | 3 | Update over round 1 | OK — no crash, no change wanted |
+
+### Stage 8 — pitch detection and tuner
+APK: `MusicReader-stage-08-pitch-<run>.apk` or later (PR [#10](https://github.com/MarcosER816/MusicReader/pull/10), branch `stage-08-pitch`)
+Date tested:
+Audio route: speaker / built-in microphone
+
+How: Library ⋮ → Tuner (allow the microphone). Tap "Measure room noise" once in a quiet room.
+
+| # | Check | Expected | Result |
+|---|---|---|---|
+| 1 | Sing or play a steady A, compare with another tuner app | Same note and octave | |
+| 2 | The six open strings, low E to high E | Each within about 5 cents of the other tuner | |
+| 3 | Sing a melody and watch the trace | Follows quickly, no visible delay | |
+| 4 | Sing softly | No octave jumps, no drop-outs while the note sounds | |
+| 5 | YIN vs MPM | Note which is better on your phone | |
+| 6 | Update over Stage 7 | No data lost, no crash | |

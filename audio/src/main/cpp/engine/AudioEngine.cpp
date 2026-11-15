@@ -17,7 +17,11 @@ private:
 };
 
 AudioEngine::AudioEngine()
-    : callback_(std::make_shared<Callback>(this)), renderer_(kSampleRate), mono_(kMaxBlock), inBuf_(kMaxBlock) {}
+    : callback_(std::make_shared<Callback>(this)),
+      renderer_(kSampleRate),
+      mono_(kMaxBlock),
+      inBuf_(kMaxBlock),
+      pitchIn_(kMaxBlock) {}
 
 AudioEngine::~AudioEngine() { stop(); }
 
@@ -366,6 +370,29 @@ EngineDiagnostics AudioEngine::diagnostics() {
         d.inputFramesPerBurst = input_->getFramesPerBurst();
     }
     return d;
+}
+
+void AudioEngine::pitchConfigure(PitchMethod method, double gateDb) {
+    std::lock_guard<std::mutex> lock(pitchMutex_);
+    pitch_.setMethod(method);
+    pitch_.setGateDb(gateDb);
+}
+
+void AudioEngine::pitchReset() {
+    std::lock_guard<std::mutex> lock(pitchMutex_);
+    pitch_.reset();
+}
+
+size_t AudioEngine::pitchPoll(PitchFrame *out, size_t capacity) {
+    std::lock_guard<std::mutex> lock(pitchMutex_);
+    size_t produced = 0;
+    while (produced < capacity) {
+        int64_t first = -1;
+        const int32_t n = readInput(pitchIn_.data(), static_cast<int32_t>(pitchIn_.size()), &first);
+        if (n <= 0) break;
+        produced += pitch_.process(pitchIn_.data(), static_cast<size_t>(n), first, out + produced, capacity - produced);
+    }
+    return produced;
 }
 
 }  // namespace mr

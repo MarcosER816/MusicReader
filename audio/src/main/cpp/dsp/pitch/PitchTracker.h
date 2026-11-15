@@ -1,0 +1,70 @@
+// Real-time pitch tracking: a 2048-sample window moved by 480 samples (10 ms at 48 kHz),
+// YIN or MPM, a level gate plus the detector's confidence for voiced/unvoiced, then smoothing.
+// Runs on an analysis thread (never in the audio callback); all buffers are allocated once.
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <vector>
+
+#include "PitchDetector.h"
+#include "PitchSmoother.h"
+
+namespace mr {
+
+enum class PitchMethod : int { kYin = 0, kMpm = 1 };
+
+struct PitchFrame {
+    /** Engine frame the pitch belongs to (window center, minus the median's 2-frame delay). */
+    int64_t frame = 0;
+    /** Smoothed frequency, 0 when unvoiced. */
+    double hz = 0.0;
+    /** Smoothed continuous MIDI note (69 = A4), 0 when unvoiced. */
+    double midi = 0.0;
+    /** The detector's confidence for this frame, 0..1. */
+    double confidence = 0.0;
+    /** RMS level of the newest 20 ms in dBFS. */
+    double levelDb = -120.0;
+    bool voiced = false;
+};
+
+class PitchTracker {
+public:
+    static constexpr size_t kWindow = 2048;
+    static constexpr size_t kHop = 480;
+
+    explicit PitchTracker(int sampleRate, PitchRange range = {});
+
+    void setMethod(PitchMethod m);
+    PitchMethod method() const { return method_; }
+    /** Frames quieter than this are unvoiced (from the room-noise measurement). */
+    void setGateDb(double db) { gateDb_ = db; }
+    double gateDb() const { return gateDb_; }
+    void reset();
+
+    /**
+     * Feeds [n] samples whose first one has engine frame [firstFrame]; writes up to [capacity]
+     * finished frames to [out] and returns how many. A gap in the frames restarts the window.
+     */
+    size_t process(const float *x, size_t n, int64_t firstFrame, PitchFrame *out, size_t capacity);
+
+    /** Frequency ↔ continuous MIDI (A4 = 440 Hz = 69). */
+    static double hzToMidi(double hz);
+    static double midiToHz(double midi);
+
+private:
+    PitchFrame analyze(int64_t endFrame);
+
+    int sampleRate_;
+    PitchMethod method_ = PitchMethod::kYin;
+    double gateDb_ = -55.0;
+    YinDetector yin_;
+    MpmDetector mpm_;
+    PitchSmoother smoother_;
+    std::vector<float> window_;
+    size_t filled_ = 0;
+    int64_t expectedFrame_ = -1;
+};
+
+}  // namespace mr

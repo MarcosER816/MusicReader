@@ -107,3 +107,15 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 
 ### Stage 8 — pitch detection (2026-11-15)
 - Stage 7 approved by Mark (two device-test rounds).
+- C++ pitch detection (`audio/src/main/cpp/dsp/pitch`):
+  - own FFT autocorrelation, with YIN (CMND, threshold 0.12, parabolic) and McLeod MPM behind one interface;
+  - window 2048 / hop 480 at 48 kHz, range 60–1200 Hz.
+- Voiced/unvoiced from a room-noise level gate (2 s, median + 10 dB) plus the detector's confidence. Then octave-jump correction and a median of 5.
+- Pitch frames go to Kotlin with audio-clock time, Hz, MIDI decimal, confidence and level. The microphone is open only while pitch runs, and nothing heavy runs in the audio callback.
+- Tuner/debug screen (Library ⋮ → Tuner): note, octave and cents needle, a 5 s trace, the YIN/MPM switch and the noise measurement. Method and gate are saved in settings.
+- Kotlin reference YIN, noise gate, tuner math and trace buffer in `core/dsp`.
+- Tests:
+  - 18 new C++ tests: tones 70–1100 Hz within 5 cents for both methods, vibrato, noise, the strong 2nd harmonic, plucked low E, smoothing, gaps;
+  - 9 JVM tests;
+  - controller and tuner ViewModel tests.
+- Decision D-030.

@@ -300,4 +300,23 @@
     <string name="hz_value">%1$d Hz</string>
     <string name="frames_ms">%1$d · %2$s ms</string>
     <string name="seconds_value">%1$s s</string>
+    <!-- Afinador (etapa 8) -->
+    <string name="tuner_title">Afinador</string>
+    <string name="tuner_summary">Nota, cents y trazo de la altura; compara YIN y MPM</string>
+    <string name="tuner_mic_denied_text">El afinador escucha tu voz o tu guitarra con el micrófono. No se graba ni se guarda nada.</string>
+    <string name="tuner_no_pitch">Sin nota</string>
+    <string name="tuner_reading">%1$s, %2$s cents</string>
+    <string name="cents_value">%1$s cents</string>
+    <string name="hz_decimal">%1$s Hz</string>
+    <string name="db_value">%1$s dB</string>
+    <string name="tuner_confidence">Confianza %1$d %%</string>
+    <string name="tuner_trace">Altura, últimos 5 segundos</string>
+    <string name="tuner_method">Detector</string>
+    <string name="method_yin">YIN</string>
+    <string name="method_mpm">McLeod (MPM)</string>
+    <string name="tuner_gate_default">Umbral de ruido: %1$s dB (por defecto). Mide la sala para que los sonidos suaves no se tomen por notas.</string>
+    <string name="tuner_gate_measured">Umbral de ruido: %1$s dB (medido en esta sala).</string>
+    <string name="tuner_measure_noise">Medir el ruido de la sala (2 s, en silencio)</string>
+    <string name="tuner_measuring_noise">Midiendo… %1$d %%</string>
+    <string name="tuner_hint">Canta o toca una nota a la vez. La nota aparece cuando el sonido supera el umbral de ruido y tiene una altura clara.</string>
 </resources>

@@ -412,3 +412,34 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
   - Kotlin tests use a fake engine for the controller and a fake `AudioService` for the ViewModels.
 - **Microphone frame numbers per session** (round 2, Mark's device test): the input ring's counts grow for the engine's whole life. Each stream session stores the frame of its first sample and the ring's write count at that moment (`InputTimeline`), so a second calibration in the same app run is aligned too.
 - **Count-in:** not part of this stage. It comes with lyric capture (Stage 9), on the same metronome.
+
+## D-030 — Real-time pitch detection and the tuner (Stage 8, 2026-11-15)
+- **Detectors** (own C++ code, no GPL; `audio/src/main/cpp/dsp/pitch`), both behind `PitchDetector`:
+  - Window 2048 samples at 48 kHz (43 ms), hop 480 (10 ms), range 60–1200 Hz.
+  - Autocorrelation through an own radix-2 FFT (4096, zero-padded). The difference d(τ) = Σx²(head) + Σx²(tail) − 2r(τ) uses prefix sums.
+  - **YIN:** cumulative mean normalized difference d′, absolute threshold 0.12, first dip below it followed to its minimum (otherwise the global minimum with low confidence). Confidence = 1 − d′(τ); voiced from 0.85.
+    - If d′(τ) > 0.05 and the dip at 2τ is less than half as deep, the full period 2τ is taken (weak fundamental, strong 2nd harmonic).
+    - The minimum is refined by parabolic interpolation.
+  - **McLeod (MPM):** normalized square difference n(τ). The key maxima (one per positive lobe) are found, and the first one ≥ 0.9 × the highest is taken, refined by parabolic interpolation. Confidence = the peak height; voiced from 0.80.
+- **Voiced/unvoiced:** level (RMS of the newest 20 ms, dBFS) ≥ noise gate **and** confidence ≥ the detector's threshold.
+  - The gate is measured from 2 s (200 frames) of room noise: median + 10 dB, kept between −70 and −25 dBFS.
+  - The default is −55 dBFS. The gate is saved in settings (`AppSettings.pitch`) together with the chosen method.
+- **Smoothing:**
+  - **Octave correction first:** a frame about ±12 semitones (within 1) from the last smoothed note (if that is younger than 100 ms) is folded back. After 3 folds in a row the leap is real: the recent frames move to the new octave and the output follows.
+  - **Then the median of the last 5 frames.** A frame is voiced when at least 3 of the last 5 were, so one dropout is bridged and one stray frame is ignored.
+- **Timing:** each frame carries the engine frame of its window center minus the median's 2-frame delay (20 ms), so its time on the audio clock is when that pitch was sung (on the input's frame counter; subtract the route latency to compare with what was heard — Stage 11).
+- **Data path:**
+  - The microphone opens only while pitch runs (a new `PITCH` user in `AudioController`, like calibration; calibration stops pitch).
+  - Kotlin polls the native tracker every 20 ms on the analysis dispatcher. The tracker drains the input ring and analyzes all full hops, outside the audio callback, with buffers allocated once.
+  - Frames go out as `AudioService.pitch: SharedFlow<PitchFrame>` (frame, seconds, Hz, MIDI decimal, confidence, level).
+- **Tuner/debug screen** (Library ⋮ → Tuner, and Settings → Audio → Tuner):
+  - note name and octave (sharps/flats setting), cents and a ±50 cent needle (green within ±5);
+  - Hz, confidence, level;
+  - a trace of the last 5 s with a line per semitone, scaling to at least an octave around the voice;
+  - the YIN/MPM switch and "Measure room noise".
+
+  The microphone is asked for when the screen opens, with the same refusal screen as calibration. Detection restarts every time the screen comes back from the background. The trace uses a fixed ring buffer and one reused Path (no allocation per drawn frame).
+- **Kotlin reference:** `core/dsp` `Yin` is the same algorithm with a direct difference sum (no FFT), used in JVM tests and as the readable description. `NoiseGate`, `TunerReading` and `PitchTrace` are pure and tested.
+- **Tests (synthetic):**
+  - C++: pure and harmonic tones 70–1100 Hz within 5 cents (YIN and MPM); a strong 2nd harmonic (3× the fundamental) without an octave error; noise unvoiced; quiet tones below the gate unvoiced; vibrato ±50 cents at 5.5 Hz followed within 15 cents; a plucked low E within 5 cents; frame timing; gaps; smoothing and octave folding.
+  - JVM: the same tone, vibrato, noise, strong-2nd-harmonic and low-E cases for the Kotlin YIN.

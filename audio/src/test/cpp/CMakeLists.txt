@@ -17,6 +17,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../main/cpp/dsp dsp)
 add_executable(dsp_tests
         RingBufferTest.cpp
         InputTimelineTest.cpp
+        PitchTest.cpp
         ClockTest.cpp
         BeatGridTest.cpp
         RendererTest.cpp

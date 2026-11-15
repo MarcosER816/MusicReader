@@ -61,6 +61,7 @@ fun LibraryScreen(
     onOpenSong: (songId: String, openSettings: Boolean) -> Unit,
     onAbout: () -> Unit,
     onSettings: () -> Unit,
+    onTuner: () -> Unit,
     viewModel: LibraryViewModel = viewModel(factory = LibraryViewModel.Factory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -99,6 +100,10 @@ fun LibraryScreen(
                     Box {
                         IconButton(onClick = { menuOpen = true }) { AppIcon(AppIcons.More, stringResource(R.string.more_options)) }
                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.tuner_title)) },
+                                onClick = { menuOpen = false; onTuner() },
+                            )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.app_settings)) },
                                 onClick = { menuOpen = false; onSettings() },

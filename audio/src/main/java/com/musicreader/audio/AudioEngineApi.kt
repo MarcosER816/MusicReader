@@ -119,6 +119,45 @@ data class EngineDiagnostics(
     }
 }
 
+/**
+ * One pitch analysis frame (10 ms), from the C++ PitchTracker. [frame] is the engine frame the
+ * pitch belongs to (audio clock), already corrected for the window and the smoothing delay.
+ */
+data class PitchFrame(
+    val frame: Long,
+    /** Seconds on the audio clock ([frame] / sample rate). */
+    val seconds: Double,
+    /** Smoothed frequency; null when unvoiced. */
+    val hz: Double?,
+    /** Smoothed continuous MIDI note (69.0 = A4); null when unvoiced. */
+    val midi: Double?,
+    /** The detector's confidence, 0..1 (also when unvoiced). */
+    val confidence: Double,
+    /** RMS level of the newest 20 ms, dBFS. */
+    val levelDb: Double,
+) {
+    val voiced: Boolean get() = midi != null
+
+    companion object {
+        const val VALUES = 6
+
+        /** Decodes frame [i] of the poll array (frame, hz, midi, confidence, levelDb, voiced). */
+        fun fromArray(a: DoubleArray, i: Int, sampleRate: Int): PitchFrame {
+            val o = i * VALUES
+            val voiced = a[o + 5] != 0.0
+            val frame = a[o].toLong()
+            return PitchFrame(
+                frame = frame,
+                seconds = frame.toDouble() / sampleRate,
+                hz = if (voiced) a[o + 1] else null,
+                midi = if (voiced) a[o + 2] else null,
+                confidence = a[o + 3],
+                levelDb = a[o + 4],
+            )
+        }
+    }
+}
+
 /** A block of microphone samples; sample 0 has engine frame [firstFrame]. */
 data class InputChunk(val count: Int, val firstFrame: Long)
 
@@ -155,4 +194,10 @@ interface AudioEngineApi {
 
     fun analyzeChirps(recording: FloatArray, length: Int, startFrame: Long, chirpFrames: LongArray): LatencyMeasurement
     fun analyzeTaps(recording: FloatArray, length: Int, startFrame: Long, clickFrames: LongArray): LatencyMeasurement
+
+    fun pitchConfigure(method: com.musicreader.core.model.PitchMethod, gateDb: Double)
+    fun pitchReset()
+
+    /** Analyzes the microphone samples waiting; returns the frames (at most 64). */
+    fun pitchPoll(): List<PitchFrame>
 }
