@@ -187,6 +187,6 @@ Round 2 (APK `MusicReader-stage-07-audio-94.apk` or later):
 
 | # | Check | Result |
 |---|---|---|
-| 1 | Automatic calibration twice in a row, then manual, without leaving the screen | |
-| 2 | Wired headphones (when available): OboeTester vs MusicReader | |
-| 3 | Update over round 1 | |
+| 1 | Automatic calibration twice in a row, then manual, without leaving the screen | OK |
+| 2 | Wired headphones (when available): OboeTester vs MusicReader | OK — within about 5 ms |
+| 3 | Update over round 1 | OK — no crash, no change wanted |
