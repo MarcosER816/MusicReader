@@ -16,6 +16,8 @@ import com.musicreader.core.data.DataStoreSettingsRepository
 import com.musicreader.core.data.FileSongRepository
 import com.musicreader.core.data.SettingsRepository
 import com.musicreader.core.data.SongRepository
+import com.musicreader.core.data.FileTakeRepository
+import com.musicreader.core.data.TakeRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -34,6 +36,9 @@ class AppContainer(application: Application) {
         songsDir = File(application.filesDir, "songs"),
         onUnreadableFile = { file, e -> Log.w("MusicReader", "Cannot read song file $file", e) },
     )
+
+    /** Accepted lyric-capture takes, last 10 per song (D-031). */
+    val takeRepository: TakeRepository = FileTakeRepository(File(application.filesDir, "songs"))
 
     val settingsRepository: SettingsRepository = DataStoreSettingsRepository(application.settingsDataStore)
 

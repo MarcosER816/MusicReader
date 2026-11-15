@@ -13,6 +13,10 @@ import com.musicreader.app.ui.about.AboutScreen
 import com.musicreader.app.ui.audio.CalibrationScreen
 import com.musicreader.app.ui.audio.DiagnosticsScreen
 import com.musicreader.app.ui.audio.MetronomeViewModel
+import com.musicreader.app.ui.capture.CaptureScreen
+import com.musicreader.app.ui.capture.CaptureViewModel
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.musicreader.app.ui.audio.TunerScreen
 import com.musicreader.app.ui.chords.ChordEditorScreen
 import com.musicreader.app.ui.library.LibraryScreen
@@ -66,6 +70,10 @@ data class ChordsRoute(val sectionId: String)
 @Serializable
 data class TabRoute(val sectionId: String)
 
+/** Lyric capture of one section (D-031). */
+@Serializable
+data class CaptureRoute(val sectionId: String)
+
 @Composable
 fun MusicReaderNavHost(navController: NavHostController = rememberNavController()) {
     NavHost(navController = navController, startDestination = LibraryRoute) {
@@ -113,6 +121,7 @@ fun MusicReaderNavHost(navController: NavHostController = rememberNavController(
                     onOpenViewer = { navController.navigate(ViewerRoute) },
                     onOpenChords = { sectionId -> navController.navigate(ChordsRoute(sectionId)) },
                     onOpenTab = { sectionId -> navController.navigate(TabRoute(sectionId)) },
+                    onOpenSing = { sectionId -> navController.navigate(CaptureRoute(sectionId)) },
                 )
             }
             composable<SongSettingsRoute> { entry ->
@@ -149,11 +158,22 @@ fun MusicReaderNavHost(navController: NavHostController = rememberNavController(
             composable<LyricsRoute> { entry ->
                 val songEntry = remember(entry) { navController.getBackStackEntry<SongRoute>() }
                 val viewModel: SongViewModel = viewModel(songEntry, factory = SongViewModel.Factory)
+                val sectionId = entry.toRoute<LyricsRoute>().sectionId
                 LyricsScreen(
                     viewModel = viewModel,
-                    sectionId = entry.toRoute<LyricsRoute>().sectionId,
+                    sectionId = sectionId,
                     onBack = { navController.popBackStack() },
+                    onSing = { navController.navigate(CaptureRoute(sectionId)) },
                 )
+            }
+            composable<CaptureRoute> { entry ->
+                val songEntry = remember(entry) { navController.getBackStackEntry<SongRoute>() }
+                val songVm: SongViewModel = viewModel(songEntry, factory = SongViewModel.Factory)
+                val songId = songEntry.toRoute<SongRoute>().songId
+                val sectionId = entry.toRoute<CaptureRoute>().sectionId
+                val capture: CaptureViewModel = viewModel(entry, factory = CaptureViewModel.factory(songId, sectionId, songVm))
+                val settings by songVm.settings.collectAsStateWithLifecycle()
+                CaptureScreen(capture, settings.accidentals, onBack = { navController.popBackStack() })
             }
         }
     }

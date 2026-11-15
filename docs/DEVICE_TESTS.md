@@ -232,3 +232,19 @@ Round 4 (APK `MusicReader-stage-08-pitch-116.apk` or later):
 | 1 | Sing a melody with leaps, with breaths between some notes: any drop? If one remains, describe it (how far, at the start or end of a note) | OK — no drop |
 | 2 | Voice still followed quickly; strings still ring | OK |
 | 3 | Update over round 3 | OK — no crash, no change |
+
+### Stage 9 — lyric capture
+APK: `MusicReader-stage-09-capture-<run>.apk` or later (PR [#11](https://github.com/MarcosER816/MusicReader/pull/11), branch `stage-09-capture`)
+Date tested:
+Audio route:
+
+How: open a song with lyrics → section ⋮ → "Sing timing" (or Lyrics → "Sing"). Select words, Sing, count-in, sing, Review, Accept.
+
+| # | Check | Expected | Result |
+|---|---|---|---|
+| 1 | Sing one line three times | Each take replaces only that line; other lines unchanged | |
+| 2 | Share of syllables on the right word and the right note | Most | |
+| 3 | Count-in | Clear; you start on time | |
+| 4 | Tap along when the automatic result is wrong | Useful | |
+| 5 | Two written syllables sung as one ("de amor") | Say what should happen | |
+| 6 | Update over Stage 8; force-stop and reopen | Timing and notes still there; no crash | |

@@ -106,6 +106,14 @@ public:
     /** Analyzes all microphone samples waiting; writes up to [capacity] frames. */
     size_t pitchPoll(PitchFrame *out, size_t capacity);
 
+    /**
+     * Keeps the microphone samples analyzed by pitchPoll (a take, D-031), up to [maxSeconds].
+     * Runs on the analysis side, never in the audio callback.
+     */
+    void recordStart(double maxSeconds);
+    /** Stops recording; returns the samples and puts the engine frame of the first in [firstFrame]. */
+    std::vector<float> recordStop(int64_t *firstFrame);
+
     // Called by the Oboe callbacks.
     oboe::DataCallbackResult onAudioReady(oboe::AudioStream *stream, void *audioData, int32_t numFrames);
     void onErrorAfterClose(oboe::AudioStream *stream, oboe::Result error);
@@ -154,6 +162,10 @@ private:
     std::mutex pitchMutex_;  // pitch analysis only
     PitchTracker pitch_{kSampleRate};
     std::vector<float> pitchIn_;
+    bool recording_ = false;
+    size_t recordMax_ = 0;
+    int64_t recordFirst_ = -1;
+    std::vector<float> recorded_;
 
     // Clock: timestamps of the presented frame (read on control threads) and, until those
     // exist, the written frame at each callback (published by the callback).

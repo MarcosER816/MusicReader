@@ -458,3 +458,40 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
 - **Tests (synthetic):**
   - C++: pure and harmonic tones 70–1100 Hz within 5 cents (YIN and MPM); a strong 2nd harmonic (3× the fundamental) without an octave error; noise unvoiced; quiet tones below the gate unvoiced; vibrato ±50 cents at 5.5 Hz followed within 15 cents; a plucked low E within 5 cents; frame timing; gaps; smoothing and octave folding.
   - JVM: the same tone, vibrato, noise, strong-2nd-harmonic and low-E cases for the Kotlin YIN.
+
+## D-031 — Lyric capture by singing (Stage 9, 2026-11-15)
+- **Where:** Lyrics → "Sing", or a section's ⋮ → "Sing timing". The Sing screen shows one voice (main or second) as words split into syllables. Under each syllable is a mark: a thin line = timed, a thick line = timed with a note. The Lyrics syllable view shows the same marks.
+- **Selection:** tap the first and the last word, or long-press and drag over the words. A third tap starts a new selection. Sung words can be selected and sung again any number of times.
+- **Start bar:** the bar of the selection's first syllable if it is timed. Otherwise a dialog asks for the bar, suggesting the bar after the last timed syllable before it. It can be changed before singing.
+- **The take:**
+  - "Sing" (microphone permission asked when first needed) starts pitch detection (D-030) and keeps the raw microphone samples. The recording is taken on the analysis side, never in the audio callback, up to 120 s.
+  - The metronome starts on the audio clock: one bar of count-in, shown as beat lights, then it keeps clicking while the words are sung.
+  - The take ends with Stop, or by itself 2.5 s after the voice stops.
+- **Timing:**
+  - The metronome's beat grid gives a `BeatClock`: its beat 0 plus one bar is the start of the chosen section bar.
+  - Pitch frames are moved back by the saved round-trip latency of the current route (0 with a hint if it is not calibrated).
+  - Taps are taken from the presented (heard) frame, so they need no correction.
+  - Start beats and durations are decimals with no snapping. A start is kept inside the section.
+- **Segmentation (`NoteSegmenter`, pure):** voiced runs of 10 ms frames.
+  - A pitch dropout up to 30 ms at steady level is bridged; a real silence (a stop consonant) is a boundary.
+  - Splits: at a level dip with a 6 dB rise on both sides within 80 ms, and at a stable pitch change over 0.7 semitone. The change is measured between medians of the 150 ms before and after, so vibrato does not split; the cut goes where the pitch crosses to the new note's side.
+  - Pieces under 60 ms (metronome clicks, blips) are dropped.
+  - A note's pitch is the median of its middle 60 % (the stable part).
+- **Alignment (`SyllableAligner`, dynamic programming):** N syllables to M notes, in order.
+  - Moves: 1 syllable on 1 note; 1 syllable over 2..k notes (melisma); 2..k syllables in 1 note (sung together, like "de amor"); skip a stray note.
+  - Costs: (log of sung / expected duration)², with the expected durations from the syllable lengths. Penalties: 0.8 per extra note, 1.0 per extra syllable, 1.5 × (1 + note length / mean) to skip a note.
+  - Every syllable gets a place whenever at least one note was sung, for N = M, N > M and N < M.
+  - Syllables sharing a note split its time by their lengths.
+- **Result per syllable (D-010 fields):**
+  - `startBeat`, `durationBeats`; silences between syllables stay gaps;
+  - `pitchStartMidi` = the median of the first note's stable part, `pitchEndMidi` = that of the last note (the same value for a one-note syllable; this is the "pitchMidi" of the Stage 9 task, which D-010 replaced with start and end notes);
+  - `pitchCurve` from the take's frames, `t` 0..1, and `takeId`.
+- **Tap along:** a switch on the Sing screen. While singing, a big Tap area reacts on finger-down. Taps give the starts; a syllable ends at the next tap or where the voice stops (60 ms gap). Its notes come from the notes found in that span. Syllables without a tap keep their old values (the review says how many).
+- **Review:**
+  - a beat time line with the pitch trace and one bar per syllable at its notes, with the syllable and note names below;
+  - tap a syllable, then move its start or end earlier or later in 0.05-beat steps. A boundary shared with the neighbour moves for both, and the notes are measured again from the take;
+  - "Hear the take" plays the recording (AudioTrack);
+  - Accept / Sing again / Cancel.
+- **Last take wins (`CaptureOps.apply`):** only the selected syllables' timing, notes, curve and `takeId` are replaced; nothing else in the song changes.
+- **Takes and undo:** each accepted take is saved as `songs/<id>/takes/<takeId>.wav` plus a `TakeInfo` with the replaced syllables' previous values. The last 10 per song are kept; older recordings are deleted. "Undo last take" restores the previous timing and notes (the text stays) and marks the take undone; it works after a restart.
+- **Rows in the viewer and editors:** a lyric line whose first syllable is timed starts its row at that syllable's bar. Untimed lines between timed ones share the space equally. Row 0 starts at beat 0. Untimed sections keep the even split.

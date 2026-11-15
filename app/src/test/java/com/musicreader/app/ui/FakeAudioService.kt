@@ -47,6 +47,24 @@ class FakeAudioService : AudioService {
     }
 
     override fun metronomeBeat() = beat
+    var grid: com.musicreader.audio.BeatGridInfo? = null
+    override fun metronomeGrid() = grid.takeIf { metronome.value != null }
+    var recorded = com.musicreader.audio.TakeAudio(FloatArray(480), 0, 48000)
+    var recording = false
+    override fun startTakeRecording(maxSeconds: Double) {
+        calls += "record"
+        recording = true
+    }
+
+    override suspend fun stopTakeRecording(): com.musicreader.audio.TakeAudio {
+        if (recording) calls += "record stop"
+        recording = false
+        return recorded
+    }
+
+    var frameNow = 0.0
+    override fun clockFrame() = frameNow
+    override val sampleRate = 48000
     override fun startDiagnostics() {
         calls += "diagnostics on"
         state.value = state.value.copy(running = true)

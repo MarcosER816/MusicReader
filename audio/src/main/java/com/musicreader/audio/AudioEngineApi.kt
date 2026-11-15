@@ -209,4 +209,13 @@ interface AudioEngineApi {
 
     /** Analyzes the microphone samples waiting; returns the frames (at most 64). */
     fun pitchPoll(): List<PitchFrame>
+
+    /** Keeps the analyzed microphone samples (a take) until [recordStop], at most [maxSeconds]. */
+    fun recordStart(maxSeconds: Double)
+    fun recordStop(): TakeAudio
+}
+
+/** A recorded take: mono samples at the engine rate; sample 0 has engine frame [firstFrame]. */
+class TakeAudio(val samples: FloatArray, val firstFrame: Long, val sampleRate: Int) {
+    val seconds: Double get() = samples.size.toDouble() / sampleRate
 }

@@ -64,9 +64,19 @@ object NativeAudio : AudioEngineApi {
         List(n) { PitchFrame.fromArray(pitchBuffer, it, rate) }
     }
 
+    override fun recordStart(maxSeconds: Double) = native { nativeRecordStart(maxSeconds) }
+
+    override fun recordStop(): TakeAudio = native {
+        val first = LongArray(1)
+        val samples = nativeRecordStop(first)
+        TakeAudio(samples, first[0], nativeSampleRate())
+    }
+
     /** 0 is oboe::Result::OK. */
     private fun resultText(code: Int): String? = if (code == 0) null else nativeResultText(code)
 
+    private external fun nativeRecordStart(maxSeconds: Double)
+    private external fun nativeRecordStop(firstFrame: LongArray): FloatArray
     private external fun nativePitchConfigure(method: Int, gateDb: Double)
     private external fun nativePitchReset()
     private external fun nativePitchPoll(out: DoubleArray): Int

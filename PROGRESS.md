@@ -136,3 +136,25 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 
 ### Stage 9 — lyric capture (2026-11-15)
 - Stage 8 approved by Mark (four device-test rounds).
+- Sing screen per section:
+  - voice switch, words with marks (timed / timed with a note), select by tapping first and last word or dragging;
+  - start bar from the first timed syllable, or asked;
+  - tap-along switch, undo of the last take.
+- The take: microphone with pitch and a raw recording, then a one-bar count-in on the audio clock, with the metronome continuing. It stops with Stop or 2.5 s of silence. Pitch frames are corrected by the route latency and converted with the metronome's beat grid.
+- Pure logic:
+  - `NoteSegmenter` (voiced runs, level dips, stable pitch steps over 0.7 semitone);
+  - `SyllableAligner` (dynamic programming: 1:1, melisma, shared note, skipped note);
+  - `TapAlong`;
+  - `CaptureOps` (selection, start bar, last take wins, restore, results in beats);
+  - `BeatClock`.
+- Review: beat time line with notes and the pitch trace, nudge start or end, hear the take, Accept / Sing again / Cancel.
+- Takes stored in `songs/<id>/takes/` (WAV + TakeInfo, last 10) with undo values; undo works after a restart. Viewer rows follow sung timing.
+- Tests:
+  - segmentation on synthetic sung sequences with known boundaries;
+  - alignment N = M, N > M, N < M, a stray note, and 200 random cases always complete and ordered;
+  - tap-along;
+  - last take wins only in the range, restore;
+  - a verse line by line, re-sung in part, through JSON;
+  - beat clock, rows, take store (pruning, WAV, undo flag);
+  - capture ViewModel flows (sung, tapped, no microphone, second voice).
+- Decision D-031.

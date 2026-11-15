@@ -14,6 +14,9 @@ import com.musicreader.core.lyrics.LyricsOps
 import com.musicreader.core.lyrics.WordSyllabifier
 import com.musicreader.core.data.ChordDictionary
 import com.musicreader.core.data.SettingsRepository
+import com.musicreader.core.model.CaptureOps
+import com.musicreader.core.model.SyllableResult
+import com.musicreader.core.model.Syllable
 import com.musicreader.core.model.AccidentalPreference
 import com.musicreader.core.model.AppSettings
 import com.musicreader.core.model.BeatTime
@@ -94,7 +97,23 @@ data class SongEditorState(
 )
 
 /** One word in the syllable view: its syllables, and whether the user split it by hand. */
-data class WordUi(val id: String, val syllables: List<String>, val manual: Boolean)
+/** What is known of a syllable (shown as a mark under it, D-031). */
+enum class SyllableMark { NONE, TIMED, NOTE }
+
+data class WordUi(
+    val id: String,
+    val syllables: List<String>,
+    val manual: Boolean,
+    /** One mark per syllable: timed by a take, and with a note. */
+    val marks: List<SyllableMark> = syllables.map { SyllableMark.NONE },
+)
+
+/** The mark of one syllable. */
+fun Syllable.mark(): SyllableMark = when {
+    pitchStartMidi != null && startBeat != null -> SyllableMark.NOTE
+    startBeat != null -> SyllableMark.TIMED
+    else -> SyllableMark.NONE
+}
 
 /**
  * One main lyric line with its second-voice line (D-022). [secondText] is empty and
@@ -331,6 +350,16 @@ class SongViewModel(
         LyricsOps.updateWord(content, wordId) { LyricsOps.resetWord(it, WordSyllabifier.forLanguage(s.language), ids) }
     }
 
+    // --- Lyric capture (D-031) -------------------------------------------------------------------
+
+    /** Last take wins: sets the timing and notes of exactly these syllables. */
+    fun applyTake(sectionId: String, results: List<SyllableResult>, takeId: String) =
+        editContent(sectionId) { _, content -> CaptureOps.apply(content, results, takeId) }
+
+    /** Undo a take: the syllables get back the values they had before it. */
+    fun restoreTake(sectionId: String, previous: List<Syllable>) =
+        editContent(sectionId) { _, content -> CaptureOps.restore(content, previous) }
+
     private fun editContent(sectionId: String, change: (Song, SectionContent) -> SectionContent) = edit { s, now ->
         val section = s.sections.firstOrNull { it.id == sectionId } ?: return@edit s
         val content = s.contentOf(section)
@@ -342,7 +371,9 @@ class SongViewModel(
     private fun lyricsUiState(s: Song, sectionId: String): LyricsUiState? {
         val section = s.sections.firstOrNull { it.id == sectionId } ?: return null
         val content = LyricsOps.normalized(s.contentOf(section))
-        fun words(line: LyricLine?) = line?.words.orEmpty().map { w -> WordUi(w.id, w.syllables.map { it.text }, w.syllableOverride) }
+        fun words(line: LyricLine?) = line?.words.orEmpty().map { w ->
+            WordUi(w.id, w.syllables.map { it.text }, w.syllableOverride, w.syllables.map { it.mark() })
+        }
         val lines = content.lyricLines.filter { it.voice == LyricLine.MAIN_VOICE }.map { main ->
             val second = LyricsOps.secondLineOf(content, main.id)
             LyricPairUi(

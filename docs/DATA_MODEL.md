@@ -89,6 +89,22 @@ Each main line has at most one second-voice line. Each voice is captured in its 
 
 The curve is stored at most one point per 10 ms of the take. Because `t` is relative, changing `durationBeats` stretches the curve. When the user moves the initial or final note by Δstart or Δend semitones, every point is shifted by `(1 - t) * Δstart + t * Δend`, so the curve always starts at `pitchStartMidi` and ends at `pitchEndMidi`. The practice line and the singing judge follow this curve; with an empty curve they use a straight glide from the initial to the final note.
 
+## TakeInfo (lyric capture, D-031)
+
+| Field | Type | Notes |
+|---|---|---|
+| id | String | also the `takeId` of the syllables it set |
+| createdAt | Long | epoch ms |
+| contentId | String | the section content that was sung |
+| voice | Int | 0 main, 1 second voice |
+| syllableIds | List&lt;String&gt; | exactly the syllables it replaced |
+| previous | List&lt;Syllable&gt; | those syllables before the take (for undo) |
+| method | `SUNG` \| `TAPPED` | |
+| tempoBpm | Double | |
+| latencyMs | Double | round trip removed from the pitch frames |
+| audioFile | String | WAV in the takes folder |
+| undone | Boolean | |
+
 ## ChordEvent
 
 | Field | Type | Notes |
@@ -157,7 +173,8 @@ filesDir/
     <id>.json          # written atomically: temp file + rename
     <id>/
       rec/*.wav        # practice recordings (WAV inside the app)
-      takes/           # raw sung takes for lyric capture
+      takes/           # accepted lyric-capture takes (D-031): <takeId>.wav (16-bit mono 48 kHz)
+        takes.json     #   and their TakeInfo list, newest first, at most 10 per song
 ```
 
 Exported mix (D-014): the official recordings mixed in sync, **without** the metronome click, encoded as M4A (AAC) and saved to the public Downloads folder through MediaStore.

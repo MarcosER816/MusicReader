@@ -45,6 +45,9 @@ interface MetronomeControl {
 
     /** The beat being heard now (audio clock); null when off. */
     fun metronomeBeat(): MetronomeBeat?
+
+    /** The running metronome's beat grid in engine frames; null when off. */
+    fun metronomeGrid(): BeatGridInfo?
 }
 
 enum class CalibrationMode { AUTOMATIC, MANUAL }
@@ -83,6 +86,18 @@ interface AudioService : MetronomeControl {
     /** Switches YIN/MPM or the noise gate while running. */
     fun updatePitch(settings: PitchSettings)
     fun stopPitch()
+
+    /** While pitch runs: also keep the raw microphone samples (a take, D-031). */
+    fun startTakeRecording(maxSeconds: Double)
+
+    /** Stops keeping samples and returns them (empty if nothing was recorded). */
+    suspend fun stopTakeRecording(): TakeAudio
+
+    /** The audio clock as an engine frame (the frame being heard now); 0 while stopped. */
+    fun clockFrame(): Double
+
+    /** Engine frames per second. */
+    val sampleRate: Int
 
     /**
      * Plays chirps (automatic) or clicks to play along with (manual), records the microphone
@@ -170,6 +185,8 @@ class AudioController(
         scope.launch { mutex.withLock { stopMetronomeLocked() } }
     }
 
+    override fun metronomeGrid(): BeatGridInfo? = if (_metronome.value == null) null else engine.metronomeGrid()
+
     override fun metronomeBeat(): MetronomeBeat? {
         if (_metronome.value == null) return null
         val grid = engine.metronomeGrid() ?: return null
@@ -205,6 +222,18 @@ class AudioController(
             mutex.withLock { if (User.PITCH in users) engine.pitchConfigure(settings.method, settings.noiseGateDb) }
         }
     }
+
+    override fun startTakeRecording(maxSeconds: Double) {
+        scope.launch { mutex.withLock { if (User.PITCH in users) engine.recordStart(maxSeconds) } }
+    }
+
+    override suspend fun stopTakeRecording(): TakeAudio = mutex.withLock {
+        if (_state.value.running) engine.recordStop() else TakeAudio(FloatArray(0), -1, ENGINE_RATE)
+    }
+
+    override fun clockFrame(): Double = if (_state.value.running) engine.presentedFrame() else 0.0
+
+    override val sampleRate: Int = ENGINE_RATE
 
     override fun stopPitch() {
         scope.launch { mutex.withLock { stopPitchLocked() } }
@@ -387,6 +416,8 @@ class AudioController(
         const val ROUTE_SETTLE_MS = 300L
         const val WARMUP_MS = 500L
         const val POLL_MS = 20L
+        /** The engine always runs at 48 kHz (D-029). */
+        const val ENGINE_RATE = 48000
         /** Pitch frames are collected every 20 ms (two 10 ms frames each time). */
         const val PITCH_POLL_MS = 20L
         const val NO_INPUT_TIMEOUT_MS = 2000L
