@@ -445,6 +445,14 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
   - **Fading note:** once the held note is 3 dB under its peak, octave jumps are always folded back. If the free choice lands on a sub- or overtone, the detector re-measures at the held note's period (±3 %, `estimateNear`) and the note continues there if it is still periodic. A new pluck is louder, so the strict rules decide again.
   - **Display hold:** the tuner keeps the last note on screen, dimmed and marked "last note", for 0.6 s after it stopped.
   - **Tests:** a realistic fading string (inharmonic, beating, echoes, noise) keeps the right note until it is a few dB above the noise and never shows another octave. A held note survives noise that could not start a note.
+- **Round 3 (Mark: sometimes jumps, "a sudden drop and a sudden spike"; Diagnostics showed the microphone "closed"):**
+  - **Cause 1:** the fading-note rule kept one loudness peak for a whole legato phrase. A softer octave leap up was folded back without limit (the drop), and let go later (the spike).
+    - Now the peak belongs to one note and resets when the shown note changes; "fading" means 6 dB under that peak.
+    - Octave folds are always limited (5 frames = 50 ms).
+    - While a note fades, an octave-off reading is replaced by the held period only if that period is clearly more periodic (by 0.03), which is true for a fading string and not for a sung leap.
+  - **Cause 2:** the Unprocessed microphone has no high-pass, so DC offset and rumble reached the detector. The tracker now filters its input with a 2nd-order Butterworth high-pass at 45 Hz (the level is measured after it).
+  - **Microphone mode:** the tuner shows it while listening, and Diagnostics shows the last mode used (the microphone is only open in the tuner and calibration).
+  - **Tests:** a softer legato octave leap is followed within 120 ms; DC offset + 12 Hz rumble do not disturb; a sung phrase with steps, octave leaps, vibrato, dynamics, breath noise, gaps, DC and rumble has no frame off by more than a semitone (both methods).
 - **Kotlin reference:** `core/dsp` `Yin` is the same algorithm with a direct difference sum (no FFT), used in JVM tests and as the readable description. `NoiseGate`, `TunerReading` and `PitchTrace` are pure and tested.
 - **Tests (synthetic):**
   - C++: pure and harmonic tones 70–1100 Hz within 5 cents (YIN and MPM); a strong 2nd harmonic (3× the fundamental) without an octave error; noise unvoiced; quiet tones below the gate unvoiced; vibrato ±50 cents at 5.5 Hz followed within 15 cents; a plucked low E within 5 cents; frame timing; gaps; smoothing and octave folding.

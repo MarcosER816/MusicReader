@@ -125,3 +125,9 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
   - a fading note keeps its octave and re-measures at its own period;
   - the last note is held on screen for 0.6 s;
   - 3 new C++ tests.
+- Round 3 (strings OK; voice sometimes jumped, one drop and spike; Diagnostics said the microphone was "closed"):
+  - the fading-note peak is now per note, and octave folds are always limited;
+  - a fading string is told from a sung leap by periodicity;
+  - a 45 Hz high-pass on the tracker input;
+  - the microphone mode is shown on the tuner, and the last one in Diagnostics;
+  - 3 new C++ tests (softer octave leap, DC and rumble, sung phrase).

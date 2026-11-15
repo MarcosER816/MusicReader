@@ -14,16 +14,16 @@ void PitchSmoother::reset() {
     folds_ = 0;
 }
 
-PitchSmoother::Output PitchSmoother::push(bool voiced, double midi, bool decaying) {
+PitchSmoother::Output PitchSmoother::push(bool voiced, double midi) {
     Output out;
     // Octave correction against the last smoothed note (if it is recent: 100 ms).
     if (voiced && hasReference_ && sinceReference_ <= 10) {
         const double d = midi - reference_;
         const double k = std::round(d / 12.0);
         if ((k == 1.0 || k == -1.0) && std::fabs(d - 12.0 * k) < 1.0) {
-            if (decaying || folds_ < kMaxFolds) {
+            if (folds_ < kMaxFolds) {
                 midi -= 12.0 * k;
-                if (!decaying) ++folds_;
+                ++folds_;
                 out.folded = true;
             } else {
                 // It stayed there: a real leap. The folded frames were the new note too.

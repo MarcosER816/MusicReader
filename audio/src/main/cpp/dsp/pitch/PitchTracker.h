@@ -38,7 +38,11 @@ public:
     /** …and this much less confident than a new note must be (hysteresis). */
     static constexpr double kHoldConfidence = 0.2;
     /** A held note this far under its peak is fading. */
-    static constexpr double kDecayDb = 3.0;
+    static constexpr double kDecayDb = 6.0;
+    /** How much more periodic the held period must be to overrule an octave-off reading. */
+    static constexpr double kOctaveMargin = 0.03;
+    /** The input high-pass: removes DC offset and rumble below the lowest note. */
+    static constexpr double kHighPassHz = 45.0;
 
     explicit PitchTracker(int sampleRate, PitchRange range = {});
 
@@ -73,7 +77,12 @@ private:
     int64_t expectedFrame_ = -1;
     bool holding_ = false;
     double heldMidi_ = 0.0;
+    /** The note the peak belongs to: a new note (another pitch) starts a new peak. */
+    double noteMidi_ = 0.0;
     double notePeakDb_ = -120.0;
+    // 2nd-order Butterworth high-pass at 45 Hz (the Unprocessed microphone has DC and rumble).
+    double hpB0_ = 1.0, hpB1_ = 0.0, hpB2_ = 0.0, hpA1_ = 0.0, hpA2_ = 0.0;
+    double hpX1_ = 0.0, hpX2_ = 0.0, hpY1_ = 0.0, hpY2_ = 0.0;
 };
 
 }  // namespace mr

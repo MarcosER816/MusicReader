@@ -17,7 +17,14 @@ class FakeAudioService : AudioService {
     override val metronome = MutableStateFlow<MetronomeSettings?>(null)
     val calls = mutableListOf<String>()
     var beat: MetronomeBeat? = null
-    var diagnostics = EngineDiagnostics(running = true, sampleRate = 48000, framesPerBurst = 96, bufferSize = 192)
+    var diagnostics = EngineDiagnostics(
+        running = true,
+        sampleRate = 48000,
+        framesPerBurst = 96,
+        bufferSize = 192,
+        inputOpen = true,
+        inputPreset = com.musicreader.audio.InputPresetName.UNPROCESSED,
+    )
     var clock = 12.5
 
     /** The next calibration's result; the calibration waits until it is completed. */

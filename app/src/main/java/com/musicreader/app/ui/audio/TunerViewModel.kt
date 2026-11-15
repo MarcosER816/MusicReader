@@ -6,6 +6,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.musicreader.app.ui.common.appContainer
 import com.musicreader.audio.AudioService
+import com.musicreader.audio.InputPresetName
 import com.musicreader.audio.PitchFrame
 import com.musicreader.core.data.SettingsRepository
 import com.musicreader.core.dsp.NoiseGate
@@ -16,6 +17,7 @@ import com.musicreader.core.model.PitchMethod
 import com.musicreader.core.model.PitchSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,6 +41,8 @@ data class TunerUiState(
     val noiseProgress: Int? = null,
     /** Changes whenever the trace changed, so the trace redraws. */
     val traceVersion: Long = 0,
+    /** The microphone mode in use (Unprocessed or VoiceRecognition), for checking on the phone. */
+    val micMode: InputPresetName = InputPresetName.OTHER,
 )
 
 /** Tuner and pitch debug screen (D-030): live pitch, cents, trace, YIN/MPM, room-noise gate. */
@@ -72,7 +76,18 @@ class TunerViewModel(
     fun start() {
         _state.update { it.copy(started = true, permissionDenied = false) }
         if (collector?.isActive != true) collector = viewModelScope.launch { audio.pitch.collect(::onFrame) }
-        viewModelScope.launch { audio.startPitch(settings.settings.first().pitch) }
+        viewModelScope.launch {
+            audio.startPitch(settings.settings.first().pitch)
+            // The microphone opens a moment later; read its mode once it is there.
+            repeat(MIC_MODE_TRIES) {
+                delay(MIC_MODE_POLL_MS)
+                val d = audio.diagnostics()
+                if (d.inputOpen) {
+                    _state.update { it.copy(micMode = d.inputPreset) }
+                    return@launch
+                }
+            }
+        }
     }
 
     fun permissionDenied() {
@@ -134,6 +149,8 @@ class TunerViewModel(
         const val TRACE_SECONDS = 5.0
         /** How long the last note stays on screen after it stopped. */
         const val HOLD_SECONDS = 0.6
+        const val MIC_MODE_POLL_MS = 250L
+        const val MIC_MODE_TRIES = 20
 
         val Factory = viewModelFactory {
             initializer {

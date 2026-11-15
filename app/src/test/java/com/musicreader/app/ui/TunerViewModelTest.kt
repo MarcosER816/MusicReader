@@ -52,6 +52,7 @@ class TunerViewModelTest {
         advanceUntilIdle()
         assertEquals(listOf("pitch on MPM"), audio.calls)
         assertEquals(-48.0, audio.pitchSettings!!.noiseGateDb)
+        assertEquals(com.musicreader.audio.InputPresetName.UNPROCESSED, vm.state.value.micMode)
         audio.pitch.emit(frame(1, 69.12))
         advanceUntilIdle()
         val s = vm.state.value

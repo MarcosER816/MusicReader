@@ -50,7 +50,7 @@ struct EngineDiagnostics {
     int inputSharingMode = 0;
     int inputDeviceId = 0;
     int inputFramesPerBurst = 0;
-    int inputPreset = 0;  // oboe::InputPreset
+    int inputPreset = 0;  // oboe::InputPreset of the open (or last opened) microphone
     double outputLatencyMs = -1.0;  // from the timestamps; -1 until known
     int64_t callbacks = 0;
     int64_t inputShortReads = 0;
@@ -128,6 +128,7 @@ private:
     std::unique_ptr<oboe::LatencyTuner> tuner_;
     bool withInput_ = false;
     int restarts_ = 0;
+    int lastInputPreset_ = 0;  // kept after the microphone closes, for Diagnostics
     bool metronomeOn_ = false;
     BeatGrid grid_{};
 

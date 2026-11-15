@@ -323,4 +323,6 @@
     <string name="preset_unprocessed">Sin procesar (sin supresión de ruido)</string>
     <string name="preset_voice_recognition">Reconocimiento de voz</string>
     <string name="tuner_held">última nota</string>
+    <string name="diag_input_preset_last">Modo del micrófono (último usado)</string>
+    <string name="tuner_mic_mode">Modo del micrófono: %1$s</string>
 </resources>

@@ -211,7 +211,16 @@ Round 2 (APK `MusicReader-stage-08-pitch-108.apk` or later):
 
 | # | Check | Result |
 |---|---|---|
-| 1 | Pluck each open string and let it ring: the note stays until the string is nearly silent | |
-| 2 | Diagnostics (with the tuner open in another moment) shows Microphone mode "Unprocessed" | |
-| 3 | Voice still followed quickly, soft singing without octave jumps | |
-| 4 | Update over round 1 | |
+| 1 | Pluck each open string and let it ring: the note stays until the string is nearly silent | OK |
+| 2 | Diagnostics (with the tuner open in another moment) shows Microphone mode "Unprocessed" | Showed "closed": the microphone closes when the tuner is left → round 3 shows the mode on the tuner, and the last mode in Diagnostics |
+| 3 | Voice still followed quickly, soft singing without octave jumps | Sometimes jumps; one sudden drop and spike → round 3 |
+| 4 | Update over round 1 | OK — no crash; change wanted: no spikes |
+
+Round 3 (APK run after the fix):
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Tuner screen, bottom: "Microphone mode" | |
+| 2 | Sing a melody with leaps (also an octave up, softer): no jumps, drops or spikes | |
+| 3 | Open strings still ring until nearly silent | |
+| 4 | Update over round 2 | |

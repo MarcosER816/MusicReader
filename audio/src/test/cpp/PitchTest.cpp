@@ -382,3 +382,102 @@ TEST(Detector, EstimateNearFindsTheHeldPeriod) {
     EXPECT_NEAR(0.0, cents(mpm.estimateNear(194.0).hz, 196.0), 5.0);
     EXPECT_EQ(0.0, mpm.estimateNear(150.0).hz);  // nothing periodic there
 }
+
+// Mark, Stage 8 round 2: "a sudden drop and a sudden spike" while singing. A legato leap up an
+// octave, sung softer than the note before, must not be folded back down.
+TEST(Tracker, ASofterLegatoOctaveLeapIsFollowed) {
+    for (PitchMethod m : {PitchMethod::kYin, PitchMethod::kMpm}) {
+        const size_t n = kRate * 2;
+        std::vector<float> x(n);
+        double phase = 0.0;
+        for (size_t i = 0; i < n; ++i) {
+            const bool second = i >= n / 2;
+            const double f = second ? 440.0 : 220.0;
+            const double a = second ? 0.4 * 0.3 : 0.4;  // 10 dB softer after the leap, no gap
+            phase += 2 * kPi * f / kRate;
+            x[i] = static_cast<float>(a * (std::sin(phase) + 0.5 * std::sin(2 * phase) + 0.25 * std::sin(3 * phase)));
+        }
+        PitchTracker t(kRate);
+        t.setMethod(m);
+        double reached = -1.0;
+        int wrongAfter = 0;
+        for (const PitchFrame &f : track(t, x)) {
+            const double ts = f.frame / static_cast<double>(kRate);
+            if (ts < 1.0 || !f.voiced) continue;
+            if (std::fabs(cents(f.hz, 440.0)) < 30.0) {
+                if (reached < 0) reached = ts;
+            } else if (reached >= 0) {
+                ++wrongAfter;
+            }
+        }
+        EXPECT_GE(reached, 1.0) << static_cast<int>(m);
+        EXPECT_LT(reached, 1.12) << static_cast<int>(m) << " reached 440 Hz at " << reached;
+        EXPECT_EQ(0, wrongAfter) << static_cast<int>(m);
+    }
+}
+
+// The Unprocessed microphone has no built-in high-pass: DC offset and rumble reach the detector.
+TEST(Tracker, DcOffsetAndRumbleDoNotDisturb) {
+    for (PitchMethod m : {PitchMethod::kYin, PitchMethod::kMpm}) {
+        for (double hz : {82.41, 196.0, 440.0}) {
+            auto x = tone(hz, kHarmonic, kRate);
+            for (size_t i = 0; i < x.size(); ++i)
+                x[i] += static_cast<float>(0.15 + 0.3 * std::sin(2 * kPi * 12.0 * i / kRate));  // DC + 12 Hz rumble
+            PitchTracker t(kRate);
+            t.setMethod(m);
+            const auto frames = track(t, x);
+            int voiced = 0;
+            for (size_t i = 10; i < frames.size(); ++i) {
+                if (!frames[i].voiced) continue;
+                ++voiced;
+                EXPECT_NEAR(0.0, cents(frames[i].hz, hz), 5.0) << static_cast<int>(m) << " " << hz;
+            }
+            EXPECT_GT(voiced, static_cast<int>(frames.size()) - 15) << static_cast<int>(m) << " " << hz;
+        }
+    }
+}
+
+// A sung phrase: steps, an octave leap up and back, vibrato, crescendo and decrescendo, breath
+// noise, short gaps between some notes, DC offset and rumble. No spikes or drops: every voiced
+// frame is within a semitone of the sung note, except in the first 60 ms after a note change.
+TEST(Tracker, ASungPhraseHasNoSpikesOrDrops) {
+    const double notes[] = {57, 60, 64, 69, 67, 64, 60, 57, 69, 57};  // MIDI
+    const double noteSeconds = 0.4;
+    const size_t perNote = static_cast<size_t>(noteSeconds * kRate);
+    const size_t n = perNote * std::size(notes);
+    std::vector<float> x(n);
+    std::mt19937 rng(21);
+    std::normal_distribution<float> breath(0.f, 0.01f);
+    double phase = 0.0;
+    for (size_t i = 0; i < n; ++i) {
+        const size_t k = i / perNote;
+        const double t = static_cast<double>(i) / kRate;
+        const double local = static_cast<double>(i % perNote) / kRate;
+        const double midi = notes[k] + 0.3 * std::sin(2 * kPi * 5.5 * t);
+        phase += 2 * kPi * PitchTracker::midiToHz(midi) / kRate;
+        double a = 0.11 + 0.07 * std::sin(kPi * t / 2.0);       // slow crescendo/decrescendo (12 dB)
+        if (k % 3 == 2 && local < 0.03) a = 0.0;                 // a short gap (a breath)
+        x[i] = static_cast<float>(a * (std::sin(phase) + 0.6 * std::sin(2 * phase) + 0.3 * std::sin(3 * phase))) +
+               breath(rng) + 0.05f + 0.05f * static_cast<float>(std::sin(2 * kPi * 15.0 * t));
+    }
+    for (PitchMethod m : {PitchMethod::kYin, PitchMethod::kMpm}) {
+        PitchTracker t(kRate);
+        t.setMethod(m);
+        int bad = 0, voiced = 0;
+        for (const PitchFrame &f : track(t, x)) {
+            if (!f.voiced || f.frame < 0) continue;
+            const size_t k = static_cast<size_t>(f.frame) / perNote;
+            if (k >= std::size(notes)) continue;
+            ++voiced;
+            const double sinceChange = static_cast<double>(static_cast<size_t>(f.frame) % perNote) / kRate;
+            if (sinceChange < 0.06) continue;
+            if (std::fabs(f.midi - notes[k]) > 1.0) {
+                ++bad;
+                ADD_FAILURE() << (m == PitchMethod::kYin ? "YIN" : "MPM") << " at " << f.frame / static_cast<double>(kRate)
+                              << " s: " << f.midi << " instead of " << notes[k];
+            }
+        }
+        EXPECT_EQ(0, bad);
+        EXPECT_GT(voiced, 300);
+    }
+}

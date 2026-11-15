@@ -108,7 +108,10 @@ oboe::Result AudioEngine::openAndStartLocked(bool withInput) {
                 ->setInputPreset(preset)
                 ->setBufferCapacityInFrames(kMaxBlock * 2);
             r = in.openStream(input_);
-            if (r == oboe::Result::OK) break;
+            if (r == oboe::Result::OK) {
+                lastInputPreset_ = static_cast<int>(input_->getInputPreset());
+                break;
+            }
             input_.reset();
         }
         if (r != oboe::Result::OK) {
@@ -353,6 +356,7 @@ EngineDiagnostics AudioEngine::diagnostics() {
     d.callbacks = callbacks_.load();
     d.inputShortReads = inputShortReads_.load();
     d.inputOverflows = inputOverflows_.load();
+    d.inputPreset = lastInputPreset_;
     if (output_) {
         d.sampleRate = output_->getSampleRate();
         d.channelCount = output_->getChannelCount();
@@ -373,7 +377,6 @@ EngineDiagnostics AudioEngine::diagnostics() {
         d.inputSharingMode = static_cast<int>(input_->getSharingMode());
         d.inputDeviceId = input_->getDeviceId();
         d.inputFramesPerBurst = input_->getFramesPerBurst();
-        d.inputPreset = static_cast<int>(input_->getInputPreset());
     }
     return d;
 }

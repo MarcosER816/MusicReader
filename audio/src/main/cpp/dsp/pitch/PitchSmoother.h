@@ -10,8 +10,8 @@ namespace mr {
 class PitchSmoother {
 public:
     static constexpr int kSize = 5;
-    /** A ±12 semitone jump is folded back for this many frames before it is believed. */
-    static constexpr int kMaxFolds = 3;
+    /** A ±12 semitone jump is folded back for this many frames (50 ms) before it is believed. */
+    static constexpr int kMaxFolds = 5;
 
     struct Output {
         bool voiced = false;
@@ -20,11 +20,7 @@ public:
         bool folded = false;
     };
 
-    /**
-     * [decaying]: the held note is fading (level well under its peak). Then an octave jump is
-     * always folded back: a fading string loses its fundamental first, it does not leap.
-     */
-    Output push(bool voiced, double midi, bool decaying = false);
+    Output push(bool voiced, double midi);
     void reset();
 
 private:

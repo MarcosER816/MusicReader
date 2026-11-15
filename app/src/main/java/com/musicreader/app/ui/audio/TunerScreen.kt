@@ -142,6 +142,11 @@ fun TunerScreen(onBack: () -> Unit, viewModel: TunerViewModel = viewModel(factor
                     else stringResource(R.string.tuner_measuring_noise, progress * 100 / NoiseGate.FRAMES),
                 )
             }
+            Text(
+                stringResource(R.string.tuner_mic_mode, presetName(state.micMode)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Text(stringResource(R.string.tuner_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
