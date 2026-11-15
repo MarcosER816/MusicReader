@@ -6,6 +6,10 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import com.musicreader.audio.AndroidRouteSource
+import com.musicreader.audio.AudioController
+import com.musicreader.audio.AudioService
+import com.musicreader.audio.NativeAudio
 import com.musicreader.core.data.ChordDictionary
 import com.musicreader.core.data.ChordDictionaryRepository
 import com.musicreader.core.data.DataStoreSettingsRepository
@@ -34,6 +38,9 @@ class AppContainer(application: Application) {
     val settingsRepository: SettingsRepository = DataStoreSettingsRepository(application.settingsDataStore)
 
     private val chordDictionaryRepository = ChordDictionaryRepository({ application.assets.open(ChordDictionaryRepository.ASSET_PATH) })
+
+    /** The audio engine (D-029); the native library loads the first time audio starts. */
+    val audio: AudioService = AudioController(NativeAudio, AndroidRouteSource(application), appScope)
 
     /** The chord dictionary, loaded once in the background at start; null until it is ready. */
     val chordDictionary: StateFlow<ChordDictionary?> = flow { emit(chordDictionaryRepository.dictionary()) }

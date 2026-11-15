@@ -8,6 +8,32 @@ permissions:
   contents: read
 
 jobs:
+  native-tests:
+    # The audio DSP (chirps, cross-correlation, onsets, click scheduling, ring buffer, clock)
+    # built for the host and tested with GoogleTest (BSD-3-Clause).
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Install GoogleTest and Ninja
+        run: sudo apt-get update -q && sudo apt-get install -y -q libgtest-dev ninja-build
+
+      - name: Build and run the native tests
+        run: |
+          cmake -S audio/src/test/cpp -B build/native-tests -G Ninja
+          cmake --build build/native-tests
+          ctest --test-dir build/native-tests --output-on-failure --output-junit native-tests.xml
+
+      - name: Upload native test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-tests-${{ github.run_number }}
+          path: build/native-tests/native-tests.xml
+          if-no-files-found: ignore
+
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 45

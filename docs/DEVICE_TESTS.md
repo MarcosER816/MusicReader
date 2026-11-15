@@ -162,3 +162,31 @@ How: Library ⋮ → "Settings".
 | 3 | Force-stop and reopen; then "Reset to default" and "Reset all" | Colors kept after restart; resets restore the defaults | OK |
 | 4 | Switch the language to Español and back | Every screen in the chosen language | OK |
 | 5 | Update over Stage 5 | No data lost, no crash | OK — no data lost, no crash, no change wanted |
+
+### Stage 7 — audio core
+APK: `MusicReader-stage-07-audio-90.apk` or later (PR [#9](https://github.com/MarcosER816/MusicReader/pull/9), branch `stage-07-audio`)
+Date tested: 2026-11-15 (round 1, APK run 90)
+Audio route: speaker and Bluetooth (no wired headphones at hand)
+
+How:
+- Metronome: open a song → metronome icon in the top bar (set tempo and time signature in the song's Settings).
+- Calibration: Library ⋮ → Settings → Audio → Latency calibration.
+- Diagnostics: Library ⋮ → Settings → Audio → Audio diagnostics.
+- Reference: Google's OboeTester app (Play Store or GitHub releases) → "Round Trip Latency".
+
+| # | Check | Expected | Result |
+|---|---|---|---|
+| 1 | OboeTester round-trip latency on the speaker and on wired headphones | Two numbers in ms | Speaker 85.6 ms, Bluetooth 682.7 ms; wired not tested (no headphones) |
+| 2 | MusicReader automatic calibration on the same routes | Within about 5 ms of OboeTester; confidence high | OK — matches; but a second automatic calibration did not work without restarting the app → fixed in round 2 |
+| 3 | Metronome for two minutes at 60 BPM and at 180 BPM | Steady, accent on beat 1, the light matches the sound | OK |
+| 4 | Diagnostics after five minutes of metronome | Underrun count (ideally 0) | Skipped for now (Mark: ignore) |
+| 5 | Plug and unplug headphones while the metronome runs | Keeps playing on the new route; route updates in Diagnostics | OK |
+| 6 | Update over Stage 6 | No data lost, no crash | OK — no data lost; see 2 for the bug |
+
+Round 2 (APK `MusicReader-stage-07-audio-94.apk` or later):
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Automatic calibration twice in a row, then manual, without leaving the screen | OK |
+| 2 | Wired headphones (when available): OboeTester vs MusicReader | OK — within about 5 ms |
+| 3 | Update over round 1 | OK — no crash, no change wanted |

@@ -62,7 +62,12 @@ private sealed interface PickerFor {
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)) {
+fun SettingsScreen(
+    onBack: () -> Unit,
+    onOpenCalibration: () -> Unit,
+    onOpenDiagnostics: () -> Unit,
+    viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val s = state.settings
     val activity = LocalActivity.current
@@ -175,6 +180,11 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = viewModel(
                     )
                 }
             }
+
+            HorizontalDivider()
+            Text(stringResource(R.string.audio_section), style = MaterialTheme.typography.titleMedium)
+            LinkRow(stringResource(R.string.calibration_title), stringResource(R.string.calibration_summary), onOpenCalibration)
+            LinkRow(stringResource(R.string.diagnostics_title), stringResource(R.string.diagnostics_summary), onOpenDiagnostics)
         }
     }
 
@@ -202,6 +212,14 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = viewModel(
 @Composable
 private fun fingerName(finger: Int): String =
     if (finger == 0) stringResource(R.string.finger_open_name) else stringResource(R.string.finger_number, finger)
+
+@Composable
+private fun LinkRow(title: String, summary: String, onClick: () -> Unit) {
+    Column(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp)) {
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+        Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
 
 @Composable
 private fun Header(title: String, onReset: () -> Unit) {
