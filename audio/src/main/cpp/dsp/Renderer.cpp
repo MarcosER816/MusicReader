@@ -1,12 +1,13 @@
 #include "Renderer.h"
 
 #include <algorithm>
+#include <cmath>
 
 #include "Sounds.h"
 
 namespace mr {
 
-Renderer::Renderer(int sampleRate) {
+Renderer::Renderer(int sampleRate) : sampleRate_(sampleRate) {
     sounds_[kSoundNormalClick] = normalClick(sampleRate);
     sounds_[kSoundAccentClick] = accentClick(sampleRate);
     sounds_[kSoundChirp] = calibrationChirp(sampleRate);
@@ -33,6 +34,17 @@ bool Renderer::addOneShot(int sound, int64_t frame) {
         }
     }
     return false;
+}
+
+bool Renderer::addMelodyNote(const MelodyNote &note) {
+    if (melodyCount_ >= kMaxMelody || note.end <= note.start) return false;
+    melody_[melodyCount_++] = note;
+    return true;
+}
+
+void Renderer::clearMelody() {
+    melodyCount_ = 0;
+    melodyIndex_ = 0;
 }
 
 void Renderer::clearOneShots() {
@@ -69,6 +81,32 @@ void Renderer::render(float *mono, int64_t firstFrame, int32_t count) {
             const auto &snd = sounds_[static_cast<size_t>(voiceSound_)];
             mono[i] += snd[voicePos_];
             if (++voicePos_ >= snd.size()) voiceSound_ = -1;
+        }
+    }
+
+    // The preview melody: one soft voice (a sine with a little 2nd harmonic), each note
+    // starting on its exact frame, gliding in pitch from its start to its end note, with 5 ms
+    // fades so notes do not click.
+    if (melodyIndex_ < melodyCount_) {
+        constexpr double kTwoPi = 6.283185307179586;
+        const int64_t fade = sampleRate_ / 200;
+        for (int32_t i = 0; i < count; ++i) {
+            const int64_t f = firstFrame + i;
+            while (melodyIndex_ < melodyCount_ && melody_[melodyIndex_].end <= f) ++melodyIndex_;
+            if (melodyIndex_ >= melodyCount_) break;
+            const MelodyNote &n = melody_[melodyIndex_];
+            if (f < n.start) continue;
+            const int64_t len = n.end - n.start;
+            const double pos = static_cast<double>(f - n.start) / static_cast<double>(len);
+            const double hz = n.startHz * std::pow(static_cast<double>(n.endHz) / n.startHz, pos);
+            if (f == n.start) melodyPhase_ = 0.0;
+            melodyPhase_ += kTwoPi * hz / sampleRate_;
+            if (melodyPhase_ > kTwoPi) melodyPhase_ -= kTwoPi;
+            const int64_t fromStart = f - n.start, toEnd = n.end - 1 - f;
+            double env = 1.0;
+            if (fromStart < fade) env = static_cast<double>(fromStart) / fade;
+            if (toEnd < fade) env = std::min(env, static_cast<double>(toEnd) / fade);
+            mono[i] += static_cast<float>(kMelodyGain * env * (std::sin(melodyPhase_) + 0.25 * std::sin(2.0 * melodyPhase_)));
         }
     }
 

@@ -14,6 +14,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -265,5 +266,56 @@ class AudioControllerTest {
         advanceUntilIdle()
         assertIs<CalibrationOutcome.Measured>(outcome.await())
         assertFalse(rig.engine.isRunning, "pitch was stopped, calibration released the engine")
+    }
+
+    @Test
+    fun previewMathAlignsTheMetronomeWithTheSectionBeats() {
+        // From beat 5.5 at 120 BPM in 4/4: the metronome starts on beat 6 (250 ms later) and its
+        // beat 2 (section beat 8) is the accented beat 1 of bar 3.
+        assertEquals(6, PreviewMath.firstWholeBeat(5.5))
+        assertEquals(250.0, PreviewMath.extraLeadMs(5.5, 120.0), 1e-9)
+        assertEquals(2, PreviewMath.barOrigin(5.5, 4))
+        assertEquals(0, PreviewMath.barOrigin(8.0, 4))
+        assertEquals(96000.0 - 12000.0, PreviewMath.frameAtFromBeat(96000, 5.5, 24000.0), 1e-9)
+        val clock = PreviewClock(5.5, 84000.0, 24000.0, 10.0)
+        val frames = PreviewMath.frames(
+            listOf(
+                PreviewNote(7.0, 8.0, 69.0, 69.0),
+                PreviewNote(4.0, 6.0, 57.0, 59.0),     // the cursor is inside it: starts there
+                PreviewNote(1.0, 2.0, 60.0, 60.0),     // already past: not played
+            ),
+            clock,
+        )
+        assertEquals(2, frames.size)
+        assertEquals(84000L, frames[0].startFrame)
+        assertEquals(84000L + 12000L, frames[0].endFrame)
+        assertEquals(PreviewMath.midiToHz(58.5), frames[0].startHz, 1e-9)   // 3/4 through a 57→59 glide
+        assertEquals(84000L + 36000L, frames[1].startFrame)
+        assertEquals(440.0, frames[1].endHz, 1e-9)
+        assertEquals(6.0, clock.beatAt(84000.0 + 12000.0), 1e-12)
+    }
+
+    @Test
+    fun previewPlaysTheMelodyWithTheMetronomeAndStops() = runTest {
+        val rig = Rig(this)
+        rig.controller.startMetronome(MetronomeSettings(100.0, 4))
+        runCurrent()
+        rig.controller.startPreview(120.0, 4, 2.0, listOf(PreviewNote(2.0, 3.0, 60.0, 60.0), PreviewNote(3.0, 4.0, 62.0, 62.0)))
+        runCurrent()
+        assertNull(rig.controller.metronome.value, "the song metronome stops")
+        assertEquals("start 120.0 4 origin 2", rig.engine.metronomeCalls.last())
+        assertEquals(2, rig.engine.melodyNotes.size)
+        val clock = assertNotNull(rig.controller.preview.value)
+        assertEquals(2.0, clock.fromBeat)
+        advanceTimeBy(1000)
+        val beat = rig.controller.previewBeat()!!
+        assertTrue(beat > 2.0 && beat < 4.5, "playhead from the audio clock: $beat")
+        assertFalse(rig.engine.withInput, "no microphone for the preview")
+        rig.controller.stopPreview()
+        runCurrent()
+        assertNull(rig.controller.preview.value)
+        assertTrue(rig.engine.melodyNotes.isEmpty())
+        assertFalse(rig.engine.isRunning)
+        assertNull(rig.controller.previewBeat())
     }
 }

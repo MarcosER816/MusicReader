@@ -27,11 +27,12 @@
 namespace mr {
 
 struct EngineCommand {
-    enum Type : int { kSetGrid, kStopMetronome, kOneShot, kClearOneShots };
+    enum Type : int { kSetGrid, kStopMetronome, kOneShot, kClearOneShots, kMelodyNote, kClearMelody };
     Type type = kSetGrid;
     BeatGrid grid{};
     int sound = 0;
     int64_t frame = 0;
+    MelodyNote note{};
 };
 
 struct EngineDiagnostics {
@@ -81,8 +82,11 @@ public:
     int64_t writtenFrames() const { return enginePos_.load(std::memory_order_acquire); }
 
     // --- Metronome ---
-    /** Starts at [leadMs] from now; returns the frame of beat 0. */
-    int64_t metronomeStart(double bpm, int beatsPerBar, double leadMs);
+    /**
+     * Starts at [leadMs] from now; returns the frame of beat 0. Beat [barOriginBeat] (and every
+     * bar from it) is accented, so a start in the middle of a bar keeps the bar's beat 1.
+     */
+    int64_t metronomeStart(double bpm, int beatsPerBar, double leadMs, int64_t barOriginBeat = 0);
     /** New tempo or time signature from the first beat [leadMs] or more from now. */
     void metronomeUpdate(double bpm, int beatsPerBar, double leadMs);
     void metronomeStop();
@@ -92,6 +96,10 @@ public:
     /** Schedules [count] sounds [intervalMs] apart, the first [leadMs] from now; returns their frames. */
     std::vector<int64_t> scheduleSounds(int sound, int count, double intervalMs, double leadMs);
     const std::vector<float> &sound(int id) const { return renderer_.sound(id); }
+
+    /** Replaces the preview melody (D-032); notes in order of start, engine frames. */
+    void setMelody(const std::vector<MelodyNote> &notes);
+    void clearMelody();
 
     // --- Microphone ---
     /** Reads up to [max] samples; [firstFrame] gets the engine frame of the first one. */
@@ -154,7 +162,7 @@ private:
     int drainCallbacks_ = 0;  // callback only
 
     Renderer renderer_;
-    SpscRingBuffer<EngineCommand> commands_{256};
+    SpscRingBuffer<EngineCommand> commands_{2048};  // room for a whole preview melody
     SpscRingBuffer<float> inputRing_{1u << 19};  // ~10.9 s at 48 kHz
     std::vector<float> mono_;
     std::vector<float> inBuf_;

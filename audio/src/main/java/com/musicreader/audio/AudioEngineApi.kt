@@ -189,7 +189,8 @@ interface AudioEngineApi {
     fun presentedFrame(): Double
     fun writtenFrames(): Long
 
-    fun metronomeStart(bpm: Double, beatsPerBar: Int, leadMs: Double): Long
+    /** Returns the frame of beat 0; beat [barOriginBeat] and every bar from it is accented. */
+    fun metronomeStart(bpm: Double, beatsPerBar: Int, leadMs: Double, barOriginBeat: Long = 0): Long
     fun metronomeUpdate(bpm: Double, beatsPerBar: Int, leadMs: Double)
     fun metronomeStop()
     fun metronomeGrid(): BeatGridInfo?
@@ -204,6 +205,10 @@ interface AudioEngineApi {
     fun analyzeChirps(recording: FloatArray, length: Int, startFrame: Long, chirpFrames: LongArray): LatencyMeasurement
     fun analyzeTaps(recording: FloatArray, length: Int, startFrame: Long, clickFrames: LongArray): LatencyMeasurement
 
+    /** The preview melody: engine frames and Hz; replaces any previous one. */
+    fun setMelody(notes: List<MelodyFrames>)
+    fun clearMelody()
+
     fun pitchConfigure(method: com.musicreader.core.model.PitchMethod, gateDb: Double)
     fun pitchReset()
 
@@ -214,6 +219,9 @@ interface AudioEngineApi {
     fun recordStart(maxSeconds: Double)
     fun recordStop(): TakeAudio
 }
+
+/** One preview note in engine frames (D-032). */
+data class MelodyFrames(val startFrame: Long, val endFrame: Long, val startHz: Double, val endHz: Double)
 
 /** A recorded take: mono samples at the engine rate; sample 0 has engine frame [firstFrame]. */
 class TakeAudio(val samples: FloatArray, val firstFrame: Long, val sampleRate: Int) {

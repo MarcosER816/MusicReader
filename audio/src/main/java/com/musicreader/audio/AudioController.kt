@@ -52,6 +52,48 @@ interface MetronomeControl {
 
 enum class CalibrationMode { AUTOMATIC, MANUAL }
 
+/** A note of the preview melody, in section beats and continuous MIDI (D-032). */
+data class PreviewNote(val startBeat: Double, val endBeat: Double, val startMidi: Double, val endMidi: Double)
+
+/** A running preview: section beat [fromBeat] plays at engine frame [frameAtFromBeat]. */
+data class PreviewClock(val fromBeat: Double, val frameAtFromBeat: Double, val framesPerBeat: Double, val endBeat: Double) {
+    /** The section beat heard at engine frame [presentedFrame]. */
+    fun beatAt(presentedFrame: Double): Double = fromBeat + (presentedFrame - frameAtFromBeat) / framesPerBeat
+}
+
+/** Pure preview math (D-032), tested without audio. */
+object PreviewMath {
+    /** The metronome starts on the first whole section beat at or after [fromBeat]. */
+    fun firstWholeBeat(fromBeat: Double): Long = kotlin.math.ceil(fromBeat - 1e-9).toLong()
+
+    /** Extra lead (ms) so the metronome's beat 0 falls on that whole beat. */
+    fun extraLeadMs(fromBeat: Double, bpm: Double): Double = (firstWholeBeat(fromBeat) - fromBeat) * 60_000.0 / bpm
+
+    /** The metronome beat that is beat 1 of a section bar, so accents stay on the bars. */
+    fun barOrigin(fromBeat: Double, beatsPerBar: Int): Long = Math.floorMod(-firstWholeBeat(fromBeat), beatsPerBar.toLong())
+
+    /** The engine frame of section beat [fromBeat], given the frame of the metronome's beat 0. */
+    fun frameAtFromBeat(anchorFrame: Long, fromBeat: Double, framesPerBeat: Double): Double =
+        anchorFrame - (firstWholeBeat(fromBeat) - fromBeat) * framesPerBeat
+
+    /** The notes still to play from [fromBeat], in engine frames, in order. */
+    fun frames(notes: List<PreviewNote>, clock: PreviewClock): List<MelodyFrames> =
+        notes.filter { it.endBeat > clock.fromBeat }.sortedBy { it.startBeat }.map { n ->
+            val from = maxOf(n.startBeat, clock.fromBeat)
+            // Start part of the way through a note when the cursor is inside it.
+            val pos = if (n.endBeat > n.startBeat) (from - n.startBeat) / (n.endBeat - n.startBeat) else 0.0
+            val startMidi = n.startMidi + (n.endMidi - n.startMidi) * pos
+            MelodyFrames(
+                startFrame = Math.round(clock.frameAtFromBeat + (from - clock.fromBeat) * clock.framesPerBeat),
+                endFrame = Math.round(clock.frameAtFromBeat + (n.endBeat - clock.fromBeat) * clock.framesPerBeat),
+                startHz = midiToHz(startMidi),
+                endHz = midiToHz(n.endMidi),
+            )
+        }
+
+    fun midiToHz(midi: Double): Double = 440.0 * Math.pow(2.0, (midi - 69.0) / 12.0)
+}
+
 /** Streams and route, for the screens. */
 data class AudioState(
     val running: Boolean = false,
@@ -99,6 +141,19 @@ interface AudioService : MetronomeControl {
     /** Engine frames per second. */
     val sampleRate: Int
 
+    /** The running melody preview; null when none plays. */
+    val preview: StateFlow<PreviewClock?>
+
+    /**
+     * Plays [notes] as a simple tone from section beat [fromBeat], with the metronome on the
+     * section's beats (D-032). Stops the song metronome.
+     */
+    fun startPreview(bpm: Double, beatsPerBar: Int, fromBeat: Double, notes: List<PreviewNote>)
+    fun stopPreview()
+
+    /** The section beat being heard now in the preview (audio clock); null when none plays. */
+    fun previewBeat(): Double?
+
     /**
      * Plays chirps (automatic) or clicks to play along with (manual), records the microphone
      * on the same frame counter and measures the round trip. Needs the microphone permission.
@@ -131,7 +186,7 @@ class AudioController(
     private val analysisDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : AudioService {
 
-    enum class User { METRONOME, CALIBRATION, DIAGNOSTICS, PITCH }
+    enum class User { METRONOME, CALIBRATION, DIAGNOSTICS, PITCH, PREVIEW }
 
     private val mutex = Mutex()
     private val users = mutableSetOf<User>()
@@ -140,6 +195,9 @@ class AudioController(
 
     private val _state = MutableStateFlow(AudioState())
     override val state: StateFlow<AudioState> = _state.asStateFlow()
+
+    private val _preview = MutableStateFlow<PreviewClock?>(null)
+    override val preview: StateFlow<PreviewClock?> = _preview.asStateFlow()
 
     private var pitchJob: Job? = null
     private val _pitch = MutableSharedFlow<PitchFrame>(extraBufferCapacity = 256, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -193,6 +251,48 @@ class AudioController(
         val b = grid.beatAt(engine.presentedFrame())
         val whole = Math.floor(b).toLong()
         return MetronomeBeat(whole, grid.beatInBar(whole), b - whole)
+    }
+
+    // --- Preview ---
+
+    override fun startPreview(bpm: Double, beatsPerBar: Int, fromBeat: Double, notes: List<PreviewNote>) {
+        scope.launch {
+            mutex.withLock {
+                stopMetronomeLocked()
+                stopPreviewLocked()
+                if (!acquireLocked(User.PREVIEW)) return@withLock
+                val lead = LEAD_MS + PreviewMath.extraLeadMs(fromBeat, bpm)
+                val anchor = engine.metronomeStart(bpm, beatsPerBar, lead, PreviewMath.barOrigin(fromBeat, beatsPerBar))
+                val fpb = ENGINE_RATE * 60.0 / bpm
+                val clock = PreviewClock(
+                    fromBeat = fromBeat,
+                    frameAtFromBeat = PreviewMath.frameAtFromBeat(anchor, fromBeat, fpb),
+                    framesPerBeat = fpb,
+                    endBeat = notes.maxOfOrNull { it.endBeat } ?: fromBeat,
+                )
+                engine.setMelody(PreviewMath.frames(notes, clock))
+                _preview.value = clock
+            }
+        }
+    }
+
+    override fun stopPreview() {
+        scope.launch { mutex.withLock { stopPreviewLocked() } }
+    }
+
+    private fun stopPreviewLocked() {
+        if (_preview.value == null && User.PREVIEW !in users) return
+        if (_state.value.running) {
+            engine.clearMelody()
+            engine.metronomeStop()
+        }
+        _preview.value = null
+        if (User.PREVIEW in users) releaseLocked(User.PREVIEW)
+    }
+
+    override fun previewBeat(): Double? {
+        val clock = _preview.value ?: return null
+        return clock.beatAt(engine.presentedFrame())
     }
 
     // --- Pitch ---
@@ -266,6 +366,7 @@ class AudioController(
             mutex.withLock {
                 users.clear()
                 _metronome.value = null
+                _preview.value = null
                 if (_state.value.running) stopEngineLocked()
             }
         }
@@ -359,7 +460,10 @@ class AudioController(
             _state.update { it.copy(error = error, running = engine.isRunning) }
             return false
         }
-        if (needInput) _metronome.value = null  // reopening with the microphone resets the metronome
+        if (needInput) {
+            _metronome.value = null  // reopening with the microphone resets the metronome
+            _preview.value = null
+        }
         _state.update { it.copy(running = true, withInput = needInput, error = null) }
         updateRouteLocked()
         startWatchdog()

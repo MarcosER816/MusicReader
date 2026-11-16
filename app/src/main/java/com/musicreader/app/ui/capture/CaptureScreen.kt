@@ -69,7 +69,7 @@ import com.musicreader.core.model.LyricLine
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CaptureScreen(viewModel: CaptureViewModel, accidentals: AccidentalPreference, onBack: () -> Unit) {
+fun CaptureScreen(viewModel: CaptureViewModel, accidentals: AccidentalPreference, onBack: () -> Unit, onOpenNotes: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -85,6 +85,7 @@ fun CaptureScreen(viewModel: CaptureViewModel, accidentals: AccidentalPreference
             TopAppBar(
                 title = { Text(stringResource(R.string.capture_title)) },
                 navigationIcon = { IconButton(onClick = { viewModel.cancel(); onBack() }) { AppIcon(AppIcons.Back, stringResource(R.string.back)) } },
+                actions = { TextButton(onClick = { viewModel.cancel(); onOpenNotes() }) { Text(stringResource(R.string.notes_menu)) } },
             )
         },
     ) { padding ->

@@ -8,7 +8,8 @@ import com.musicreader.audio.PitchFrame
 import com.musicreader.audio.TakeAudio
 import com.musicreader.core.data.SettingsRepository
 import com.musicreader.core.data.TakeRepository
-import com.musicreader.core.dsp.NoteSegmenter
+import com.musicreader.core.dsp.ConsonantCue
+import com.musicreader.core.dsp.SyllableSegmenter
 import com.musicreader.core.dsp.SyllableAligner
 import com.musicreader.core.dsp.SyllableTiming
 import com.musicreader.core.dsp.TakeFrame
@@ -339,8 +340,15 @@ class CaptureViewModel(
                 val weights = syllableIds.map { SyllableAligner.weight(texts[it].orEmpty()) }
                 val method = if (local.value.tapMode) TakeMethod.TAPPED else TakeMethod.SUNG
                 val timings: List<SyllableTiming?> = withContext(analysis) {
-                    if (method == TakeMethod.TAPPED) TapAlong.timings(tapSeconds, takeFrames, syllableIds.size)
-                    else SyllableAligner.timings(weights, NoteSegmenter.segment(takeFrames))
+                    if (method == TakeMethod.TAPPED) {
+                        TapAlong.timings(tapSeconds, takeFrames, syllableIds.size)
+                    } else {
+                        // Exactly the selected syllables, from pitch, level and the consonants heard
+                        // in the recording (on the same latency-corrected timeline as the frames).
+                        val cues = if (recording.samples.isEmpty() || recording.firstFrame < 0) emptyList()
+                        else ConsonantCue.compute(recording.samples, recording.sampleRate, (recording.firstFrame - latencyFrames) / audio.sampleRate)
+                        SyllableSegmenter.timings(takeFrames, weights, cues)
+                    }
                 }
                 if (timings.all { it == null }) {
                     fail(CaptureError.NOTHING_SUNG)

@@ -265,3 +265,22 @@ Round 3 (APK run 135, 2026-11-16):
 | 4 | Tap along when the automatic result is wrong | Useful | |
 | 5 | Two written syllables sung as one ("de amor") | Say what should happen | |
 | 6 | Update over Stage 8; force-stop and reopen | Timing and notes still there; no crash | |
+
+### Stage 10 — note editor
+APK: `MusicReader-stage-10-note-editor-144.apk` or later (PR [#12](https://github.com/MarcosER816/MusicReader/pull/12), branch `stage-10-note-editor`)
+Date tested:
+Audio route:
+
+How: a section with sung lyrics → ⋮ → "Notes" (or "Notes" on the Sing screen).
+
+Round 1 (APK run 144): "All the lyrics on the notes get one over the other, at least divide them per line" → round 2, APK `MusicReader-stage-10-note-editor-148.apk` or later: one lyric line at a time (line chips, view fitted to the line), words never overlapping (inside the bar or above it with a leader line).
+
+Round 2 (APK run 148): words readable per line, nothing on top; precise; truly free; preview "sounds similar, but it confused the syllables they belonged to"; values understandable; no crash; change wanted: "fix the way the program detects syllables" → round 3, APK `MusicReader-stage-10-note-editor-152.apk` or later: new syllable segmentation (silences, small level dips, consonant noise from the recording, pitch steps; exactly the selected number of syllables chosen by dynamic programming). Sing the lines again to use it.
+
+| # | Check | Expected | Result |
+|---|---|---|---|
+| 1 | Move a note and change its length with a finger (also with "Fine" and the −/+ buttons) | Precise enough | |
+| 2 | Drag slowly up and sideways | Truly free: no snapping to notes or beats | |
+| 3 | ▶ from the cursor | Sounds like the melody you sang, with the metronome; the playhead follows | |
+| 4 | Note ("A3 +12 cents") and beat values ("1.37 beats", "bar 2, beat 1.25") | Understandable | |
+| 5 | Update over Stage 9; force-stop and reopen | Changes saved; no crash | |

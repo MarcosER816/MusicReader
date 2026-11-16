@@ -356,6 +356,10 @@ class SongViewModel(
     fun applyTake(sectionId: String, results: List<SyllableResult>, takeId: String) =
         editContent(sectionId) { _, content -> CaptureOps.apply(content, results, takeId) }
 
+    /** A hand edit of notes and lengths (D-032), saved like every other edit. */
+    fun editNotes(sectionId: String, change: (SectionContent) -> SectionContent) =
+        editContent(sectionId) { _, content -> change(content) }
+
     /** Undo a take: the syllables get back the values they had before it. */
     fun restoreTake(sectionId: String, previous: List<Syllable>) =
         editContent(sectionId) { _, content -> CaptureOps.restore(content, previous) }

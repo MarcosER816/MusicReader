@@ -472,7 +472,19 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
   - Pitch frames are moved back by the saved round-trip latency of the current route (0 with a hint if it is not calibrated).
   - Taps are taken from the presented (heard) frame, so they need no correction.
   - Start beats and durations are decimals with no snapping. A start is kept inside the section.
-- **Segmentation (`NoteSegmenter`, pure):** voiced runs of 10 ms frames.
+- **Syllable segmentation, from Stage 10 round 3 (`SyllableSegmenter` + `ConsonantCue`)**, replacing "find notes, then align":
+  - Mark heard the right melody, but syllables were attached to the wrong notes. Real legato consonants barely change pitch or level: an "l"/"m" dips 2–4 dB, a "t" closes for 20–30 ms, an "s" is noise.
+  - Every boundary between 10 ms frames gets a score from all clues:
+    - a silence of any length: 1 + up to 2 for a breath of 200 ms or more;
+    - a level dip from 1.5 dB (full at 4.5 dB), placed where it starts to fall;
+    - consonant noise in the recording: hiss when high-frequency energy dominates, a burst when it jumps 6 dB or more, measured with the first difference per 10 ms on the take's latency-corrected timeline;
+    - a pitch step over 0.5 semitone between the 50 ms before and after, placed where the pitch crosses to the new note, and weighted only 0.5 because a melisma changes pitch inside a syllable.
+  - Clues within 20 ms add up. Weak fallback places every 40 ms let two syllables share one sung note.
+  - Since exactly N syllables were selected, dynamic programming chooses the N − 1 boundaries with the best clue score minus 0.6 × (log of voiced length / expected length)².
+  - Each syllable starts at its first voiced frame and ends after its last, so silences stay gaps. Its notes come from the notes in its span, as with tap-along.
+  - Tests: real audio of "la la la" with soft l's, "te to ta" with 25 ms stops, "a-sa-se-so" with hiss, a line with a melisma and a breath, two syllables in one note, vibrato. Every start is within 30 ms, also without the recording; the old method found one note in "la la la la".
+  - The earlier note segmenter and aligner (below) stay as tested building blocks; the Sing screen uses the segmenter above.
+- **Segmentation before Stage 10 round 3 (`NoteSegmenter`, pure):** voiced runs of 10 ms frames.
   - A pitch dropout up to 30 ms at steady level is bridged; a real silence (a stop consonant) is a boundary.
   - Splits: at a level dip with a 6 dB rise on both sides within 80 ms, and at a stable pitch change over 0.7 semitone. The change is measured between medians of the 150 ms before and after, so vibrato does not split; the cut goes where the pitch crosses to the new note's side.
   - Pieces under 60 ms (metronome clicks, blips) are dropped.
@@ -501,3 +513,48 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
 - **Last take wins (`CaptureOps.apply`):** only the selected syllables' timing, notes, curve and `takeId` are replaced; nothing else in the song changes.
 - **Takes and undo:** each accepted take is saved as `songs/<id>/takes/<takeId>.wav` plus a `TakeInfo` with the replaced syllables' previous values. The last 10 per song are kept; older recordings are deleted. "Undo last take" restores the previous timing and notes (the text stays) and marks the take undone; it works after a restart.
 - **Rows in the viewer and editors:** a lyric line whose first syllable is timed starts its row at that syllable's bar. Untimed lines between timed ones share the space equally. Row 0 starts at beat 0. Untimed sections keep the even split.
+
+## D-032 — Note editor (Stage 10, 2026-11-16)
+- **Where:** a section's ⋮ → "Notes", or "Notes" at the top of the Sing screen. One voice at a time (main or second).
+- **Canvas (one Compose Canvas):**
+  - Horizontal axis = section beats, with beat lines and bar lines and bar numbers along the bottom. The section end is a red line.
+  - Vertical axis = continuous MIDI, as piano-roll rows (black keys shaded, C lines stronger), with a fixed note-name strip on the left. Names show for every row when rows are ≥ 13 px, else only C.
+  - Section chords are written faintly (55 % of their chord color) along the top.
+  - Text is measured once and reused, so drawing allocates nothing per frame.
+- **Bars:** each syllable with timing and a note is a bar from its start to its end beat, sloped from its initial to its final note (D-010), with its text on it and the sung curve behind it.
+  - The selected bar has a length grip at its right end and its values beside it ("A3 +12 cents · 1.37 beats"): to the right if there is room, else above.
+  - The panel under the canvas shows the text, note, length, start ("bar 2, beat 1.25") and the final note if it differs.
+- **Gestures:**
+  - A finger on a bar drags it. The right end (22 dp, at most half of a short bar) changes the length; the body changes the note (up/down) or the start (sideways).
+  - The body locks to one axis after 10 px, so changing the note never shifts the start by accident (and the other way round).
+  - On empty space: one finger pans, two fingers zoom horizontally and vertically on their own around the fingers, and a tap sets the cursor. A tap on a bar selects it.
+  - Hit testing prefers the selected bar, then the later bar, and has an 8 dp slop.
+- **No snapping anywhere:** beats and pitch are continuous decimals. Dragging changes exactly one syllable; other bars never move, even when they now overlap. Starts stay inside the section; lengths are at least 0.02 beat; notes stay between MIDI 24 and 108.
+- **D-010 curve:** moving the note shifts both ends and every curve point. Moving only the initial or final note shifts each point by (1 − t)·Δstart + t·Δend. A new length stretches the curve (t is relative).
+- **Fine control:**
+  - a "Fine" switch makes drags move a quarter of the finger's way;
+  - while dragging, a large bubble shows the exact value (note and cents, start position, or length);
+  - −/+ buttons: note, first note and last note ±5 cents; start and length ±0.01 beat.
+- **Add / clear:** syllables without a note are listed under the canvas.
+  - "Add a note at <cursor>" gives the selected one the note of its nearest neighbour with a note (else middle C), starting at the cursor and 1 beat long if it had no timing.
+  - "Clear the note" removes the note and curve and keeps the timing.
+- **Undo/redo:** snapshots of the section's syllable timing and notes; a whole drag or one button press is one step. The text is never part of it.
+- **Preview:**
+  - ▶ plays the voice's notes from the cursor as a soft tone (sine + 25 % 2nd harmonic, 5 ms fades, gliding from initial to final note), rendered sample-exactly in the audio callback from notes sent through the lock-free command queue (enlarged to 2048).
+  - The metronome starts on the first whole beat after the cursor, with its accents on the section's bar lines (`barOriginBeat`).
+  - The playhead is drawn from the audio clock (`PreviewClock.beatAt(presentedFrame)`). It stops one beat after the last note, on ▶ again, or in the background.
+- **One lyric line at a time** (round 2, Mark: "all the lyrics on the notes get one over the other, at least divide them per line"):
+  - Line chips above the canvas ("1 · Cielito lindo…") choose the line. Only that line's bars carry words and can be dragged; the other lines' bars stay as faint shapes for context.
+  - Choosing a line fits the view to its notes. The list of syllables without a note and "Add a note" follow the line.
+  - Words never overlap: inside their bar when they fit, else above it on a small background with a thin leader line to their bar, moving further up until they touch no other word or bar (`ReviewLayout.place`, as in the take review).
+  - The selected bar's values are drawn last: right of the bar if there is room, else under it.
+- **Round 3** (Mark: the preview sounds similar, "but it confused the syllables they belonged to … fix the way the program detects syllables"): capture now uses `SyllableSegmenter` (see D-031). Notes already captured keep their values; singing a line again gives it the new segmentation.
+- **Saving:** every change goes through the song's normal auto-save (`SongViewModel.editNotes`).
+- **Tests:**
+  - viewport conversion, zoom around the fingers, pan and clamp;
+  - hit testing (body, edge, overlaps, short bars, the strip);
+  - drag math (continuous, fine mode) and the ViewModel drags (axis lock, one bar only, no snapping);
+  - D-010 reshaping, limits, add/clear, undo/redo;
+  - preview math (metronome alignment, accents, a start inside a note) and controller flow;
+  - the native melody voice (sample-exact starts, pitch by zero crossings, glides);
+  - a screenshot of the editor.

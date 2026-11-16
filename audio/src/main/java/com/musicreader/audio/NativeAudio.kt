@@ -23,8 +23,21 @@ object NativeAudio : AudioEngineApi {
     override fun presentedFrame(): Double = native { nativePresentedFrame() }
     override fun writtenFrames(): Long = native { nativeWrittenFrames() }
 
-    override fun metronomeStart(bpm: Double, beatsPerBar: Int, leadMs: Double): Long =
-        native { nativeMetronomeStart(bpm, beatsPerBar, leadMs) }
+    override fun metronomeStart(bpm: Double, beatsPerBar: Int, leadMs: Double, barOriginBeat: Long): Long =
+        native { nativeMetronomeStart(bpm, beatsPerBar, leadMs, barOriginBeat) }
+
+    override fun setMelody(notes: List<MelodyFrames>) = native {
+        val a = DoubleArray(notes.size * 4)
+        notes.forEachIndexed { i, n ->
+            a[i * 4] = n.startFrame.toDouble()
+            a[i * 4 + 1] = n.endFrame.toDouble()
+            a[i * 4 + 2] = n.startHz
+            a[i * 4 + 3] = n.endHz
+        }
+        nativeSetMelody(a)
+    }
+
+    override fun clearMelody() = native { nativeClearMelody() }
 
     override fun metronomeUpdate(bpm: Double, beatsPerBar: Int, leadMs: Double) =
         native { nativeMetronomeUpdate(bpm, beatsPerBar, leadMs) }
@@ -89,7 +102,9 @@ object NativeAudio : AudioEngineApi {
     private external fun nativeSampleRate(): Int
     private external fun nativePresentedFrame(): Double
     private external fun nativeWrittenFrames(): Long
-    private external fun nativeMetronomeStart(bpm: Double, beatsPerBar: Int, leadMs: Double): Long
+    private external fun nativeMetronomeStart(bpm: Double, beatsPerBar: Int, leadMs: Double, barOriginBeat: Long): Long
+    private external fun nativeSetMelody(notes: DoubleArray)
+    private external fun nativeClearMelody()
     private external fun nativeMetronomeUpdate(bpm: Double, beatsPerBar: Int, leadMs: Double)
     private external fun nativeMetronomeStop()
     private external fun nativeMetronomeGrid(): DoubleArray?

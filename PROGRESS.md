@@ -17,8 +17,8 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 | 6 | User configuration: chord colors, finger colors, default viewer layers, app language, sharps/flats, left-handed diagrams | stage-06-settings | done | [#8](https://github.com/MarcosER816/MusicReader/pull/8) | 2026-11-14 ("Stage 6 approved") |
 | 7 | Audio core: C++ Oboe engine, JNI, audio clock, metronome, latency calibration per route, diagnostics | stage-07-audio | done | [#9](https://github.com/MarcosER816/MusicReader/pull/9) | 2026-11-15 ("Stage 7 approved") |
 | 8 | Real-time pitch detection (YIN and MPM in C++, Kotlin reference YIN), voiced/unvoiced gate, smoothing, tuner/debug screen | stage-08-pitch | done | [#10](https://github.com/MarcosER816/MusicReader/pull/10) | 2026-11-15 ("Stage 8 approved") |
-| 9 | Lyric capture by singing: select words, count-in, record take, segment notes, align to syllables, review, last take wins, tap-along | stage-09-capture | waiting for Mark | [#11](https://github.com/MarcosER816/MusicReader/pull/11) | |
-| 10 | Note editor: per-syllable pitch and duration, free drag with no snapping | stage-10-note-editor | not started | | |
+| 9 | Lyric capture by singing: select words, count-in, record take, segment notes, align to syllables, review, last take wins, tap-along | stage-09-capture | done | [#11](https://github.com/MarcosER816/MusicReader/pull/11) | 2026-11-16 ("Stage 9 approved") |
+| 10 | Note editor: every syllable's note and length on a zoomable canvas, free drag with no snapping, fine control, preview with metronome, undo/redo | stage-10-note-editor | waiting for Mark | [#12](https://github.com/MarcosER816/MusicReader/pull/12) | |
 | 11 | Practice — singing: right-to-left note line, pitch arrow with trail, gold/green/red, particles | stage-11-practice-sing | not started | | |
 | 12 | Practice — chords and tab: one strumming pattern per section (D-008, not built yet), right-to-left lanes, timing judge, gold/green/red, particles, lower layers | stage-12-practice-play | not started | | |
 | 13 | Recordings: record practice, keep as official (one per type), synced mix playback, export to Downloads | stage-13-recordings | not started | | |
@@ -161,3 +161,23 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 - Round 2 after Mark's first look ("the review is unreadable"): review redesigned and covered by a screenshot test.
 - Round 3 ("some words get over one another"): word-fitting time-line scale, overlap-free label placement (tested), unbroken words in the list, crowded-take screenshot.
 - Round 3 device test: review readable, only the sung line replaced, about 80 % of syllables right, count-in clear, tap-along useful, "de amor" behaviour kept, D-010 notes confirmed, no crash.
+- Stage 9 approved by Mark on 2026-11-16.
+
+### Stage 10 — note editor (2026-11-16)
+- Stage 9 approved by Mark (three device-test rounds).
+- Note editor per section, on one Canvas:
+  - beats horizontally (bar and beat lines, pinch zoom, pan), continuous pitch vertically with a note-name strip, faint chords on top;
+  - each syllable a sloped bar (initial → final note) with its text and sung curve; the selected one shows "A3 +12 cents · 1.37 beats".
+- Free dragging with no snapping, one bar only: the body changes the note or the start (axis lock), the right end the length.
+- Fine control: a slow-drag "Fine" switch, a value bubble while dragging, and −/+ buttons (±5 cents for the note, first or last note; ±0.01 beat for start and length).
+- Undo/redo, add a note at the cursor, clear a note.
+- Preview from the cursor: a sample-exact native melody voice with the metronome aligned to the bars; the playhead follows the audio clock.
+- Tests:
+  - viewport, hit testing, drag math, D-010 curve, add/clear, undo/redo (core/model);
+  - ViewModel drags and preview;
+  - preview math and controller;
+  - native melody (GoogleTest);
+  - an editor screenshot.
+- Decision D-032.
+- Round 2 ("lyrics on the notes get one over the other"): one lyric line at a time, with line chips, a view fitted to the line and the other lines faint; overlap-free words with leader lines; a crowded-line screenshot.
+- Round 3 ("it confused the syllables… fix the way the program detects syllables"): capture uses the new `SyllableSegmenter` (all boundary clues including consonant noise from the recording, N − 1 boundaries chosen by dynamic programming), with 10 tests on synthetic sung audio with real consonant shapes.

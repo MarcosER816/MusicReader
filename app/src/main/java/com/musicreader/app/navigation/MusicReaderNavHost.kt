@@ -14,6 +14,8 @@ import com.musicreader.app.ui.audio.CalibrationScreen
 import com.musicreader.app.ui.audio.DiagnosticsScreen
 import com.musicreader.app.ui.audio.MetronomeViewModel
 import com.musicreader.app.ui.capture.CaptureScreen
+import com.musicreader.app.ui.notes.NoteEditorScreen
+import com.musicreader.app.ui.notes.NoteEditorViewModel
 import com.musicreader.app.ui.capture.CaptureViewModel
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -70,6 +72,10 @@ data class ChordsRoute(val sectionId: String)
 @Serializable
 data class TabRoute(val sectionId: String)
 
+/** Note editor of one section (D-032). */
+@Serializable
+data class NotesRoute(val sectionId: String)
+
 /** Lyric capture of one section (D-031). */
 @Serializable
 data class CaptureRoute(val sectionId: String)
@@ -122,6 +128,7 @@ fun MusicReaderNavHost(navController: NavHostController = rememberNavController(
                     onOpenChords = { sectionId -> navController.navigate(ChordsRoute(sectionId)) },
                     onOpenTab = { sectionId -> navController.navigate(TabRoute(sectionId)) },
                     onOpenSing = { sectionId -> navController.navigate(CaptureRoute(sectionId)) },
+                    onOpenNotes = { sectionId -> navController.navigate(NotesRoute(sectionId)) },
                 )
             }
             composable<SongSettingsRoute> { entry ->
@@ -173,7 +180,19 @@ fun MusicReaderNavHost(navController: NavHostController = rememberNavController(
                 val sectionId = entry.toRoute<CaptureRoute>().sectionId
                 val capture: CaptureViewModel = viewModel(entry, factory = CaptureViewModel.factory(songId, sectionId, songVm))
                 val settings by songVm.settings.collectAsStateWithLifecycle()
-                CaptureScreen(capture, settings.accidentals, onBack = { navController.popBackStack() })
+                CaptureScreen(
+                    capture,
+                    settings.accidentals,
+                    onBack = { navController.popBackStack() },
+                    onOpenNotes = { navController.navigate(NotesRoute(sectionId)) },
+                )
+            }
+            composable<NotesRoute> { entry ->
+                val songEntry = remember(entry) { navController.getBackStackEntry<SongRoute>() }
+                val songVm: SongViewModel = viewModel(songEntry, factory = SongViewModel.Factory)
+                val sectionId = entry.toRoute<NotesRoute>().sectionId
+                val notes: NoteEditorViewModel = viewModel(entry, factory = NoteEditorViewModel.factory(sectionId, songVm))
+                NoteEditorScreen(notes, onBack = { navController.popBackStack() })
             }
         }
     }
