@@ -131,3 +131,41 @@ TEST(Renderer, OneShotsPlayAtTheirFrameAcrossBlocks) {
     EXPECT_EQ(0.f, out[999]);
     EXPECT_EQ(0.f, out[1000 + chirp.size()]);
 }
+
+TEST(Melody, NotesStartOnTheirFrameAtTheirPitch) {
+    Renderer r(48000);
+    ASSERT_TRUE(r.addMelodyNote({4800, 28800, 440.f, 440.f}));     // 0.1 s .. 0.6 s, A4
+    ASSERT_TRUE(r.addMelodyNote({33600, 57600, 220.f, 220.f}));    // 0.7 s .. 1.2 s, A3
+    std::vector<float> out(60000, 0.f);
+    for (int64_t f = 0; f < 60000; f += 192) r.render(out.data() + f, f, static_cast<int32_t>(std::min<int64_t>(192, 60000 - f)));
+    // Silent before the first note, at the gap, and after the end.
+    for (int i = 0; i <= 4800; ++i) ASSERT_EQ(0.f, out[static_cast<size_t>(i)]) << i;
+    for (int i = 28800; i <= 33600; ++i) ASSERT_EQ(0.f, out[static_cast<size_t>(i)]) << i;
+    for (int i = 57600; i < 60000; ++i) ASSERT_EQ(0.f, out[static_cast<size_t>(i)]) << i;
+    EXPECT_NE(0.f, out[4801]);  // the first sample after the note's start frame
+    // Pitch: count upward zero crossings over 0.4 s in the middle of each note.
+    auto crossings = [&](size_t from, size_t to) {
+        int c = 0;
+        for (size_t i = from + 1; i < to; ++i) c += (out[i - 1] < 0.f && out[i] >= 0.f) ? 1 : 0;
+        return c;
+    };
+    EXPECT_NEAR(176, crossings(7200, 26400), 2);   // 440 Hz × 0.4 s
+    EXPECT_NEAR(88, crossings(36000, 55200), 2);   // 220 Hz × 0.4 s
+}
+
+TEST(Melody, AGlideMovesFromStartToEndPitch) {
+    Renderer r(48000);
+    r.addMelodyNote({0, 96000, 220.f, 440.f});  // 2 s, one octave up
+    std::vector<float> out(96000, 0.f);
+    r.render(out.data(), 0, 96000);
+    auto crossings = [&](size_t from, size_t to) {
+        int c = 0;
+        for (size_t i = from + 1; i < to; ++i) c += (out[i - 1] < 0.f && out[i] >= 0.f) ? 1 : 0;
+        return c;
+    };
+    EXPECT_LT(crossings(0, 4800), crossings(91200, 96000) - 8);  // faster at the end
+    r.clearMelody();
+    std::vector<float> after(4800, 0.f);
+    r.render(after.data(), 0, 4800);
+    for (float v : after) ASSERT_EQ(0.f, v);
+}

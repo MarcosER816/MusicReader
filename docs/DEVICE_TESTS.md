@@ -265,3 +265,18 @@ Round 3 (APK run 135, 2026-11-16):
 | 4 | Tap along when the automatic result is wrong | Useful | |
 | 5 | Two written syllables sung as one ("de amor") | Say what should happen | |
 | 6 | Update over Stage 8; force-stop and reopen | Timing and notes still there; no crash | |
+
+### Stage 10 — note editor
+APK: `MusicReader-stage-10-note-editor-<run>.apk` or later (PR [#12](https://github.com/MarcosER816/MusicReader/pull/12), branch `stage-10-note-editor`)
+Date tested:
+Audio route:
+
+How: a section with sung lyrics → ⋮ → "Notes" (or "Notes" on the Sing screen).
+
+| # | Check | Expected | Result |
+|---|---|---|---|
+| 1 | Move a note and change its length with a finger (also with "Fine" and the −/+ buttons) | Precise enough | |
+| 2 | Drag slowly up and sideways | Truly free: no snapping to notes or beats | |
+| 3 | ▶ from the cursor | Sounds like the melody you sang, with the metronome; the playhead follows | |
+| 4 | Note ("A3 +12 cents") and beat values ("1.37 beats", "bar 2, beat 1.25") | Understandable | |
+| 5 | Update over Stage 9; force-stop and reopen | Changes saved; no crash | |

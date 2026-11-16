@@ -373,4 +373,25 @@
     <string name="ok">OK</string>
     <string name="capture_until">until %1$s</string>
     <string name="capture_bar_short">Bar</string>
+    <!-- Note editor (Stage 10) -->
+    <string name="notes_title">Notes</string>
+    <string name="notes_menu">Notes</string>
+    <string name="notes_note_value">%1$s %2$s cents</string>
+    <string name="notes_beats_value">%1$s beats</string>
+    <string name="notes_play">Play from the cursor</string>
+    <string name="notes_stop">Stop</string>
+    <string name="notes_fine">Fine</string>
+    <string name="notes_fine_hint">Drags move a quarter as far, for small changes.</string>
+    <string name="notes_hint">Drag a bar up or down for its note, sideways for its start, its right end for its length. Nothing snaps. One finger on empty space moves the view, two fingers zoom. Tap empty space to set the cursor.</string>
+    <string name="notes_without">Syllables without a note</string>
+    <string name="notes_starts">Starts at %1$s</string>
+    <string name="notes_ends_on">ends on %1$s</string>
+    <string name="notes_note">Note</string>
+    <string name="notes_first_note">First note</string>
+    <string name="notes_last_note">Last note</string>
+    <string name="notes_length">Length</string>
+    <string name="notes_clear">Clear the note</string>
+    <string name="notes_no_note">“%1$s” has no note.</string>
+    <string name="notes_add">Add a note at %1$s</string>
+    <string name="notes_select_hint">Tap a bar to see and change its note and length.</string>
 </resources>

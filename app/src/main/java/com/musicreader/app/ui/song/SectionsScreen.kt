@@ -78,6 +78,7 @@ fun SectionsScreen(
     onOpenChords: (sectionId: String) -> Unit,
     onOpenTab: (sectionId: String) -> Unit,
     onOpenSing: (sectionId: String) -> Unit,
+    onOpenNotes: (sectionId: String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val metronomeState by metronome.state.collectAsStateWithLifecycle()
@@ -160,6 +161,7 @@ fun SectionsScreen(
                     onOpenChords = onOpenChords,
                     onOpenTab = onOpenTab,
                     onOpenSing = onOpenSing,
+                    onOpenNotes = onOpenNotes,
                     onMove = viewModel::moveSection,
                     onDuplicate = viewModel::duplicateSection,
                     onUnlink = viewModel::unlinkSection,
@@ -209,6 +211,7 @@ private fun SectionList(
     onOpenChords: (String) -> Unit,
     onOpenTab: (String) -> Unit,
     onOpenSing: (String) -> Unit,
+    onOpenNotes: (String) -> Unit,
     onMove: (String, String) -> Unit,
     onDuplicate: (String, Boolean) -> Unit,
     onUnlink: (String) -> Unit,
@@ -248,6 +251,7 @@ private fun SectionList(
                 onOpenChords = { onOpenChords(row.id) },
                 onOpenTab = { onOpenTab(row.id) },
                 onOpenSing = { onOpenSing(row.id) },
+                onOpenNotes = { onOpenNotes(row.id) },
                 onDuplicate = { linked -> onDuplicate(row.id, linked) },
                 onUnlink = { onUnlink(row.id) },
                 onDelete = { onDelete(row.id) },
@@ -283,6 +287,7 @@ private fun SectionCard(
     onOpenChords: () -> Unit,
     onOpenTab: () -> Unit,
     onOpenSing: () -> Unit,
+    onOpenNotes: () -> Unit,
     onDuplicate: (linked: Boolean) -> Unit,
     onUnlink: () -> Unit,
     onDelete: () -> Unit,
@@ -374,6 +379,10 @@ private fun SectionCard(
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.capture_menu)) },
                         onClick = { menuOpen = false; onOpenSing() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.notes_menu)) },
+                        onClick = { menuOpen = false; onOpenNotes() },
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.edit_section)) },

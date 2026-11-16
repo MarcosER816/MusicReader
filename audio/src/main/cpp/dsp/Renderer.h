@@ -12,6 +12,14 @@ namespace mr {
 
 enum Sound : int { kSoundNormalClick = 0, kSoundAccentClick = 1, kSoundChirp = 2, kSoundCount = 3 };
 
+/** One note of the preview melody (D-032): frames [start, end), pitch gliding start → end. */
+struct MelodyNote {
+    int64_t start = 0;
+    int64_t end = 0;
+    float startHz = 440.f;
+    float endHz = 440.f;
+};
+
 class Renderer {
 public:
     /** Builds the sounds; call outside the audio callback. */
@@ -27,6 +35,14 @@ public:
     bool addOneShot(int sound, int64_t frame);
 
     void clearOneShots();
+
+    /** Adds a preview note; notes must come in order of start. False when full. */
+    bool addMelodyNote(const MelodyNote &note);
+    void clearMelody();
+    size_t melodyCount() const { return melodyCount_; }
+    static constexpr size_t kMaxMelody = 1024;
+    /** Tone level and fades of the preview voice. */
+    static constexpr float kMelodyGain = 0.35f;
 
     /** Adds the sounds for frames [firstFrame, firstFrame + count) to [mono]. */
     void render(float *mono, int64_t firstFrame, int32_t count);
@@ -57,6 +73,12 @@ private:
     int voiceSound_ = -1;
     size_t voicePos_ = 0;
     std::array<OneShot, kMaxOneShots> oneShots_{};
+
+    int sampleRate_ = 48000;
+    std::array<MelodyNote, kMaxMelody> melody_{};
+    size_t melodyCount_ = 0;
+    size_t melodyIndex_ = 0;  // first note that has not ended
+    double melodyPhase_ = 0.0;
 };
 
 }  // namespace mr

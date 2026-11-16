@@ -41,6 +41,7 @@ oboe::Result AudioEngine::start(bool withInput) {
     }
     renderer_.stopMetronome(INT64_MIN);
     renderer_.clearOneShots();
+    renderer_.clearMelody();
     metronomeOn_ = false;
     return openAndStartLocked(withInput);
 }
@@ -178,6 +179,8 @@ void AudioEngine::pushCommand(const EngineCommand &c) {
             case EngineCommand::kStopMetronome: renderer_.stopMetronome(c.frame); break;
             case EngineCommand::kOneShot: renderer_.addOneShot(c.sound, c.frame); break;
             case EngineCommand::kClearOneShots: renderer_.clearOneShots(); break;
+            case EngineCommand::kMelodyNote: renderer_.addMelodyNote(c.note); break;
+            case EngineCommand::kClearMelody: renderer_.clearMelody(); break;
         }
         return;
     }
@@ -193,6 +196,8 @@ oboe::DataCallbackResult AudioEngine::onAudioReady(oboe::AudioStream *stream, vo
             case EngineCommand::kStopMetronome: renderer_.stopMetronome(c.frame); break;
             case EngineCommand::kOneShot: renderer_.addOneShot(c.sound, c.frame); break;
             case EngineCommand::kClearOneShots: renderer_.clearOneShots(); break;
+            case EngineCommand::kMelodyNote: renderer_.addMelodyNote(c.note); break;
+            case EngineCommand::kClearMelody: renderer_.clearMelody(); break;
         }
     }
 
@@ -280,14 +285,14 @@ double AudioEngine::presentedFrame() {
     return monotonic_.next(estimate);
 }
 
-int64_t AudioEngine::metronomeStart(double bpm, int beatsPerBar, double leadMs) {
+int64_t AudioEngine::metronomeStart(double bpm, int beatsPerBar, double leadMs, int64_t barOriginBeat) {
     std::lock_guard<std::mutex> lock(mutex_);
     BeatGrid g;
     g.anchorFrame = enginePos_.load() + static_cast<int64_t>(leadMs * kSampleRate / 1000.0);
     g.anchorBeat = 0;
     g.framesPerBeat = framesPerBeat(kSampleRate, bpm);
     g.beatsPerBar = beatsPerBar < 1 ? 1 : beatsPerBar;
-    g.barOriginBeat = 0;
+    g.barOriginBeat = barOriginBeat;
     EngineCommand c;
     c.type = EngineCommand::kSetGrid;
     c.grid = g;
@@ -426,6 +431,25 @@ std::vector<float> AudioEngine::recordStop(int64_t *firstFrame) {
     std::vector<float> out;
     out.swap(recorded_);
     return out;
+}
+
+void AudioEngine::setMelody(const std::vector<MelodyNote> &notes) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    EngineCommand c;
+    c.type = EngineCommand::kClearMelody;
+    pushCommand(c);
+    c.type = EngineCommand::kMelodyNote;
+    for (const MelodyNote &n : notes) {
+        c.note = n;
+        pushCommand(c);
+    }
+}
+
+void AudioEngine::clearMelody() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    EngineCommand c;
+    c.type = EngineCommand::kClearMelody;
+    pushCommand(c);
 }
 
 }  // namespace mr

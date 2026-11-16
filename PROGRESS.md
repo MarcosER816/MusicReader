@@ -165,3 +165,17 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 
 ### Stage 10 — note editor (2026-11-16)
 - Stage 9 approved by Mark (three device-test rounds).
+- Note editor per section, on one Canvas:
+  - beats horizontally (bar and beat lines, pinch zoom, pan), continuous pitch vertically with a note-name strip, faint chords on top;
+  - each syllable a sloped bar (initial → final note) with its text and sung curve; the selected one shows "A3 +12 cents · 1.37 beats".
+- Free dragging with no snapping, one bar only: the body changes the note or the start (axis lock), the right end the length.
+- Fine control: a slow-drag "Fine" switch, a value bubble while dragging, and −/+ buttons (±5 cents for the note, first or last note; ±0.01 beat for start and length).
+- Undo/redo, add a note at the cursor, clear a note.
+- Preview from the cursor: a sample-exact native melody voice with the metronome aligned to the bars; the playhead follows the audio clock.
+- Tests:
+  - viewport, hit testing, drag math, D-010 curve, add/clear, undo/redo (core/model);
+  - ViewModel drags and preview;
+  - preview math and controller;
+  - native melody (GoogleTest);
+  - an editor screenshot.
+- Decision D-032.

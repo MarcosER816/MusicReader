@@ -501,3 +501,42 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
 - **Last take wins (`CaptureOps.apply`):** only the selected syllables' timing, notes, curve and `takeId` are replaced; nothing else in the song changes.
 - **Takes and undo:** each accepted take is saved as `songs/<id>/takes/<takeId>.wav` plus a `TakeInfo` with the replaced syllables' previous values. The last 10 per song are kept; older recordings are deleted. "Undo last take" restores the previous timing and notes (the text stays) and marks the take undone; it works after a restart.
 - **Rows in the viewer and editors:** a lyric line whose first syllable is timed starts its row at that syllable's bar. Untimed lines between timed ones share the space equally. Row 0 starts at beat 0. Untimed sections keep the even split.
+
+## D-032 — Note editor (Stage 10, 2026-11-16)
+- **Where:** a section's ⋮ → "Notes", or "Notes" at the top of the Sing screen. One voice at a time (main or second).
+- **Canvas (one Compose Canvas):**
+  - Horizontal axis = section beats, with beat lines and bar lines and bar numbers along the bottom. The section end is a red line.
+  - Vertical axis = continuous MIDI, as piano-roll rows (black keys shaded, C lines stronger), with a fixed note-name strip on the left. Names show for every row when rows are ≥ 13 px, else only C.
+  - Section chords are written faintly (55 % of their chord color) along the top.
+  - Text is measured once and reused, so drawing allocates nothing per frame.
+- **Bars:** each syllable with timing and a note is a bar from its start to its end beat, sloped from its initial to its final note (D-010), with its text on it and the sung curve behind it.
+  - The selected bar has a length grip at its right end and its values beside it ("A3 +12 cents · 1.37 beats"): to the right if there is room, else above.
+  - The panel under the canvas shows the text, note, length, start ("bar 2, beat 1.25") and the final note if it differs.
+- **Gestures:**
+  - A finger on a bar drags it. The right end (22 dp, at most half of a short bar) changes the length; the body changes the note (up/down) or the start (sideways).
+  - The body locks to one axis after 10 px, so changing the note never shifts the start by accident (and the other way round).
+  - On empty space: one finger pans, two fingers zoom horizontally and vertically on their own around the fingers, and a tap sets the cursor. A tap on a bar selects it.
+  - Hit testing prefers the selected bar, then the later bar, and has an 8 dp slop.
+- **No snapping anywhere:** beats and pitch are continuous decimals. Dragging changes exactly one syllable; other bars never move, even when they now overlap. Starts stay inside the section; lengths are at least 0.02 beat; notes stay between MIDI 24 and 108.
+- **D-010 curve:** moving the note shifts both ends and every curve point. Moving only the initial or final note shifts each point by (1 − t)·Δstart + t·Δend. A new length stretches the curve (t is relative).
+- **Fine control:**
+  - a "Fine" switch makes drags move a quarter of the finger's way;
+  - while dragging, a large bubble shows the exact value (note and cents, start position, or length);
+  - −/+ buttons: note, first note and last note ±5 cents; start and length ±0.01 beat.
+- **Add / clear:** syllables without a note are listed under the canvas.
+  - "Add a note at <cursor>" gives the selected one the note of its nearest neighbour with a note (else middle C), starting at the cursor and 1 beat long if it had no timing.
+  - "Clear the note" removes the note and curve and keeps the timing.
+- **Undo/redo:** snapshots of the section's syllable timing and notes; a whole drag or one button press is one step. The text is never part of it.
+- **Preview:**
+  - ▶ plays the voice's notes from the cursor as a soft tone (sine + 25 % 2nd harmonic, 5 ms fades, gliding from initial to final note), rendered sample-exactly in the audio callback from notes sent through the lock-free command queue (enlarged to 2048).
+  - The metronome starts on the first whole beat after the cursor, with its accents on the section's bar lines (`barOriginBeat`).
+  - The playhead is drawn from the audio clock (`PreviewClock.beatAt(presentedFrame)`). It stops one beat after the last note, on ▶ again, or in the background.
+- **Saving:** every change goes through the song's normal auto-save (`SongViewModel.editNotes`).
+- **Tests:**
+  - viewport conversion, zoom around the fingers, pan and clamp;
+  - hit testing (body, edge, overlaps, short bars, the strip);
+  - drag math (continuous, fine mode) and the ViewModel drags (axis lock, one bar only, no snapping);
+  - D-010 reshaping, limits, add/clear, undo/redo;
+  - preview math (metronome alignment, accents, a start inside a note) and controller flow;
+  - the native melody voice (sample-exact starts, pitch by zero crossings, glides);
+  - a screenshot of the editor.

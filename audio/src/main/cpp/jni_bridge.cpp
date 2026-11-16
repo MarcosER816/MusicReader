@@ -74,8 +74,27 @@ JNIEXPORT jlong JNICALL Java_com_musicreader_audio_NativeAudio_nativeWrittenFram
 }
 
 JNIEXPORT jlong JNICALL Java_com_musicreader_audio_NativeAudio_nativeMetronomeStart(JNIEnv *, jobject, jdouble bpm,
-                                                                                    jint beatsPerBar, jdouble leadMs) {
-    return engine().metronomeStart(bpm, beatsPerBar, leadMs);
+                                                                                    jint beatsPerBar, jdouble leadMs,
+                                                                                    jlong barOriginBeat) {
+    return engine().metronomeStart(bpm, beatsPerBar, leadMs, barOriginBeat);
+}
+
+/** [notes]: 4 values per note: start frame, end frame, start Hz, end Hz. */
+JNIEXPORT void JNICALL Java_com_musicreader_audio_NativeAudio_nativeSetMelody(JNIEnv *env, jobject, jdoubleArray notes) {
+    const jsize n = env->GetArrayLength(notes) / 4;
+    std::vector<double> v(static_cast<size_t>(n) * 4);
+    env->GetDoubleArrayRegion(notes, 0, n * 4, v.data());
+    std::vector<mr::MelodyNote> melody(static_cast<size_t>(n));
+    for (jsize i = 0; i < n; ++i) {
+        const size_t o = static_cast<size_t>(i) * 4;
+        melody[static_cast<size_t>(i)] = {static_cast<int64_t>(v[o]), static_cast<int64_t>(v[o + 1]),
+                                          static_cast<float>(v[o + 2]), static_cast<float>(v[o + 3])};
+    }
+    engine().setMelody(melody);
+}
+
+JNIEXPORT void JNICALL Java_com_musicreader_audio_NativeAudio_nativeClearMelody(JNIEnv *, jobject) {
+    engine().clearMelody();
 }
 
 JNIEXPORT void JNICALL Java_com_musicreader_audio_NativeAudio_nativeMetronomeUpdate(JNIEnv *, jobject, jdouble bpm,

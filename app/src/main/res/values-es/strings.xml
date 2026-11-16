@@ -376,4 +376,25 @@
     <string name="ok">Aceptar</string>
     <string name="capture_until">hasta %1$s</string>
     <string name="capture_bar_short">Compás</string>
+    <!-- Editor de notas (etapa 10) -->
+    <string name="notes_title">Notas</string>
+    <string name="notes_menu">Notas</string>
+    <string name="notes_note_value">%1$s %2$s cents</string>
+    <string name="notes_beats_value">%1$s tiempos</string>
+    <string name="notes_play">Reproducir desde el cursor</string>
+    <string name="notes_stop">Parar</string>
+    <string name="notes_fine">Fino</string>
+    <string name="notes_fine_hint">Al arrastrar se mueve la cuarta parte, para cambios pequeños.</string>
+    <string name="notes_hint">Arrastra una barra hacia arriba o abajo para su nota, a los lados para su inicio, y su extremo derecho para su duración. Nada se ajusta solo. Un dedo en un espacio vacío mueve la vista, dos dedos hacen zoom. Toca un espacio vacío para poner el cursor.</string>
+    <string name="notes_without">Sílabas sin nota</string>
+    <string name="notes_starts">Empieza en %1$s</string>
+    <string name="notes_ends_on">termina en %1$s</string>
+    <string name="notes_note">Nota</string>
+    <string name="notes_first_note">Nota inicial</string>
+    <string name="notes_last_note">Nota final</string>
+    <string name="notes_length">Duración</string>
+    <string name="notes_clear">Quitar la nota</string>
+    <string name="notes_no_note">«%1$s» no tiene nota.</string>
+    <string name="notes_add">Añadir una nota en %1$s</string>
+    <string name="notes_select_hint">Toca una barra para ver y cambiar su nota y su duración.</string>
 </resources>

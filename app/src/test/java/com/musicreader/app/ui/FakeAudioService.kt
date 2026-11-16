@@ -62,6 +62,23 @@ class FakeAudioService : AudioService {
         return recorded
     }
 
+    override val preview = MutableStateFlow<com.musicreader.audio.PreviewClock?>(null)
+    var previewNotes: List<com.musicreader.audio.PreviewNote> = emptyList()
+    var previewBeatNow: Double? = null
+    override fun startPreview(bpm: Double, beatsPerBar: Int, fromBeat: Double, notes: List<com.musicreader.audio.PreviewNote>) {
+        calls += "preview $bpm $beatsPerBar $fromBeat"
+        previewNotes = notes
+        preview.value = com.musicreader.audio.PreviewClock(fromBeat, 0.0, 24000.0, notes.maxOfOrNull { it.endBeat } ?: fromBeat)
+        previewBeatNow = fromBeat
+    }
+
+    override fun stopPreview() {
+        calls += "preview stop"
+        preview.value = null
+        previewBeatNow = null
+    }
+
+    override fun previewBeat() = previewBeatNow
     var frameNow = 0.0
     override fun clockFrame() = frameNow
     override val sampleRate = 48000

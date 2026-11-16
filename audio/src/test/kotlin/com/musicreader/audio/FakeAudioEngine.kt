@@ -60,10 +60,10 @@ class FakeAudioEngine(private val nowMillis: () -> Long, var latencyFrames: Long
     override fun presentedFrame() = (frameNow() - 960).toDouble()
     override fun writtenFrames() = frameNow()
 
-    override fun metronomeStart(bpm: Double, beatsPerBar: Int, leadMs: Double): Long {
+    override fun metronomeStart(bpm: Double, beatsPerBar: Int, leadMs: Double, barOriginBeat: Long): Long {
         val anchor = frameNow() + (leadMs * sampleRate / 1000).toLong()
-        grid = BeatGridInfo(anchor, 0, sampleRate * 60.0 / bpm, beatsPerBar, 0)
-        metronomeCalls += "start $bpm $beatsPerBar"
+        grid = BeatGridInfo(anchor, 0, sampleRate * 60.0 / bpm, beatsPerBar, barOriginBeat)
+        metronomeCalls += "start $bpm $beatsPerBar" + if (barOriginBeat != 0L) " origin $barOriginBeat" else ""
         return anchor
     }
 
@@ -116,6 +116,15 @@ class FakeAudioEngine(private val nowMillis: () -> Long, var latencyFrames: Long
 
     override fun analyzeTaps(recording: FloatArray, length: Int, startFrame: Long, clickFrames: LongArray) =
         analyze(recording, length, startFrame, clickFrames)
+
+    var melodyNotes: List<MelodyFrames> = emptyList()
+    override fun setMelody(notes: List<MelodyFrames>) {
+        melodyNotes = notes
+    }
+
+    override fun clearMelody() {
+        melodyNotes = emptyList()
+    }
 
     val pitchLog = mutableListOf<String>()
     val pitchQueue = ArrayDeque<PitchFrame>()
