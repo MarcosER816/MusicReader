@@ -37,6 +37,9 @@ import kotlin.math.max
 /** A syllable without a note (listed under the editor so it can be given one). */
 data class UnplacedSyllable(val id: String, val text: String, val timed: Boolean)
 
+/** A lyric line to choose (the editor shows one line at a time). */
+data class EditorLine(val id: String, val text: String)
+
 /** A chord of the section, drawn faintly along the top (D-032). */
 data class ChordMark(val beat: Double, val symbol: ChordSymbol)
 
@@ -47,7 +50,13 @@ data class NoteEditorUiState(
     val ready: Boolean = false,
     val voice: Int = LyricLine.MAIN_VOICE,
     val hasSecondVoice: Boolean = false,
+    /** The voice's lyric lines; [line] is the one being edited. */
+    val lines: List<EditorLine> = emptyList(),
+    val line: Int = 0,
+    /** The bars of the chosen line (editable, with their text). */
     val bars: List<NoteBar> = emptyList(),
+    /** The other lines' bars, drawn faintly for context (not editable here). */
+    val otherBars: List<NoteBar> = emptyList(),
     /** The sung curves, in (beat, midi), drawn faintly behind the bars. */
     val curves: Map<String, List<Pair<Double, Double>>> = emptyMap(),
     val unplaced: List<UnplacedSyllable> = emptyList(),
@@ -84,6 +93,7 @@ class NoteEditorViewModel(
 
     private data class Local(
         val voice: Int = LyricLine.MAIN_VOICE,
+        val line: Int = 0,
         val viewport: NoteViewport? = null,
         val selectedId: String? = null,
         val cursorBeat: Double = 0.0,
@@ -110,15 +120,23 @@ class NoteEditorViewModel(
 
     private fun uiState(s: Song?, settings: AppSettings, l: Local, previewing: Boolean): NoteEditorUiState {
         val content = content(s) ?: return NoteEditorUiState()
-        val syllables = CaptureOps.syllables(content, l.voice).map { it.second }
-        val withNote = syllables.filter { it.startBeat != null && it.durationBeats != null && it.pitchStartMidi != null }
+        val voiceLines = content.lyricLines.filter { it.voice == l.voice }
+        val lineIndex = l.line.coerceIn(0, maxOf(0, voiceLines.size - 1))
+        fun barsOf(lines: List<LyricLine>) = lines.flatMap { line -> line.words.flatMap { it.syllables } }
+            .filter { it.startBeat != null && it.durationBeats != null && it.pitchStartMidi != null }
+        val lineSyllables = voiceLines.getOrNull(lineIndex)?.words?.flatMap { it.syllables }.orEmpty()
+        val withNote = barsOf(listOfNotNull(voiceLines.getOrNull(lineIndex)))
+        fun bar(it: Syllable) = NoteBar(it.id, it.text, it.startBeat!!, it.durationBeats!!, it.pitchStartMidi!!, it.pitchEndMidi ?: it.pitchStartMidi!!)
         return NoteEditorUiState(
             ready = true,
             voice = l.voice,
             hasSecondVoice = content.lyricLines.any { it.voice == LyricLine.SECOND_VOICE && it.words.isNotEmpty() },
-            bars = withNote.map { NoteBar(it.id, it.text, it.startBeat!!, it.durationBeats!!, it.pitchStartMidi!!, it.pitchEndMidi ?: it.pitchStartMidi!!) },
+            lines = voiceLines.map { EditorLine(it.id, it.text) },
+            line = lineIndex,
+            bars = withNote.map(::bar),
+            otherBars = barsOf(voiceLines.filterIndexed { i, _ -> i != lineIndex }).map(::bar),
             curves = withNote.associate { sy -> sy.id to sy.pitchCurve.map { p -> sy.startBeat!! + p.t * sy.durationBeats!! to p.midi } },
-            unplaced = syllables.filter { it.pitchStartMidi == null }.map { UnplacedSyllable(it.id, it.text, it.startBeat != null) },
+            unplaced = lineSyllables.filter { it.pitchStartMidi == null }.map { UnplacedSyllable(it.id, it.text, it.startBeat != null) },
             chords = content.chords.map { ChordMark(it.beat, it.symbol) },
             lengthBeats = content.lengthBeats,
             beatsPerBar = s!!.timeSignature.num,
@@ -153,18 +171,9 @@ class NoteEditorViewModel(
             if (vp.widthPx != widthPx || vp.heightPx != heightPx) update { it.copy(viewport = vp.copy(widthPx = widthPx, heightPx = heightPx)) }
             return
         }
-        val bars = current().bars
-        val midis = bars.flatMap { listOf(it.startMidi, it.endMidi) }
-        val mid = if (midis.isEmpty()) 60.0 else (midis.min() + midis.max()) / 2
-        val semis = max(14.0, if (midis.isEmpty()) 14.0 else midis.max() - midis.min() + 6.0)
-        val firstBeat = (bars.minOfOrNull { it.startBeat } ?: 0.0) - 0.5
         val content = content() ?: return
-        update {
-            it.copy(
-                viewport = NoteViewport(firstBeat, pxPerBeat, mid + semis / 2, heightPx / semis, widthPx, heightPx, stripPx).clamp(content.lengthBeats),
-                cursorBeat = bars.minOfOrNull { b -> b.startBeat } ?: 0.0,
-            )
-        }
+        update { it.copy(viewport = NoteViewport(0.0, pxPerBeat, 72.0, heightPx / 24.0, widthPx, heightPx, stripPx).clamp(content.lengthBeats)) }
+        fitLine()
     }
 
     fun zoom(zoomX: Double, zoomY: Double, focusX: Double, focusY: Double) {
@@ -177,7 +186,47 @@ class NoteEditorViewModel(
         update { l -> l.copy(viewport = l.viewport?.pan(dx, dy)?.clamp(len)) }
     }
 
-    fun setVoice(voice: Int) = update { it.copy(voice = voice, selectedId = null) }
+    fun setVoice(voice: Int) {
+        update { it.copy(voice = voice, line = 0, selectedId = null) }
+        fitLine()
+    }
+
+    /** Shows lyric line [index]: only its words are labelled and editable, and the view fits it. */
+    fun setLine(index: Int) {
+        update { it.copy(line = index, selectedId = null) }
+        fitLine()
+    }
+
+    /** Fits the view to the chosen line's notes (a little margin around them). */
+    private fun fitLine() {
+        val vp = local.value.viewport ?: return
+        val st = current()
+        val content = content() ?: return
+        val bars = st.bars
+        if (bars.isEmpty()) {
+            // No notes yet: start where the line's row starts.
+            update { it.copy(cursorBeat = rowStart(content, st.line)) }
+            return
+        }
+        val from = bars.minOf { it.startBeat }
+        val to = bars.maxOf { it.endBeat }
+        val midis = bars.flatMap { listOf(it.startMidi, it.endMidi) }
+        val semis = max(12.0, midis.max() - midis.min() + 6.0)
+        val usable = vp.widthPx - vp.stripPx
+        val pxPerBeat = (usable / (to - from + 1.0)).coerceIn(NoteViewport.MIN_PX_PER_BEAT, NoteViewport.MAX_PX_PER_BEAT)
+        val fitted = vp.copy(
+            firstBeat = from - 0.5,
+            pxPerBeat = pxPerBeat,
+            pxPerSemitone = vp.heightPx / semis,
+            topMidi = (midis.min() + midis.max()) / 2 + semis / 2,
+        ).clamp(content.lengthBeats)
+        update { it.copy(viewport = fitted, cursorBeat = from) }
+    }
+
+    private fun rowStart(content: SectionContent, line: Int): Double {
+        val n = content.lyricLines.count { it.voice == local.value.voice }
+        return if (n == 0) 0.0 else content.lengthBeats.toDouble() * line / n
+    }
 
     fun setFine(on: Boolean) = update { it.copy(fine = on) }
 

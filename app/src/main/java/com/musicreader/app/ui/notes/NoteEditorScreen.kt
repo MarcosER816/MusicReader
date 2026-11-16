@@ -3,6 +3,7 @@ package com.musicreader.app.ui.notes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -63,6 +64,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.musicreader.app.R
 import com.musicreader.app.ui.common.AppIcon
 import com.musicreader.app.ui.common.AppIcons
+import com.musicreader.app.ui.capture.LabelBox
+import com.musicreader.app.ui.capture.ReviewLayout
 import com.musicreader.core.model.AccidentalPreference
 import com.musicreader.core.model.LyricLine
 import com.musicreader.core.model.NoteBar
@@ -119,6 +122,21 @@ fun NoteEditorScreen(viewModel: NoteEditorViewModel, onBack: () -> Unit) {
                 Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(state.voice == LyricLine.MAIN_VOICE, onClick = { viewModel.setVoice(LyricLine.MAIN_VOICE) }, label = { Text(stringResource(R.string.main_voice)) })
                     FilterChip(state.voice == LyricLine.SECOND_VOICE, onClick = { viewModel.setVoice(LyricLine.SECOND_VOICE) }, label = { Text(stringResource(R.string.second_voice)) })
+                }
+            }
+            if (state.lines.size > 1) {
+                // One lyric line at a time, so the words on the notes have room.
+                Row(
+                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    state.lines.forEachIndexed { i, line ->
+                        FilterChip(
+                            selected = i == state.line,
+                            onClick = { viewModel.setLine(i) },
+                            label = { Text("${i + 1} · " + line.text.take(18) + if (line.text.length > 18) "…" else "", maxLines = 1) },
+                        )
+                    }
                 }
             }
             NoteCanvas(state, viewModel, Modifier.fillMaxWidth().height(380.dp))
@@ -217,6 +235,23 @@ private fun NoteCanvas(state: NoteEditorUiState, vm: NoteEditorViewModel, modifi
     }
     val barTexts = remember(state.bars.map { it.text }, colors) {
         state.bars.associate { it.id to measurer.measure(it.text, TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold, color = colors.onPrimaryContainer)) }
+    }
+    val outsideTexts = remember(state.bars.map { it.text }, colors) {
+        state.bars.associate { it.id to measurer.measure(it.text, TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold, color = colors.onSurface)) }
+    }
+    // Where each word goes: inside its bar when it fits, else above, never over another word
+    // or bar (the same placement as the take review, D-031).
+    val wordBoxes = remember(state.bars, state.viewport, barTexts) {
+        val vp = state.viewport ?: return@remember emptyList<LabelBox>()
+        val blocks = state.bars.map { b ->
+            val x0 = vp.beatToX(b.startBeat)
+            val x1 = max(vp.beatToX(b.endBeat), x0 + 3.0)
+            val top = vp.midiToY(max(b.startMidi, b.endMidi)) - barH / 2
+            val bottom = vp.midiToY(minOf(b.startMidi, b.endMidi)) + barH / 2
+            LabelBox(x0.toFloat(), top.toFloat(), (x1 - x0).toFloat(), (bottom - top).toFloat())
+        }
+        val sizes = state.bars.map { b -> barTexts[b.id]!!.let { it.size.width.toFloat() to it.size.height.toFloat() } }
+        ReviewLayout.place(blocks, sizes, sizes.map { 0f to 0f }, padding = 6f, gap = 3f).first
     }
     val chordTexts = remember(state.chords, state.settings, colors) {
         state.chords.map { c -> measurer.measure(c.symbol.toString(), TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(state.settings.chordColor(c.symbol).toInt()).copy(alpha = 0.55f))) }
@@ -333,8 +368,20 @@ private fun NoteCanvas(state: NoteEditorUiState, vm: NoteEditorViewModel, modifi
                     drawLine(colors.secondary.copy(alpha = 0.8f), Offset(x(curve[k - 1].first), y(curve[k - 1].second)), Offset(x(curve[k].first), y(curve[k].second)), 2.dp.toPx())
                 }
             }
-            // Bars: from the initial to the final note.
+            // The other lines' bars, faint and without words, for context.
             val h = (barH / 2).toFloat()
+            for (bar in state.otherBars) {
+                val x0 = x(bar.startBeat)
+                val x1 = max(x(bar.endBeat), x0 + 3f)
+                shape.reset()
+                shape.moveTo(x0, y(bar.startMidi) - h * 0.6f)
+                shape.lineTo(x1, y(bar.endMidi) - h * 0.6f)
+                shape.lineTo(x1, y(bar.endMidi) + h * 0.6f)
+                shape.lineTo(x0, y(bar.startMidi) + h * 0.6f)
+                shape.close()
+                drawPath(shape, colors.outline.copy(alpha = 0.35f))
+            }
+            // Bars of the chosen line: from the initial to the final note.
             for (bar in state.bars) {
                 val selected = bar.id == state.selectedId
                 val x0 = x(bar.startBeat)
@@ -349,23 +396,44 @@ private fun NoteCanvas(state: NoteEditorUiState, vm: NoteEditorViewModel, modifi
                 shape.close()
                 drawPath(shape, if (selected) colors.tertiaryContainer else colors.primaryContainer)
                 drawPath(shape, if (selected) colors.tertiary else colors.primary, style = Stroke(if (selected) 3.dp.toPx() else 1.5.dp.toPx()))
-                barTexts[bar.id]?.let { t -> drawText(t, topLeft = Offset(x0 + 6f, (y0 + y1) / 2 - t.size.height / 2)) }
+
                 if (selected) {
                     // The length grip at the right end, and the values beside the bar.
                     drawRoundRect(colors.tertiary, Offset(x1 - 5.dp.toPx(), y1 - h + 3f), Size(4.dp.toPx(), 2 * h - 6f), CornerRadius(2.dp.toPx()))
-                    // Its values beside it: right of the bar if there is room, else above it.
-                    selectedText?.let { t ->
-                        val gap = 8.dp.toPx()
-                        val w = t.size.width
-                        val above = minOf(y0, y1) - h - t.size.height - 6f
-                        val at = when {
-                            x1 + gap + w <= size.width -> Offset(x1 + gap, (y0 + y1) / 2 - t.size.height / 2)
-                            above >= 0f -> Offset(max(stripW + 4f, minOf(x0, size.width - w - 4f)), above)
-                            else -> Offset(max(stripW + 4f, minOf(x0, size.width - w - 4f)), maxOf(y0, y1) + h + 6f)
-                        }
-                        drawRoundRect(colors.surfaceContainerHighest, Offset(at.x - 4f, at.y - 2f), Size(w + 8f, t.size.height + 4f), CornerRadius(4.dp.toPx()))
-                        drawText(t, topLeft = at)
-                    }
+                }
+            }
+            // Words: inside their bar, or above it on a small background, never overlapping.
+            state.bars.forEachIndexed { i, bar ->
+                val box = wordBoxes.getOrNull(i) ?: return@forEachIndexed
+                val x0 = x(bar.startBeat)
+                val x1 = max(x(bar.endBeat), x0 + 3f)
+                val inside = box.left >= x0 && box.right <= x1 + 1f && box.top >= minOf(y(bar.startMidi), y(bar.endMidi)) - h - 1f &&
+                    box.bottom <= maxOf(y(bar.startMidi), y(bar.endMidi)) + h + 1f
+                if (inside) {
+                    barTexts[bar.id]?.let { t -> drawText(t, topLeft = Offset(box.left, box.top)) }
+                } else {
+                    // A thin leader from the word down to its bar, so it is clear whose word it is.
+                    val barTop = minOf(y(bar.startMidi), y(bar.endMidi)) - h
+                    val ax = minOf(box.left + 6f, x1)
+                    drawLine(colors.onSurfaceVariant.copy(alpha = 0.7f), Offset(ax, box.bottom), Offset((x0 + x1) / 2, barTop), 1.5f)
+                    drawRoundRect(colors.surfaceContainerHighest, Offset(box.left - 3f, box.top - 1f), Size(box.width + 6f, box.height + 2f), CornerRadius(4.dp.toPx()))
+                    outsideTexts[bar.id]?.let { t -> drawText(t, topLeft = Offset(box.left, box.top)) }
+                }
+            }
+            // The selected bar's values, last so nothing covers them: right of the bar if there
+            // is room, else under it (words go above bars).
+            sel?.let { bar ->
+                val x0 = x(bar.startBeat)
+                val x1 = max(x(bar.endBeat), x0 + 3f)
+                val y0 = y(bar.startMidi)
+                val y1 = y(bar.endMidi)
+                selectedText?.let { t ->
+                    val gap = 8.dp.toPx()
+                    val w = t.size.width
+                    val at = if (x1 + gap + w <= size.width - gap) Offset(x1 + gap, (y0 + y1) / 2 - t.size.height / 2)
+                    else Offset(max(stripW + 4f, minOf(x0, size.width - w - 4f)), maxOf(y0, y1) + h + 6f)
+                    drawRoundRect(colors.surfaceContainerHighest, Offset(at.x - 4f, at.y - 2f), Size(w + 8f, t.size.height + 4f), CornerRadius(4.dp.toPx()))
+                    drawText(t, topLeft = at)
                 }
             }
             // Cursor and playhead.

@@ -531,6 +531,11 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
   - ▶ plays the voice's notes from the cursor as a soft tone (sine + 25 % 2nd harmonic, 5 ms fades, gliding from initial to final note), rendered sample-exactly in the audio callback from notes sent through the lock-free command queue (enlarged to 2048).
   - The metronome starts on the first whole beat after the cursor, with its accents on the section's bar lines (`barOriginBeat`).
   - The playhead is drawn from the audio clock (`PreviewClock.beatAt(presentedFrame)`). It stops one beat after the last note, on ▶ again, or in the background.
+- **One lyric line at a time** (round 2, Mark: "all the lyrics on the notes get one over the other, at least divide them per line"):
+  - Line chips above the canvas ("1 · Cielito lindo…") choose the line. Only that line's bars carry words and can be dragged; the other lines' bars stay as faint shapes for context.
+  - Choosing a line fits the view to its notes. The list of syllables without a note and "Add a note" follow the line.
+  - Words never overlap: inside their bar when they fit, else above it on a small background with a thin leader line to their bar, moving further up until they touch no other word or bar (`ReviewLayout.place`, as in the take review).
+  - The selected bar's values are drawn last: right of the bar if there is room, else under it.
 - **Saving:** every change goes through the song's normal auto-save (`SongViewModel.editNotes`).
 - **Tests:**
   - viewport conversion, zoom around the fingers, pan and clamp;

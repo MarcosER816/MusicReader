@@ -179,3 +179,4 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
   - native melody (GoogleTest);
   - an editor screenshot.
 - Decision D-032.
+- Round 2 ("lyrics on the notes get one over the other"): one lyric line at a time, with line chips, a view fitted to the line and the other lines faint; overlap-free words with leader lines; a crowded-line screenshot.

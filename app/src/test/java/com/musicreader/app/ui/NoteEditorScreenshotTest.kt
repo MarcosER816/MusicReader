@@ -55,4 +55,33 @@ class NoteEditorScreenshotTest {
         rule.waitForIdle()
         rule.onRoot().captureRoboImage("src/test/screenshots/note_editor.png")
     }
+
+    /** Mark, Stage 10 round 1: "all the lyrics on the notes get one over the other". */
+    @Test
+    fun aCrowdedSectionShowsOneLineWithoutOverlaps() {
+        fun quick(id: String, text: String, start: Double, m: Double) = Syllable(id, text, start, 0.22, m, m)
+        val content = SectionContent(
+            id = "c", lengthBeats = 16,
+            lyricLines = listOf(
+                LyricLine("l1", text = "Strengthen your heart tonight my love", words = listOf(
+                    Word("a", "Strengthen", listOf(quick("1", "Streng", 0.0, 62.0), quick("2", "then", 0.25, 62.3))),
+                    Word("b", "your", listOf(quick("3", "your", 0.5, 62.0))),
+                    Word("c", "heart", listOf(quick("4", "heart", 0.75, 63.0))),
+                    Word("d", "tonight", listOf(quick("5", "to", 1.0, 64.0), quick("6", "night", 1.25, 64.2))),
+                    Word("e", "my", listOf(quick("7", "my", 1.5, 62.0))),
+                    Word("f", "love", listOf(Syllable("8", "love", 1.75, 1.5, 60.0, 60.0))),
+                )),
+                LyricLine("l2", text = "and again", words = listOf(
+                    Word("g", "and", listOf(quick("9", "and", 4.0, 60.0))),
+                    Word("h", "again", listOf(quick("10", "a", 4.25, 62.0), Syllable("11", "gain", 4.5, 1.0, 64.0, 64.0))),
+                )),
+            ),
+        )
+        val song = MutableStateFlow<Song?>(Song(id = "x", title = "T", sections = listOf(Section("s", SectionType.VERSE, contentId = "c")),
+            sectionContents = listOf(content), createdAt = 0, updatedAt = 0))
+        val vm = NoteEditorViewModel("s", song, MutableStateFlow(AppSettings()), { _, _ -> }, FakeAudioService())
+        rule.setContent { MusicReaderTheme { NoteEditorScreen(vm, onBack = {}) } }
+        rule.waitForIdle()
+        rule.onRoot().captureRoboImage("src/test/screenshots/note_editor_crowded.png")
+    }
 }

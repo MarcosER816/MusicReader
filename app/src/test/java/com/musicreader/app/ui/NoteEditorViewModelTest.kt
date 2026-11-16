@@ -75,7 +75,10 @@ class NoteEditorViewModelTest {
         advanceUntilIdle()
         r.vm.setSize(1000.0, 600.0, 50.0, 100.0)
         advanceUntilIdle()
-        // The fit starts half a beat before the first note; pan so that beat 0 is at the strip.
+        // Opening fits the line; set a known scale (100 px per beat) for the pixel maths below.
+        r.vm.zoom(100.0 / r.vm.state.value.viewport!!.pxPerBeat, 1.0, 50.0, 0.0)
+        advanceUntilIdle()
+        // Pan so that beat 0 is at the strip.
         r.vm.pan(r.vm.state.value.viewport!!.firstBeat * 100, 0.0)
         advanceUntilIdle()
         val vp = r.vm.state.value.viewport!!
@@ -225,6 +228,36 @@ class NoteEditorViewModelTest {
         assertEquals("preview stop", r.audio.calls.last())
         advanceUntilIdle()
         assertFalse(r.vm.state.value.previewing)
+        r.vm.viewModelScope.coroutineContext.cancelChildren()
+    }
+
+    @Test
+    fun oneLyricLineAtATime() = runTest(dispatcher) {
+        val twoLines = song0.copy(sectionContents = listOf(content.copy(lyricLines = content.lyricLines + LyricLine("l2", text = "ven", words = listOf(
+            Word("w9", "ven", listOf(Syllable("s9", "ven", 8.0, 2.0, 55.0, 55.0), Syllable("s10", "ya"))),
+        )))))
+        val r = Rig(this, twoLines)
+        advanceUntilIdle()
+        r.vm.setSize(1000.0, 600.0, 50.0, 100.0)
+        advanceUntilIdle()
+        val first = r.vm.state.value
+        assertEquals(listOf("Hola mi", "ven"), first.lines.map { it.text })
+        assertEquals(listOf("s1", "s2"), first.bars.map { it.id })
+        assertEquals(listOf("s9"), first.otherBars.map { it.id }, "other lines are faint context")
+        assertEquals(listOf("s3"), first.unplaced.map { it.id })
+        // The view fits line 1's notes (beats 1–3): about a third of the width per beat.
+        assertEquals(0.5, first.viewport!!.firstBeat, 1e-9)
+        assertEquals(950.0 / 3.0, first.viewport!!.pxPerBeat, 1e-9)
+        r.vm.setLine(1)
+        advanceUntilIdle()
+        val second = r.vm.state.value
+        assertEquals(listOf("s9"), second.bars.map { it.id })
+        assertEquals(listOf("s10"), second.unplaced.map { it.id })
+        assertEquals(7.5, second.viewport!!.firstBeat, 1e-9)
+        assertEquals(8.0, second.cursorBeat)
+        // Bars of other lines cannot be grabbed: only this line's are hit.
+        val vp = second.viewport!!
+        assertFalse(r.vm.dragStart(vp.beatToX(1.5), vp.midiToY(60.0), 26.0, 22.0, 8.0))
         r.vm.viewModelScope.coroutineContext.cancelChildren()
     }
 }
