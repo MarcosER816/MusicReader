@@ -472,7 +472,19 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
   - Pitch frames are moved back by the saved round-trip latency of the current route (0 with a hint if it is not calibrated).
   - Taps are taken from the presented (heard) frame, so they need no correction.
   - Start beats and durations are decimals with no snapping. A start is kept inside the section.
-- **Segmentation (`NoteSegmenter`, pure):** voiced runs of 10 ms frames.
+- **Syllable segmentation, from Stage 10 round 3 (`SyllableSegmenter` + `ConsonantCue`)**, replacing "find notes, then align":
+  - Mark heard the right melody, but syllables were attached to the wrong notes. Real legato consonants barely change pitch or level: an "l"/"m" dips 2–4 dB, a "t" closes for 20–30 ms, an "s" is noise.
+  - Every boundary between 10 ms frames gets a score from all clues:
+    - a silence of any length: 1 + up to 2 for a breath of 200 ms or more;
+    - a level dip from 1.5 dB (full at 4.5 dB), placed where it starts to fall;
+    - consonant noise in the recording: hiss when high-frequency energy dominates, a burst when it jumps 6 dB or more, measured with the first difference per 10 ms on the take's latency-corrected timeline;
+    - a pitch step over 0.5 semitone between the 50 ms before and after, placed where the pitch crosses to the new note, and weighted only 0.5 because a melisma changes pitch inside a syllable.
+  - Clues within 20 ms add up. Weak fallback places every 40 ms let two syllables share one sung note.
+  - Since exactly N syllables were selected, dynamic programming chooses the N − 1 boundaries with the best clue score minus 0.6 × (log of voiced length / expected length)².
+  - Each syllable starts at its first voiced frame and ends after its last, so silences stay gaps. Its notes come from the notes in its span, as with tap-along.
+  - Tests: real audio of "la la la" with soft l's, "te to ta" with 25 ms stops, "a-sa-se-so" with hiss, a line with a melisma and a breath, two syllables in one note, vibrato. Every start is within 30 ms, also without the recording; the old method found one note in "la la la la".
+  - The earlier note segmenter and aligner (below) stay as tested building blocks; the Sing screen uses the segmenter above.
+- **Segmentation before Stage 10 round 3 (`NoteSegmenter`, pure):** voiced runs of 10 ms frames.
   - A pitch dropout up to 30 ms at steady level is bridged; a real silence (a stop consonant) is a boundary.
   - Splits: at a level dip with a 6 dB rise on both sides within 80 ms, and at a stable pitch change over 0.7 semitone. The change is measured between medians of the 150 ms before and after, so vibrato does not split; the cut goes where the pitch crosses to the new note's side.
   - Pieces under 60 ms (metronome clicks, blips) are dropped.
@@ -536,6 +548,7 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
   - Choosing a line fits the view to its notes. The list of syllables without a note and "Add a note" follow the line.
   - Words never overlap: inside their bar when they fit, else above it on a small background with a thin leader line to their bar, moving further up until they touch no other word or bar (`ReviewLayout.place`, as in the take review).
   - The selected bar's values are drawn last: right of the bar if there is room, else under it.
+- **Round 3** (Mark: the preview sounds similar, "but it confused the syllables they belonged to … fix the way the program detects syllables"): capture now uses `SyllableSegmenter` (see D-031). Notes already captured keep their values; singing a line again gives it the new segmentation.
 - **Saving:** every change goes through the song's normal auto-save (`SongViewModel.editNotes`).
 - **Tests:**
   - viewport conversion, zoom around the fingers, pan and clamp;

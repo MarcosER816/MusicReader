@@ -180,3 +180,4 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
   - an editor screenshot.
 - Decision D-032.
 - Round 2 ("lyrics on the notes get one over the other"): one lyric line at a time, with line chips, a view fitted to the line and the other lines faint; overlap-free words with leader lines; a crowded-line screenshot.
+- Round 3 ("it confused the syllables… fix the way the program detects syllables"): capture uses the new `SyllableSegmenter` (all boundary clues including consonant noise from the recording, N − 1 boundaries chosen by dynamic programming), with 10 tests on synthetic sung audio with real consonant shapes.
