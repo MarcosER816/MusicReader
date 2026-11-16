@@ -244,6 +244,19 @@ Round 1 (APK run 125): "The review is unreadable" → review redesigned in round
 
 Round 2 (APK run 131): "Some words get over one another" → round 3, APK `MusicReader-stage-09-capture-135.apk` or later: the time line widens so words fit their blocks, and words or notes that do not fit move out of the way without overlapping. The list no longer breaks long words.
 
+Round 3 (APK run 135, 2026-11-16):
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Review readable, no words over one another | OK — nothing hard to read or tap |
+| 2 | Sing one line three times: only that line replaced | OK |
+| 3 | Share of syllables on the right word and note | About 80 % |
+| 4 | Count-in clear, start on time | OK |
+| 5 | Tap-along useful when the automatic result is wrong | OK — useful |
+| 6 | Two written syllables sung as one ("de amor") | Keep it as it is (they share the note's time by length, both get its pitch) |
+| 7 | Update without losing data; crash or change | OK — no crash, no change |
+| 8 | Notes stored as start and end note (D-010) | OK |
+
 | # | Check | Expected | Result |
 |---|---|---|---|
 | 1 | Sing one line three times | Each take replaces only that line; other lines unchanged | |

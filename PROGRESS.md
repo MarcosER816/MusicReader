@@ -160,3 +160,4 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 - Decision D-031.
 - Round 2 after Mark's first look ("the review is unreadable"): review redesigned and covered by a screenshot test.
 - Round 3 ("some words get over one another"): word-fitting time-line scale, overlap-free label placement (tested), unbroken words in the list, crowded-take screenshot.
+- Round 3 device test: review readable, only the sung line replaced, about 80 % of syllables right, count-in clear, tap-along useful, "de amor" behaviour kept, D-010 notes confirmed, no crash.

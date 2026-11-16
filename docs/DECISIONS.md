@@ -481,10 +481,10 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
   - Moves: 1 syllable on 1 note; 1 syllable over 2..k notes (melisma); 2..k syllables in 1 note (sung together, like "de amor"); skip a stray note.
   - Costs: (log of sung / expected duration)², with the expected durations from the syllable lengths. Penalties: 0.8 per extra note, 1.0 per extra syllable, 1.5 × (1 + note length / mean) to skip a note.
   - Every syllable gets a place whenever at least one note was sung, for N = M, N > M and N < M.
-  - Syllables sharing a note split its time by their lengths.
+  - Syllables sharing a note split its time by their lengths, and both get its pitch. Mark confirmed this in round 3 ("keep it").
 - **Result per syllable (D-010 fields):**
   - `startBeat`, `durationBeats`; silences between syllables stay gaps;
-  - `pitchStartMidi` = the median of the first note's stable part, `pitchEndMidi` = that of the last note (the same value for a one-note syllable; this is the "pitchMidi" of the Stage 9 task, which D-010 replaced with start and end notes);
+  - `pitchStartMidi` = the median of the first note's stable part, `pitchEndMidi` = that of the last note (the same value for a one-note syllable; this is the "pitchMidi" of the Stage 9 task, which D-010 replaced with start and end notes; confirmed by Mark in round 3);
   - `pitchCurve` from the take's frames, `t` 0..1, and `takeId`.
 - **Tap along:** a switch on the Sing screen. While singing, a big Tap area reacts on finger-down. Taps give the starts; a syllable ends at the next tap or where the voice stops (60 ms gap). Its notes come from the notes found in that span. Syllables without a tap keep their old values (the review says how many).
 - **Review** (redesigned after Mark's round 1: "the review is unreadable"):
