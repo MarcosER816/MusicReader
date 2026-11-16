@@ -492,7 +492,12 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
   - Then a time line that scrolls sideways at 80 dp per beat, with bar numbers and beat lines, the sung pitch behind, and one block per syllable at the height of its note: the syllable written inside (16 sp, bold), the note name under it.
   - Then a list with one row per syllable: text, note (start → end if they differ), and from/to as "bar N, beat B.BB".
   - Tapping a row or a block selects it; the selected row shows Start and End with "◀ earlier" / "later ▶" (0.05 beat). A boundary shared with the neighbour moves for both, and the notes are measured again from the take.
-  - A screenshot test keeps the layout readable.
+  - Round 3 (Mark: "some words get over one another"):
+    - The time line's scale is chosen so each word fits inside its block (80–240 dp per beat).
+    - A word that still does not fit goes above its block, on a small background; note names go under the blocks.
+    - A label that would touch another label or a foreign block moves one more row away (`ReviewLayout.place`, tested on 300 random crowded takes: no overlaps).
+    - The list shows the word and note on one line and the position on the next, so no word is broken.
+  - Screenshot tests (a normal and a crowded take) keep the layout readable.
 - **Last take wins (`CaptureOps.apply`):** only the selected syllables' timing, notes, curve and `takeId` are replaced; nothing else in the song changes.
 - **Takes and undo:** each accepted take is saved as `songs/<id>/takes/<takeId>.wav` plus a `TakeInfo` with the replaced syllables' previous values. The last 10 per song are kept; older recordings are deleted. "Undo last take" restores the previous timing and notes (the text stays) and marks the take undone; it works after a restart.
 - **Rows in the viewer and editors:** a lyric line whose first syllable is timed starts its row at that syllable's bar. Untimed lines between timed ones share the space equally. Row 0 starts at beat 0. Untimed sections keep the even split.

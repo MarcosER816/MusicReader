@@ -60,4 +60,33 @@ class ReviewScreenshotTest {
         }
         rule.onRoot().captureRoboImage("src/test/screenshots/capture_review.png")
     }
+
+    /** Short syllables, long words and close notes: no word may run over another. */
+    @Test
+    fun aCrowdedTakeHasNoOverlappingWords() {
+        val crowded = listOf(
+            ReviewSyllable("1", "Strength", 0.0, 0.2, 60.0, 60.0),
+            ReviewSyllable("2", "ens", 0.2, 0.15, 60.3, 60.3),
+            ReviewSyllable("3", "your", 0.35, 0.2, 60.0, 60.0),
+            ReviewSyllable("4", "heart", 0.6, 0.12, 61.0, 61.0),
+            ReviewSyllable("5", "to", 0.75, 0.1, 61.0, 61.0),
+            ReviewSyllable("6", "night", 0.9, 1.0, 62.0, 62.0),
+            ReviewSyllable("7", "de", 2.0, 0.25, 60.0, 60.0),
+            ReviewSyllable("8", "a", 2.25, 0.25, 60.0, 60.0),
+            ReviewSyllable("9", "mor", 2.5, 1.0, 60.0, 60.0),
+        )
+        rule.setContent {
+            MusicReaderTheme {
+                Surface {
+                    ReviewContent(
+                        review = ReviewState(crowded, emptyList(), emptyList(), 0.0, 3.5, selected = null, method = TakeMethod.SUNG),
+                        beatsPerBar = 4,
+                        accidentals = AccidentalPreference.SHARPS,
+                        onSelect = {}, onNudge = { _, _ -> }, onPlay = {}, onAccept = {}, onAgain = {}, onCancel = {},
+                    )
+                }
+            }
+        }
+        rule.onRoot().captureRoboImage("src/test/screenshots/capture_review_crowded.png")
+    }
 }

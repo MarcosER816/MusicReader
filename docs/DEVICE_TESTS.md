@@ -242,6 +242,8 @@ How: open a song with lyrics → section ⋮ → "Sing timing" (or Lyrics → "S
 
 Round 1 (APK run 125): "The review is unreadable" → review redesigned in round 2, APK `MusicReader-stage-09-capture-131.apk` or later (actions on top, a wide scrolling time line with the syllables written in their blocks, a list with positions and the nudge buttons).
 
+Round 2 (APK run 131): "Some words get over one another" → round 3: the time line widens so words fit their blocks, and words or notes that do not fit move out of the way without overlapping. The list no longer breaks long words.
+
 | # | Check | Expected | Result |
 |---|---|---|---|
 | 1 | Sing one line three times | Each take replaces only that line; other lines unchanged | |

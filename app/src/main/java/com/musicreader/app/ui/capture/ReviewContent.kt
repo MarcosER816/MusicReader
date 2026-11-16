@@ -105,18 +105,20 @@ fun ReviewContent(
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(s.text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.width(72.dp))
+                // Word and note on one line, where it is on the next: nothing is squeezed or cut.
+                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(s.text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, softWrap = false)
                     Text(
                         noteText(s.startMidi, accidentals) + if (s.endMidi != null && TunerReading.of(s.endMidi).note != s.startMidi?.let { TunerReading.of(it).note }) " → " + noteText(s.endMidi, accidentals) else "",
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.width(88.dp),
+                        softWrap = false,
                     )
-                    Column {
-                        Text(barBeat(s.startBeat, beatsPerBar), style = MaterialTheme.typography.bodyMedium)
-                        Text(stringResource(R.string.capture_until, barBeat(s.endBeat, beatsPerBar)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
                 }
+                Text(
+                    barBeat(s.startBeat, beatsPerBar) + "  " + stringResource(R.string.capture_until, barBeat(s.endBeat, beatsPerBar)),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 if (selected) {
                     NudgeRow(stringResource(R.string.capture_start), { onNudge(true, -CaptureViewModel.NUDGE_BEATS) }, { onNudge(true, CaptureViewModel.NUDGE_BEATS) })
                     NudgeRow(stringResource(R.string.capture_end), { onNudge(false, -CaptureViewModel.NUDGE_BEATS) }, { onNudge(false, CaptureViewModel.NUDGE_BEATS) })
@@ -135,11 +137,10 @@ private fun NudgeRow(label: String, onMinus: () -> Unit, onPlus: () -> Unit) {
     }
 }
 
-private val BEAT_WIDTH = 80.dp
-
 @Composable
 private fun ReviewTimeline(review: ReviewState, beatsPerBar: Int, accidentals: AccidentalPreference, onSelect: (Int?) -> Unit) {
     val measurer = rememberTextMeasurer()
+    val density = androidx.compose.ui.platform.LocalDensity.current
     val from = floor(review.fromBeat) - 0.25
     val to = ceil(review.toBeat) + 0.25
     val midis = review.syllables.flatMap { listOfNotNull(it.startMidi, it.endMidi) }
@@ -153,7 +154,33 @@ private fun ReviewTimeline(review: ReviewState, beatsPerBar: Int, accidentals: A
     val rulerStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold)
     val barLabel = stringResource(R.string.capture_bar_short)
     val scroll = rememberScrollState()
-    val widthDp = BEAT_WIDTH * (to - from).toFloat()
+    // Text is measured once per take/selection, not on every draw.
+    val layouts = remember(review.syllables, review.selected, accidentals, colors) {
+        review.syllables.mapIndexed { i, it ->
+            val selected = i == review.selected
+            measurer.measure(it.text, textStyle.copy(color = if (selected) colors.onTertiaryContainer else colors.onPrimaryContainer)) to
+                measurer.measure(noteText(it.startMidi, accidentals), noteStyle.copy(color = colors.onSurfaceVariant))
+        }
+    }
+    val outsideWords = remember(review.syllables, colors) {
+        review.syllables.map { measurer.measure(it.text, textStyle.copy(color = colors.onSurface)) }
+    }
+    val barLabels = remember(from, to, beatsPerBar, colors) {
+        (ceil(from).toInt()..floor(to).toInt()).filter { it % beatsPerBar == 0 }
+            .associateWith { measurer.measure("$barLabel ${it / beatsPerBar + 1}", rulerStyle.copy(color = colors.onSurface)) }
+    }
+    // Wide enough that the words fit in their blocks (80–240 dp per beat).
+    val padPx = with(density) { 8.dp.toPx() }
+    val beatPx = remember(layouts) {
+        ReviewLayout.beatWidth(
+            review.syllables.map { it.durationBeats },
+            layouts.map { it.first.size.width.toFloat() },
+            padPx,
+            with(density) { 80.dp.toPx() },
+            with(density) { 240.dp.toPx() },
+        )
+    }
+    val widthDp = with(density) { (beatPx * (to - from)).toFloat().toDp() }
     Box(
         Modifier
             .fillMaxWidth()
@@ -161,22 +188,10 @@ private fun ReviewTimeline(review: ReviewState, beatsPerBar: Int, accidentals: A
             .border(1.dp, colors.outlineVariant, RoundedCornerShape(12.dp))
             .horizontalScroll(scroll),
     ) {
-        // Text is measured once per take/selection, not on every draw.
-        val layouts = remember(review.syllables, review.selected, accidentals, colors) {
-            review.syllables.mapIndexed { i, it ->
-                val selected = i == review.selected
-                measurer.measure(it.text, textStyle.copy(color = if (selected) colors.onTertiaryContainer else colors.onPrimaryContainer)) to
-                    measurer.measure(noteText(it.startMidi, accidentals), noteStyle.copy(color = colors.onSurfaceVariant))
-            }
-        }
-        val barLabels = remember(from, to, beatsPerBar, colors) {
-            (ceil(from).toInt()..floor(to).toInt()).filter { it % beatsPerBar == 0 }
-                .associateWith { measurer.measure("$barLabel ${it / beatsPerBar + 1}", rulerStyle.copy(color = colors.onSurface)) }
-        }
         Canvas(
             Modifier
                 .width(widthDp)
-                .height(260.dp)
+                .height(320.dp)
                 .pointerInput(review) {
                     awaitPointerEventScope {
                         while (true) {
@@ -189,11 +204,12 @@ private fun ReviewTimeline(review: ReviewState, beatsPerBar: Int, accidentals: A
                 },
         ) {
             val ruler = 28.dp.toPx()
-            val top = ruler + 8.dp.toPx()
-            val bottom = size.height - 24.dp.toPx()
+            // Room above and below the notes for labels pushed out of the way.
+            val top = ruler + 64.dp.toPx()
+            val bottom = size.height - 56.dp.toPx()
             fun x(b: Double) = ((b - from) / (to - from) * size.width).toFloat()
             fun y(m: Double) = (top + (1 - (m - lo) / (hi - lo)) * (bottom - top)).toFloat()
-            // Ruler: bar numbers at bar lines, ticks at beats.
+            // Ruler: bar numbers at bar lines, a line at every beat.
             var b = ceil(from)
             while (b <= to) {
                 val isBar = (b.toInt() % beatsPerBar) == 0
@@ -212,26 +228,43 @@ private fun ReviewTimeline(review: ReviewState, beatsPerBar: Int, accidentals: A
                 prev?.let { drawLine(colors.secondary, it, p, 2.dp.toPx()) }
                 prev = p
             }
-            // One block per syllable at its note, the syllable written inside, the note under it.
+            // Blocks at their notes; words and note names placed so none overlap.
             val blockH = 28.dp.toPx()
-            review.syllables.forEachIndexed { i, s ->
-                val m = s.startMidi ?: mid
-                val selected = i == review.selected
+            val blocks = review.syllables.map { s ->
                 val left = x(s.startBeat)
-                val w = max(x(s.endBeat) - left, 6.dp.toPx())
-                val topY = y(m) - blockH / 2
+                val w = max(x(s.endBeat) - left - 2.dp.toPx(), 6.dp.toPx())
+                LabelBox(left, y(s.startMidi ?: mid) - blockH / 2, w, blockH)
+            }
+            val (wordBoxes, noteBoxes) = ReviewLayout.place(
+                blocks,
+                layouts.map { it.first.size.width.toFloat() to it.first.size.height.toFloat() },
+                layouts.map { it.second.size.width.toFloat() to it.second.size.height.toFloat() },
+                padding = 4.dp.toPx(),
+                gap = 2.dp.toPx(),
+            )
+            blocks.forEachIndexed { i, bx ->
+                val selected = i == review.selected
                 drawRoundRect(
                     if (selected) colors.tertiaryContainer else colors.primaryContainer,
-                    Offset(left, topY), Size(w, blockH), CornerRadius(6.dp.toPx()),
+                    Offset(bx.left, bx.top), Size(bx.width, bx.height), CornerRadius(6.dp.toPx()),
                 )
                 drawRoundRect(
                     if (selected) colors.tertiary else colors.primary,
-                    Offset(left, topY), Size(w, blockH), CornerRadius(6.dp.toPx()),
+                    Offset(bx.left, bx.top), Size(bx.width, bx.height), CornerRadius(6.dp.toPx()),
                     style = Stroke(if (selected) 3.dp.toPx() else 1.5.dp.toPx()),
                 )
-                val (text, note) = layouts[i]
-                drawText(text, topLeft = Offset(left + 4.dp.toPx(), topY + (blockH - text.size.height) / 2))
-                drawText(note, topLeft = Offset(left + 2.dp.toPx(), topY + blockH + 2.dp.toPx()))
+            }
+            blocks.indices.forEach { i ->
+                val wb = wordBoxes[i]
+                val inside = wb.top >= blocks[i].top && wb.bottom <= blocks[i].bottom
+                if (!inside) {
+                    // A word outside its block gets a background so it reads over lines and pitch.
+                    drawRoundRect(colors.surfaceContainerHighest, Offset(wb.left - 2.dp.toPx(), wb.top), Size(wb.width + 4.dp.toPx(), wb.height), CornerRadius(4.dp.toPx()))
+                    drawText(outsideWords[i], topLeft = Offset(wb.left, wb.top))
+                } else {
+                    drawText(layouts[i].first, topLeft = Offset(wb.left, wb.top))
+                }
+                drawText(layouts[i].second, topLeft = Offset(noteBoxes[i].left, noteBoxes[i].top))
             }
         }
     }
