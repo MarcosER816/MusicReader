@@ -275,7 +275,7 @@ How: a section with sung lyrics → ⋮ → "Notes" (or "Notes" on the Sing scre
 
 Round 1 (APK run 144): "All the lyrics on the notes get one over the other, at least divide them per line" → round 2, APK `MusicReader-stage-10-note-editor-148.apk` or later: one lyric line at a time (line chips, view fitted to the line), words never overlapping (inside the bar or above it with a leader line).
 
-Round 2 (APK run 148): words readable per line, nothing on top; precise; truly free; preview "sounds similar, but it confused the syllables they belonged to"; values understandable; no crash; change wanted: "fix the way the program detects syllables" → round 3: new syllable segmentation (silences, small level dips, consonant noise from the recording, pitch steps; exactly the selected number of syllables chosen by dynamic programming). Sing the lines again to use it.
+Round 2 (APK run 148): words readable per line, nothing on top; precise; truly free; preview "sounds similar, but it confused the syllables they belonged to"; values understandable; no crash; change wanted: "fix the way the program detects syllables" → round 3, APK `MusicReader-stage-10-note-editor-152.apk` or later: new syllable segmentation (silences, small level dips, consonant noise from the recording, pitch steps; exactly the selected number of syllables chosen by dynamic programming). Sing the lines again to use it.
 
 | # | Check | Expected | Result |
 |---|---|---|---|
