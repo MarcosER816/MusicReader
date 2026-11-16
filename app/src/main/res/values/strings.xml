@@ -372,4 +372,6 @@
     <string name="capture_accept">Accept</string>
     <string name="capture_again">Sing again</string>
     <string name="ok">OK</string>
+    <string name="capture_until">until %1$s</string>
+    <string name="capture_bar_short">Bar</string>
 </resources>

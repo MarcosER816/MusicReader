@@ -240,6 +240,8 @@ Audio route:
 
 How: open a song with lyrics → section ⋮ → "Sing timing" (or Lyrics → "Sing"). Select words, Sing, count-in, sing, Review, Accept.
 
+Round 1 (APK run 125): "The review is unreadable" → review redesigned in round 2 (actions on top, a wide scrolling time line with the syllables written in their blocks, a list with positions and the nudge buttons).
+
 | # | Check | Expected | Result |
 |---|---|---|---|
 | 1 | Sing one line three times | Each take replaces only that line; other lines unchanged | |

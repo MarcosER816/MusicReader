@@ -158,3 +158,4 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
   - beat clock, rows, take store (pruning, WAV, undo flag);
   - capture ViewModel flows (sung, tapped, no microphone, second voice).
 - Decision D-031.
+- Round 2 after Mark's first look ("the review is unreadable"): review redesigned and covered by a screenshot test.

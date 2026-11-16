@@ -487,11 +487,12 @@ Mark's answer to the Stage 4 test: "can you do it per syllables?"; which syllabl
   - `pitchStartMidi` = the median of the first note's stable part, `pitchEndMidi` = that of the last note (the same value for a one-note syllable; this is the "pitchMidi" of the Stage 9 task, which D-010 replaced with start and end notes);
   - `pitchCurve` from the take's frames, `t` 0..1, and `takeId`.
 - **Tap along:** a switch on the Sing screen. While singing, a big Tap area reacts on finger-down. Taps give the starts; a syllable ends at the next tap or where the voice stops (60 ms gap). Its notes come from the notes found in that span. Syllables without a tap keep their old values (the review says how many).
-- **Review:**
-  - a beat time line with the pitch trace and one bar per syllable at its notes, with the syllable and note names below;
-  - tap a syllable, then move its start or end earlier or later in 0.05-beat steps. A boundary shared with the neighbour moves for both, and the notes are measured again from the take;
-  - "Hear the take" plays the recording (AudioTrack);
-  - Accept / Sing again / Cancel.
+- **Review** (redesigned after Mark's round 1: "the review is unreadable"):
+  - Accept / Sing again / Cancel and "Hear the take" (AudioTrack) are on top.
+  - Then a time line that scrolls sideways at 80 dp per beat, with bar numbers and beat lines, the sung pitch behind, and one block per syllable at the height of its note: the syllable written inside (16 sp, bold), the note name under it.
+  - Then a list with one row per syllable: text, note (start → end if they differ), and from/to as "bar N, beat B.BB".
+  - Tapping a row or a block selects it; the selected row shows Start and End with "◀ earlier" / "later ▶" (0.05 beat). A boundary shared with the neighbour moves for both, and the notes are measured again from the take.
+  - A screenshot test keeps the layout readable.
 - **Last take wins (`CaptureOps.apply`):** only the selected syllables' timing, notes, curve and `takeId` are replaced; nothing else in the song changes.
 - **Takes and undo:** each accepted take is saved as `songs/<id>/takes/<takeId>.wav` plus a `TakeInfo` with the replaced syllables' previous values. The last 10 per song are kept; older recordings are deleted. "Undo last take" restores the previous timing and notes (the text stays) and marks the take undone; it works after a restart.
 - **Rows in the viewer and editors:** a lyric line whose first syllable is timed starts its row at that syllable's bar. Untimed lines between timed ones share the space equally. Row 0 starts at beat 0. Untimed sections keep the even split.

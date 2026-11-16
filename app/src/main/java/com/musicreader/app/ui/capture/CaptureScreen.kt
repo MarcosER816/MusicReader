@@ -4,9 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
@@ -28,7 +26,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
@@ -51,12 +48,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -67,10 +62,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.musicreader.app.R
-import com.musicreader.app.ui.audio.noteName
 import com.musicreader.app.ui.common.AppIcon
 import com.musicreader.app.ui.common.AppIcons
-import com.musicreader.core.dsp.TunerReading
 import com.musicreader.core.model.AccidentalPreference
 import com.musicreader.core.model.LyricLine
 
@@ -110,7 +103,19 @@ fun CaptureScreen(viewModel: CaptureViewModel, accidentals: AccidentalPreference
                 is CapturePhase.CountIn -> CountIn(phase, state.tapMode, viewModel)
                 is CapturePhase.Singing -> SingingPanel(state, phase, viewModel)
                 CapturePhase.Analyzing -> BigText(stringResource(R.string.capture_analyzing))
-                CapturePhase.Review -> state.review?.let { ReviewPanel(it, state, accidentals, viewModel) }
+                CapturePhase.Review -> state.review?.let { r ->
+                    ReviewContent(
+                        review = r,
+                        beatsPerBar = state.beatsPerBar,
+                        accidentals = accidentals,
+                        onSelect = viewModel::selectReviewed,
+                        onNudge = viewModel::nudge,
+                        onPlay = { if (r.playing) viewModel.stopPlaying() else viewModel.playTake() },
+                        onAccept = viewModel::accept,
+                        onAgain = viewModel::singAgain,
+                        onCancel = viewModel::cancel,
+                    )
+                }
                 is CapturePhase.Failed -> {
                     Text(
                         stringResource(
@@ -331,126 +336,3 @@ private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.detectTa
     }
 }
 
-@Composable
-private fun ReviewPanel(r: ReviewState, state: CaptureUiState, accidentals: AccidentalPreference, vm: CaptureViewModel) {
-    Text(stringResource(R.string.capture_review), style = MaterialTheme.typography.titleLarge)
-    if (r.missing.isNotEmpty()) {
-        Text(pluralStringResource(R.plurals.capture_missing, r.missing.size, r.missing.size), color = MaterialTheme.colorScheme.error)
-    }
-    Timeline(r, accidentals, onSelect = vm::selectReviewed)
-    val sel = r.selected?.let { r.syllables.getOrNull(it) }
-    if (sel == null) {
-        Text(stringResource(R.string.capture_review_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    } else {
-        Text(
-            stringResource(R.string.capture_selected_syllable, sel.text, formatBeat(sel.startBeat, state), formatBeat(sel.endBeat, state)),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        NudgeRow(stringResource(R.string.capture_start), onMinus = { vm.nudge(true, -CaptureViewModel.NUDGE_BEATS) }, onPlus = { vm.nudge(true, CaptureViewModel.NUDGE_BEATS) })
-        NudgeRow(stringResource(R.string.capture_end), onMinus = { vm.nudge(false, -CaptureViewModel.NUDGE_BEATS) }, onPlus = { vm.nudge(false, CaptureViewModel.NUDGE_BEATS) })
-    }
-    FilledTonalButton(onClick = { if (r.playing) vm.stopPlaying() else vm.playTake() }) {
-        Text(stringResource(if (r.playing) R.string.capture_stop_playing else R.string.capture_play))
-    }
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Button(onClick = vm::accept) { Text(stringResource(R.string.capture_accept)) }
-        OutlinedButton(onClick = vm::singAgain) { Text(stringResource(R.string.capture_again)) }
-        TextButton(onClick = vm::cancel) { Text(stringResource(R.string.cancel)) }
-    }
-}
-
-/** "bar 3, beat 2.25" for a section beat (decimals: nothing is snapped). */
-@Composable
-private fun formatBeat(beat: Double, state: CaptureUiState): String {
-    val bpb = state.beatsPerBar
-    val bar = (beat / bpb).toInt() + 1
-    val inBar = beat - (bar - 1) * bpb + 1
-    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
-    return stringResource(R.string.capture_bar_beat_decimal, bar, String.format(locale, "%.2f", inBar))
-}
-
-@Composable
-private fun NudgeRow(label: String, onMinus: () -> Unit, onPlus: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(label, modifier = Modifier.width(72.dp))
-        OutlinedButton(onClick = onMinus) { Text(stringResource(R.string.capture_earlier)) }
-        OutlinedButton(onClick = onPlus) { Text(stringResource(R.string.capture_later)) }
-    }
-}
-
-/**
- * The take on a beat time line: the pitch trace, one block per syllable at its note (height =
- * pitch), with the syllable and note names; tap a block to select it.
- */
-@Composable
-private fun Timeline(r: ReviewState, accidentals: AccidentalPreference, onSelect: (Int?) -> Unit) {
-    val from = r.fromBeat - 0.25
-    val to = r.toBeat + 0.25
-    val midis = r.syllables.mapNotNull { it.startMidi } + r.trace.mapNotNull { it.second }
-    val lo = (midis.minOrNull() ?: 55.0) - 2
-    val hi = (midis.maxOrNull() ?: 67.0) + 2
-    val traceColor = MaterialTheme.colorScheme.outline
-    val block = MaterialTheme.colorScheme.primary
-    val selectedColor = MaterialTheme.colorScheme.tertiary
-    val beatLine = MaterialTheme.colorScheme.outlineVariant
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(180.dp)
-            .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(8.dp))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp))
-            .pointerInput(r) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val e = awaitPointerEvent()
-                        val c = e.changes.firstOrNull { it.pressed && !it.previousPressed } ?: continue
-                        val beat = from + (to - from) * c.position.x / size.width
-                        onSelect(r.syllables.indexOfFirst { beat >= it.startBeat && beat <= it.endBeat }.takeIf { it >= 0 })
-                    }
-                }
-            },
-    ) {
-        Canvas(Modifier.fillMaxSize()) {
-            fun x(b: Double) = ((b - from) / (to - from) * size.width).toFloat()
-            fun y(m: Double) = ((1 - (m - lo) / (hi - lo)) * size.height).toFloat()
-            var b = kotlin.math.ceil(from)
-            while (b <= to) {
-                drawLine(beatLine, Offset(x(b), 0f), Offset(x(b), size.height), 1f)
-                b += 1.0
-            }
-            var prev: Offset? = null
-            for ((beat, m) in r.trace) {
-                if (m == null) {
-                    prev = null
-                    continue
-                }
-                val p = Offset(x(beat), y(m))
-                prev?.let { drawLine(traceColor, it, p, 2f) }
-                prev = p
-            }
-            r.syllables.forEachIndexed { i, s ->
-                val m0 = s.startMidi ?: return@forEachIndexed
-                val m1 = s.endMidi ?: m0
-                drawLine(
-                    if (i == r.selected) selectedColor else block,
-                    Offset(x(s.startBeat), y(m0)),
-                    Offset(x(s.endBeat), y(m1)),
-                    strokeWidth = 8.dp.toPx(),
-                    cap = StrokeCap.Butt,
-                )
-            }
-        }
-    }
-    // Names under the time line, in order.
-    androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        r.syllables.forEachIndexed { i, s ->
-            val note = s.startMidi?.let { m -> TunerReading.of(m).let { noteName(it.note, accidentals) + it.octave } } ?: "–"
-            Text(
-                "${s.text} $note",
-                style = MaterialTheme.typography.labelLarge,
-                color = if (i == r.selected) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.clickable { onSelect(i) }.padding(4.dp),
-            )
-        }
-    }
-}

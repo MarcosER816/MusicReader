@@ -375,4 +375,6 @@
     <string name="capture_accept">Aceptar</string>
     <string name="capture_again">Cantar otra vez</string>
     <string name="ok">Aceptar</string>
+    <string name="capture_until">hasta %1$s</string>
+    <string name="capture_bar_short">Compás</string>
 </resources>
