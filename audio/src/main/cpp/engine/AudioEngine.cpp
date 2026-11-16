@@ -399,9 +399,33 @@ size_t AudioEngine::pitchPoll(PitchFrame *out, size_t capacity) {
         int64_t first = -1;
         const int32_t n = readInput(pitchIn_.data(), static_cast<int32_t>(pitchIn_.size()), &first);
         if (n <= 0) break;
+        if (recording_) {
+            if (recordFirst_ < 0) recordFirst_ = first;
+            const size_t room = recordMax_ > recorded_.size() ? recordMax_ - recorded_.size() : 0;
+            const size_t take = std::min(room, static_cast<size_t>(n));
+            recorded_.insert(recorded_.end(), pitchIn_.begin(), pitchIn_.begin() + static_cast<long>(take));
+        }
         produced += pitch_.process(pitchIn_.data(), static_cast<size_t>(n), first, out + produced, capacity - produced);
     }
     return produced;
+}
+
+void AudioEngine::recordStart(double maxSeconds) {
+    std::lock_guard<std::mutex> lock(pitchMutex_);
+    recorded_.clear();
+    recordMax_ = static_cast<size_t>(maxSeconds * kSampleRate);
+    recorded_.reserve(std::min<size_t>(recordMax_, static_cast<size_t>(60 * kSampleRate)));
+    recordFirst_ = -1;
+    recording_ = true;
+}
+
+std::vector<float> AudioEngine::recordStop(int64_t *firstFrame) {
+    std::lock_guard<std::mutex> lock(pitchMutex_);
+    recording_ = false;
+    *firstFrame = recordFirst_;
+    std::vector<float> out;
+    out.swap(recorded_);
+    return out;
 }
 
 }  // namespace mr

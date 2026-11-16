@@ -96,8 +96,7 @@ object SheetLayoutBuilder {
         val total = content.lengthBeats.toDouble()
         val mainLines = content.lyricLines.filter { it.voice == LyricLine.MAIN_VOICE }
         val spans: List<Pair<Double, Double>> = if (mainLines.isNotEmpty()) {
-            val n = mainLines.size
-            (0 until n).map { i -> total * i / n to total * (i + 1) / n }
+            lineSpans(mainLines, total, timeSignature.beatsPerBar.toDouble())
         } else {
             val rowBeats = (BARS_PER_ROW_WITHOUT_LYRICS * timeSignature.beatsPerBar).toDouble()
             val count = maxOf(1, kotlin.math.ceil(total / rowBeats).toInt())
@@ -141,6 +140,35 @@ object SheetLayoutBuilder {
                 syllables = syllables,
             )
         }
+    }
+
+    /**
+     * Row spans of the lyric lines. Lines share the section equally; a line whose syllables were
+     * sung (D-031) starts its row at the bar of its first syllable instead, and the untimed lines
+     * between timed ones share that space equally. Row 0 always starts at beat 0.
+     */
+    internal fun lineSpans(lines: List<LyricLine>, total: Double, beatsPerBar: Double): List<Pair<Double, Double>> {
+        val n = lines.size
+        val even = (0 until n).map { i -> total * i / n to total * (i + 1) / n }
+        val anchors = sortedMapOf(0 to 0.0, n to total)
+        lines.forEachIndexed { i, line ->
+            if (i == 0) return@forEachIndexed
+            val first = line.words.firstOrNull()?.syllables?.firstOrNull()?.startBeat ?: return@forEachIndexed
+            anchors[i] = kotlin.math.floor(first / beatsPerBar + 1e-9) * beatsPerBar
+        }
+        if (anchors.size == 2) return even
+        val starts = DoubleArray(n + 1)
+        val keys = anchors.keys.toList()
+        for (k in 0 until keys.size - 1) {
+            val a = keys[k]
+            val b = keys[k + 1]
+            val from = anchors.getValue(a)
+            val to = anchors.getValue(b)
+            for (i in a..b) starts[i] = from + (to - from) * (i - a) / (b - a)
+        }
+        // Timing that goes backwards (lines sung out of order): keep the even split.
+        for (i in 1..n) if (starts[i] <= starts[i - 1] + 1e-9) return even
+        return (0 until n).map { starts[it] to starts[it + 1] }
     }
 
     /**

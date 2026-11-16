@@ -128,6 +128,16 @@ class FakeAudioEngine(private val nowMillis: () -> Long, var latencyFrames: Long
         pitchLog += "reset"
     }
 
+    var recordingSeconds: Double? = null
+    override fun recordStart(maxSeconds: Double) {
+        recordingSeconds = maxSeconds
+    }
+
+    override fun recordStop(): TakeAudio {
+        recordingSeconds = null
+        return TakeAudio(FloatArray(4800) { 0.1f }, 1000, sampleRate)
+    }
+
     override fun pitchPoll(): List<PitchFrame> {
         val out = pitchQueue.toList()
         pitchQueue.clear()

@@ -232,3 +232,36 @@ Round 4 (APK `MusicReader-stage-08-pitch-116.apk` or later):
 | 1 | Sing a melody with leaps, with breaths between some notes: any drop? If one remains, describe it (how far, at the start or end of a note) | OK — no drop |
 | 2 | Voice still followed quickly; strings still ring | OK |
 | 3 | Update over round 3 | OK — no crash, no change |
+
+### Stage 9 — lyric capture
+APK: `MusicReader-stage-09-capture-125.apk` or later (PR [#11](https://github.com/MarcosER816/MusicReader/pull/11), branch `stage-09-capture`)
+Date tested:
+Audio route:
+
+How: open a song with lyrics → section ⋮ → "Sing timing" (or Lyrics → "Sing"). Select words, Sing, count-in, sing, Review, Accept.
+
+Round 1 (APK run 125): "The review is unreadable" → review redesigned in round 2, APK `MusicReader-stage-09-capture-131.apk` or later (actions on top, a wide scrolling time line with the syllables written in their blocks, a list with positions and the nudge buttons).
+
+Round 2 (APK run 131): "Some words get over one another" → round 3, APK `MusicReader-stage-09-capture-135.apk` or later: the time line widens so words fit their blocks, and words or notes that do not fit move out of the way without overlapping. The list no longer breaks long words.
+
+Round 3 (APK run 135, 2026-11-16):
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Review readable, no words over one another | OK — nothing hard to read or tap |
+| 2 | Sing one line three times: only that line replaced | OK |
+| 3 | Share of syllables on the right word and note | About 80 % |
+| 4 | Count-in clear, start on time | OK |
+| 5 | Tap-along useful when the automatic result is wrong | OK — useful |
+| 6 | Two written syllables sung as one ("de amor") | Keep it as it is (they share the note's time by length, both get its pitch) |
+| 7 | Update without losing data; crash or change | OK — no crash, no change |
+| 8 | Notes stored as start and end note (D-010) | OK |
+
+| # | Check | Expected | Result |
+|---|---|---|---|
+| 1 | Sing one line three times | Each take replaces only that line; other lines unchanged | |
+| 2 | Share of syllables on the right word and the right note | Most | |
+| 3 | Count-in | Clear; you start on time | |
+| 4 | Tap along when the automatic result is wrong | Useful | |
+| 5 | Two written syllables sung as one ("de amor") | Say what should happen | |
+| 6 | Update over Stage 8; force-stop and reopen | Timing and notes still there; no crash | |

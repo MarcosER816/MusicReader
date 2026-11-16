@@ -196,4 +196,19 @@ JNIEXPORT jint JNICALL Java_com_musicreader_audio_NativeAudio_nativePitchPoll(JN
     return static_cast<jint>(n);
 }
 
+JNIEXPORT void JNICALL Java_com_musicreader_audio_NativeAudio_nativeRecordStart(JNIEnv *, jobject, jdouble maxSeconds) {
+    engine().recordStart(maxSeconds);
+}
+
+/** The recorded take; [firstFrame][0] gets the engine frame of its first sample (-1 if empty). */
+JNIEXPORT jfloatArray JNICALL Java_com_musicreader_audio_NativeAudio_nativeRecordStop(JNIEnv *env, jobject, jlongArray firstFrame) {
+    int64_t first = -1;
+    const std::vector<float> samples = engine().recordStop(&first);
+    const jlong f = first;
+    env->SetLongArrayRegion(firstFrame, 0, 1, &f);
+    jfloatArray a = env->NewFloatArray(static_cast<jsize>(samples.size()));
+    if (!samples.empty()) env->SetFloatArrayRegion(a, 0, static_cast<jsize>(samples.size()), samples.data());
+    return a;
+}
+
 }  // extern "C"

@@ -27,6 +27,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -49,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.musicreader.app.R
+import com.musicreader.app.ui.capture.SyllableMarkBar
 import com.musicreader.app.ui.common.AppIcon
 import com.musicreader.app.ui.common.AppIcons
 import com.musicreader.app.ui.common.sectionDisplayName
@@ -57,7 +59,7 @@ private enum class LyricsMode { MAIN_TEXT, SECOND_VOICE, SYLLABLES }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun LyricsScreen(viewModel: SongViewModel, sectionId: String, onBack: () -> Unit) {
+fun LyricsScreen(viewModel: SongViewModel, sectionId: String, onBack: () -> Unit, onSing: () -> Unit) {
     val flow = remember(viewModel, sectionId) { viewModel.lyricsState(sectionId) }
     val state by flow.collectAsStateWithLifecycle(initialValue = null)
     var mode by rememberSaveable { mutableStateOf(LyricsMode.MAIN_TEXT) }
@@ -75,6 +77,7 @@ fun LyricsScreen(viewModel: SongViewModel, sectionId: String, onBack: () -> Unit
                 navigationIcon = {
                     IconButton(onClick = onBack) { AppIcon(AppIcons.Back, stringResource(R.string.back)) }
                 },
+                actions = { TextButton(onClick = onSing) { Text(stringResource(R.string.capture_sing)) } },
             )
         },
     ) { padding ->
@@ -271,7 +274,11 @@ private fun WordChip(
                         Text("·", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
                     }
                 }
-                SyllableText(syllable, onSplitAt = { offset -> onSplit(index, offset) }, onLongPress = onReset)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    SyllableText(syllable, onSplitAt = { offset -> onSplit(index, offset) }, onLongPress = onReset)
+                    val mark = word.marks.getOrElse(index) { SyllableMark.NONE }
+                    SyllableMarkBar(timed = mark != SyllableMark.NONE, hasNote = mark == SyllableMark.NOTE)
+                }
             }
         }
     }
