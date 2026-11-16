@@ -362,7 +362,6 @@
         <item quantity="other">%1$d syllables got no tap and keep their old timing.</item>
     </plurals>
     <string name="capture_review_hint">Tap a syllable to move its start or end.</string>
-    <string name="capture_selected_syllable">“%1$s”: from %2$s to %3$s</string>
     <string name="capture_start">Start</string>
     <string name="capture_end">End</string>
     <string name="capture_earlier">◀ earlier</string>

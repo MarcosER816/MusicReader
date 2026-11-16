@@ -365,7 +365,6 @@
         <item quantity="other">%1$d sílabas no recibieron toque y conservan su tiempo anterior.</item>
     </plurals>
     <string name="capture_review_hint">Toca una sílaba para mover su inicio o su final.</string>
-    <string name="capture_selected_syllable">«%1$s»: de %2$s a %3$s</string>
     <string name="capture_start">Inicio</string>
     <string name="capture_end">Final</string>
     <string name="capture_earlier">◀ antes</string>
