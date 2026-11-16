@@ -267,7 +267,7 @@ Round 3 (APK run 135, 2026-11-16):
 | 6 | Update over Stage 8; force-stop and reopen | Timing and notes still there; no crash | |
 
 ### Stage 10 — note editor
-APK: `MusicReader-stage-10-note-editor-<run>.apk` or later (PR [#12](https://github.com/MarcosER816/MusicReader/pull/12), branch `stage-10-note-editor`)
+APK: `MusicReader-stage-10-note-editor-144.apk` or later (PR [#12](https://github.com/MarcosER816/MusicReader/pull/12), branch `stage-10-note-editor`)
 Date tested:
 Audio route:
 

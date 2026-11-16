@@ -18,7 +18,7 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 | 7 | Audio core: C++ Oboe engine, JNI, audio clock, metronome, latency calibration per route, diagnostics | stage-07-audio | done | [#9](https://github.com/MarcosER816/MusicReader/pull/9) | 2026-11-15 ("Stage 7 approved") |
 | 8 | Real-time pitch detection (YIN and MPM in C++, Kotlin reference YIN), voiced/unvoiced gate, smoothing, tuner/debug screen | stage-08-pitch | done | [#10](https://github.com/MarcosER816/MusicReader/pull/10) | 2026-11-15 ("Stage 8 approved") |
 | 9 | Lyric capture by singing: select words, count-in, record take, segment notes, align to syllables, review, last take wins, tap-along | stage-09-capture | done | [#11](https://github.com/MarcosER816/MusicReader/pull/11) | 2026-11-16 ("Stage 9 approved") |
-| 10 | Note editor: every syllable's note and length on a zoomable canvas, free drag with no snapping, fine control, preview with metronome, undo/redo | stage-10-note-editor | in progress | | |
+| 10 | Note editor: every syllable's note and length on a zoomable canvas, free drag with no snapping, fine control, preview with metronome, undo/redo | stage-10-note-editor | waiting for Mark | [#12](https://github.com/MarcosER816/MusicReader/pull/12) | |
 | 11 | Practice — singing: right-to-left note line, pitch arrow with trail, gold/green/red, particles | stage-11-practice-sing | not started | | |
 | 12 | Practice — chords and tab: one strumming pattern per section (D-008, not built yet), right-to-left lanes, timing judge, gold/green/red, particles, lower layers | stage-12-practice-play | not started | | |
 | 13 | Recordings: record practice, keep as official (one per type), synced mix playback, export to Downloads | stage-13-recordings | not started | | |
