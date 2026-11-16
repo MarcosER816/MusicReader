@@ -17,8 +17,8 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 | 6 | User configuration: chord colors, finger colors, default viewer layers, app language, sharps/flats, left-handed diagrams | stage-06-settings | done | [#8](https://github.com/MarcosER816/MusicReader/pull/8) | 2026-11-14 ("Stage 6 approved") |
 | 7 | Audio core: C++ Oboe engine, JNI, audio clock, metronome, latency calibration per route, diagnostics | stage-07-audio | done | [#9](https://github.com/MarcosER816/MusicReader/pull/9) | 2026-11-15 ("Stage 7 approved") |
 | 8 | Real-time pitch detection (YIN and MPM in C++, Kotlin reference YIN), voiced/unvoiced gate, smoothing, tuner/debug screen | stage-08-pitch | done | [#10](https://github.com/MarcosER816/MusicReader/pull/10) | 2026-11-15 ("Stage 8 approved") |
-| 9 | Lyric capture by singing: select words, count-in, record take, segment notes, align to syllables, review, last take wins, tap-along | stage-09-capture | waiting for Mark | [#11](https://github.com/MarcosER816/MusicReader/pull/11) | |
-| 10 | Note editor: per-syllable pitch and duration, free drag with no snapping | stage-10-note-editor | not started | | |
+| 9 | Lyric capture by singing: select words, count-in, record take, segment notes, align to syllables, review, last take wins, tap-along | stage-09-capture | done | [#11](https://github.com/MarcosER816/MusicReader/pull/11) | 2026-11-16 ("Stage 9 approved") |
+| 10 | Note editor: every syllable's note and length on a zoomable canvas, free drag with no snapping, fine control, preview with metronome, undo/redo | stage-10-note-editor | in progress | | |
 | 11 | Practice — singing: right-to-left note line, pitch arrow with trail, gold/green/red, particles | stage-11-practice-sing | not started | | |
 | 12 | Practice — chords and tab: one strumming pattern per section (D-008, not built yet), right-to-left lanes, timing judge, gold/green/red, particles, lower layers | stage-12-practice-play | not started | | |
 | 13 | Recordings: record practice, keep as official (one per type), synced mix playback, export to Downloads | stage-13-recordings | not started | | |
@@ -161,3 +161,7 @@ Stage numbers follow Mark's stage requests (D-021, D-023). Stages 0–6 are as M
 - Round 2 after Mark's first look ("the review is unreadable"): review redesigned and covered by a screenshot test.
 - Round 3 ("some words get over one another"): word-fitting time-line scale, overlap-free label placement (tested), unbroken words in the list, crowded-take screenshot.
 - Round 3 device test: review readable, only the sung line replaced, about 80 % of syllables right, count-in clear, tap-along useful, "de amor" behaviour kept, D-010 notes confirmed, no crash.
+- Stage 9 approved by Mark on 2026-11-16.
+
+### Stage 10 — note editor (2026-11-16)
+- Stage 9 approved by Mark (three device-test rounds).
